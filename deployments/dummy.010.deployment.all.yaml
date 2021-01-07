@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dummy
+  namespace: TARGET_K8S_NAMESPACE
+  labels:
+    app: dummy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dummy
+  template:
+    metadata:
+      labels:
+        app: dummy
+    spec:
+      containers:
+      - name: dummy
+        image: TARGET_DOCKER_REGISTRY/dummy:VERSION
+        args: ["run"]

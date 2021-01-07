@@ -1,0 +1,93 @@
+name: Upload a new release
+on:
+  push:
+    tags:
+      - "v*" #Napptive uses Semantic Versioning with the prefix 'v'
+env:
+  GOPRIVATE: "github.com/napptive/*"
+  GH_NAPP_USER: ${{ secrets.GH_NAPP_USER }}
+  GH_NAPP_TOKEN: ${{ secrets.GH_NAPP_TOKEN }}
+jobs:
+  gh:
+    name: Create GitHub Release Asset
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+        id: go
+
+      - name: Configure git for private modules
+        run: git config --global url."https://${GH_NAPP_USER}:${GH_NAPP_TOKEN}@github.com".insteadOf "https://github.com"
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
+
+      - name: Make release
+        id: make_release
+        run: make release
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+          TARGET_DOCKER_REGISTRY: napptive
+          TARGET_K8S_NAMESPACE: napptive
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload release asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.make_release.outputs.release_file }}
+          asset_name: ${{ steps.make_release.outputs.release_name }}
+          asset_content_type: application/tar+gzip
+
+  docker:
+    name: Push Docker Release Images
+    runs-on: ubuntu-latest
+
+    needs: gh
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+        id: go
+
+      - name: Configure git for private modules
+        run: git config --global url."https://${GH_NAPP_USER}:${GH_NAPP_TOKEN}@github.com".insteadOf "https://github.com"
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
+
+      - name: Docker login
+        uses: docker/login-action@v1
+        with:
+          username: ${{secrets.DOCKER_HUB_USER}}
+          password: ${{secrets.DOCKER_HUB_TOKEN}}
+
+      - name: Build and push Docker images
+        run: make docker-push
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+          TARGET_DOCKER_REGISTRY: napptive

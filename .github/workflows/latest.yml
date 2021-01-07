@@ -1,0 +1,37 @@
+name: Publish latest component version
+
+on:
+  push:
+    branches: [main]
+env:
+  GOPRIVATE: "github.com/napptive/*"
+  GH_NAPP_USER: ${{ secrets.GH_NAPP_USER }}
+  GH_NAPP_TOKEN: ${{ secrets.GH_NAPP_TOKEN }}
+jobs:
+  build:
+    name: Push docker images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+
+      - name: Configure git for private modules
+        run: git config --global url."https://${GH_NAPP_USER}:${GH_NAPP_TOKEN}@github.com".insteadOf "https://github.com"
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Docker Login
+        uses: docker/login-action@v1
+        with:
+          username: ${{secrets.DOCKER_HUB_USER}}
+          password: ${{secrets.DOCKER_HUB_TOKEN}}
+
+      - name: Build and push Docker images
+        run: make docker-push
+        env:
+          VERSION: latest
+          TARGET_DOCKER_REGISTRY: napptive
