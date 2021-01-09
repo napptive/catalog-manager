@@ -36,7 +36,7 @@ type ManagerProvider struct {
 	// conf with all the provider configurations
 	conf      config.ConfList
 	// catalog with a map wit all the components in the catalog
-	catalog   map[string]grpc_catalog_manager_go.CatalogEntryResponse
+	catalog   map[string]*grpc_catalog_manager_go.CatalogEntryResponse
 	// TODO: Hace falta?
 	sync.Mutex
 }
@@ -84,7 +84,7 @@ func (mp *ManagerProvider) Init() error {
 }
 
 // GetComponents returns  the catalog
-func (mp *ManagerProvider) GetCatalog() map[string]grpc_catalog_manager_go.CatalogEntryResponse {
+func (mp *ManagerProvider) GetCatalog() map[string]*grpc_catalog_manager_go.CatalogEntryResponse {
 
 	return mp.catalog
 }
@@ -92,7 +92,7 @@ func (mp *ManagerProvider) GetCatalog() map[string]grpc_catalog_manager_go.Catal
 // LoadComponents get the components from all the providers and stored them into catalog
 func (mp *ManagerProvider) loadComponents() error{
 	// uses a catalogAux to avoid lock main time
-	catalog  := map[string]grpc_catalog_manager_go.CatalogEntryResponse{}
+	catalog  := map[string]*grpc_catalog_manager_go.CatalogEntryResponse{}
 
 	// get Components
 	for _, provider := range mp.providers {
@@ -103,7 +103,8 @@ func (mp *ManagerProvider) loadComponents() error{
 		// The catalogId is the name of the catalog
 		catalogId := provider.GetName()
 		for _, component := range componentsList {
-			catalog[component.EntryId] = utils.ComponentToCatalogEntryResponse(catalogId, component.EntryId, &component.Component)
+			response := utils.ComponentToCatalogEntryResponse(catalogId, component.EntryId, &component.Component)
+			catalog[component.EntryId] = response
 		}
 	}
 
@@ -142,5 +143,5 @@ func (mp *ManagerProvider) GetComponent(catalogId string, componentId string) (*
 	if !exists {
 		return nil, nerrors.NewNotFoundError("component does not exit [%s]", componentId)
 	}
-	return &component, nil
+	return component, nil
 }
