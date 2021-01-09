@@ -69,7 +69,7 @@ func (s *Service) Run()  {
 	// Launch a loop to pull the repositories and view new components
 	go catalogProvider.LaunchAutomaticRepoUpdates(time.Minute * time.Duration(s.cfg.PullInterval))
 
-	manager := catalog_manager.NewManager(*catalogProvider)
+	manager := catalog_manager.NewManager(catalogProvider)
 	handler := catalog_manager.NewHandler(manager)
 
 	// create gRPC server
