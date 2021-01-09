@@ -99,9 +99,13 @@ func (g *GitProvider) GetComponents() ([]CatalogEntry, error) {
 		return nil, nerrors.NewFailedPreconditionError("Unable to load components, init the client first")
 	}
 	// git pull
-	g.wt.Pull(&git.PullOptions{
+	if err:= g.wt.Pull(&git.PullOptions{
 		RemoteName: "origin",
-	})
+	}); err != nil {
+		log.Warn().Str("repo", g.url).
+			Str("error", err.Error()).
+			Msg("Error pulling the repo")
+	}
 	entries :=  g.loadComponents(".", nil)
 	return entries, nil
 }

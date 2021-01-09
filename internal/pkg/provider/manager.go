@@ -38,7 +38,7 @@ type ManagerProvider struct {
 	// catalog with a map wit all the components in the catalog
 	catalog   map[string]grpc_catalog_manager_go.CatalogEntryResponse
 	// TODO: Hace falta?
-	sync.Mutex
+	*sync.Mutex
 }
 
 // NewManagerProvider creates a new provider manager
@@ -56,7 +56,11 @@ func NewManagerProvider(configFile string,  cloneDir string) (*ManagerProvider, 
 		return nil, nerrors.FromError(err)
 	}
 
-	return &ManagerProvider{conf: configList, clonePath: cloneDir, providers: make(map[string]CatalogProvider, 0)}, nil
+	return &ManagerProvider{
+		conf: configList,
+		clonePath: cloneDir,
+		providers: map[string]CatalogProvider{},
+	}, nil
 }
 
 // Init creates providers based on the list of configurations
@@ -73,8 +77,7 @@ func (mp *ManagerProvider) Init() error {
 			return nerrors.NewInvalidArgumentError("provider not supported [%s]", conf.ProviderType)
 		}
 	}
-	mp.loadComponents()
-	return nil
+	return mp.loadComponents()
 }
 
 // GetComponents returns  the catalog
@@ -86,7 +89,7 @@ func (mp *ManagerProvider) GetCatalog() map[string]grpc_catalog_manager_go.Catal
 // LoadComponents get the components from all the providers and stored them into catalog
 func (mp *ManagerProvider) loadComponents() error{
 	// uses a catalogAux to avoid lock main time
-	catalog  := make (map[string]grpc_catalog_manager_go.CatalogEntryResponse, 0)
+	catalog  := map[string]grpc_catalog_manager_go.CatalogEntryResponse{}
 
 	// get Components
 	for _, provider := range mp.providers {

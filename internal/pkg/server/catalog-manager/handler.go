@@ -25,7 +25,6 @@ import (
 
 type Handler struct {
 	manager Manager
-	pp grpc_catalog_manager_go.CatalogEntryListResponse
 }
 
 func NewHandler(manager Manager) *Handler {

@@ -80,7 +80,7 @@ func DecodeComponent (data []byte) (*grpc_oam_go.Component, error) {
 }
 
 func IsYamlFile (filePath string) bool {
-	return strings.Index(filePath, ".yaml") != -1
+	return strings.Contains(filePath, ".yaml")
 }
 
 // OAMComponentToCatalogEntryResponse converts a Component to a CatalogEntryResponse
