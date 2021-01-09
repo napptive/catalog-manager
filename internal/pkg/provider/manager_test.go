@@ -24,7 +24,7 @@ import (
 
 
 var _ = ginkgo.Describe("Handler test on manager", func() {
-	var manager ManagerProvider
+	var manager *ManagerProvider
 
 	if !utils.RunIntegrationTests("provider") {
 		log.Warn().Msg("Manager Provider tests are skipped")

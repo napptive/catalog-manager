@@ -42,21 +42,21 @@ type ManagerProvider struct {
 }
 
 // NewManagerProvider creates a new provider manager
-func NewManagerProvider(configFile string,  cloneDir string) (ManagerProvider, error) {
+func NewManagerProvider(configFile string,  cloneDir string) (*ManagerProvider, error) {
 
 	reader, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.Err(err).Msg("error reading the config")
-		return ManagerProvider{}, nerrors.FromError(err)
+		return nil, nerrors.FromError(err)
 	}
 	var configList config.ConfList
 	err = json.Unmarshal(reader, &configList)
 	if err != nil {
 		log.Err(err).Msg("error getting the config list")
-		return ManagerProvider{}, nerrors.FromError(err)
+		return nil, nerrors.FromError(err)
 	}
 
-	return ManagerProvider{
+	return &ManagerProvider{
 		conf: configList,
 		clonePath: cloneDir,
 		providers: map[string]CatalogProvider{},

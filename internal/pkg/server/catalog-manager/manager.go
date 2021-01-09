@@ -22,12 +22,12 @@ import (
 )
 
 type Manager struct {
-	ManagerProvider provider.ManagerProvider
+	ManagerProvider *provider.ManagerProvider
 }
 
 // NewManager returns a new object of manager
-func NewManager(provider provider.ManagerProvider) Manager {
-	return Manager{ManagerProvider: provider}
+func NewManager(provider *provider.ManagerProvider) *Manager {
+	return &Manager{ManagerProvider: provider}
 }
 
 func (m *Manager) List() (*grpc_catalog_manager_go.CatalogEntryListResponse, error) {

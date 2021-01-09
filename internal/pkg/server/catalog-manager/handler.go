@@ -24,10 +24,10 @@ import (
 )
 
 type Handler struct {
-	manager Manager
+	manager *Manager
 }
 
-func NewHandler(manager Manager) *Handler {
+func NewHandler(manager *Manager) *Handler {
 	return &Handler{manager: manager}
 }
 
