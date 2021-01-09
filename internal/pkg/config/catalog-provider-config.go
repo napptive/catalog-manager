@@ -15,6 +15,8 @@
  */
 package config
 
+import "github.com/napptive/nerrors/pkg/nerrors"
+
 const ProviderTypeGit = "github"
 
 // Conf
@@ -27,6 +29,18 @@ type ProviderConf struct {
 
 type ConfList []ProviderConf
 
-func (c *ProviderConf) isValid() error {
+func (c *ProviderConf) IsValid() error {
+	if c.Name == "" {
+		return nerrors.NewFailedPreconditionError("name in the repo config must be filled")
+	}
+	if c.Url == "" {
+		return nerrors.NewFailedPreconditionError("url in the repo config must be filled")
+	}
+	if c.ProviderType != ProviderTypeGit {
+		return nerrors.NewFailedPreconditionError("only github provider allowed")
+	}
+	if c.SSHPath == "" {
+		return nerrors.NewFailedPreconditionError("sshPath in the repo config must be filled")
+	}
 	return nil
 }

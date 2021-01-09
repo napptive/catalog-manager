@@ -66,6 +66,9 @@ func NewManagerProvider(configFile string,  cloneDir string) (*ManagerProvider, 
 // Init creates providers based on the list of configurations
 func (mp *ManagerProvider) Init() error {
 	for _, conf := range mp.conf {
+		if err := conf.IsValid(); err != nil {
+			return err
+		}
 		switch conf.ProviderType {
 		case config.ProviderTypeGit:
 			cp, err := NewGitProvider(conf.Name, conf.Url, conf.SSHPath, mp.clonePath)
