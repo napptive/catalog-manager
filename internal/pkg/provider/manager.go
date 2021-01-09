@@ -103,7 +103,7 @@ func (mp *ManagerProvider) loadComponents() error{
 		// The catalogId is the name of the catalog
 		catalogId := provider.GetName()
 		for _, component := range componentsList {
-			catalog[component.EntryId] = utils.ComponentToCatalogEntryResponse(catalogId, component.EntryId, component.Component)
+			catalog[component.EntryId] = utils.ComponentToCatalogEntryResponse(catalogId, component.EntryId, &component.Component)
 		}
 	}
 
