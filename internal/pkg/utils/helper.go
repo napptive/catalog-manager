@@ -99,6 +99,8 @@ func ComponentToCatalogEntryResponse(catalogId string, entryId string, component
 		}
 	}
 
+	oamComponent := component
+
 	return &grpc_catalog_manager_go.CatalogEntryResponse{
 		CatalogId: catalogId,
 		EntryId:   entryId,
@@ -106,7 +108,7 @@ func ComponentToCatalogEntryResponse(catalogId string, entryId string, component
 		Image:     image,
 		Version:   component.ApiVersion,
 		Added:     false,
-		Component: &component,
+		Component: &oamComponent,
 	}
 
 }
