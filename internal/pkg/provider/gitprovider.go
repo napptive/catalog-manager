@@ -41,6 +41,8 @@ type GitProvider struct {
 	dir string
 	// wt with the worktree of the cloned repo
 	wt *git.Worktree
+	// PublicKey with the key to clone and pull the repo
+	PublicKey *sshgit.PublicKeys
 }
 
 // NewGitProvider returns a new git provider object
@@ -68,6 +70,7 @@ func (g *GitProvider) init() error {
 	publicKey.HostKeyCallbackHelper = sshgit.HostKeyCallbackHelper{
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
+	g.PublicKey = publicKey
 	path := fmt.Sprintf("%s/%s/", g.dir, g.name)
 	repo, err := git.PlainClone(path, false, &git.CloneOptions{
 		URL:      g.url,
@@ -99,8 +102,10 @@ func (g *GitProvider) GetComponents() ([]CatalogEntry, error) {
 		return nil, nerrors.NewFailedPreconditionError("Unable to load components, init the client first")
 	}
 	// git pull
+
 	if err:= g.wt.Pull(&git.PullOptions{
 		RemoteName: "origin",
+		Auth: g.PublicKey,
 	}); err != nil {
 		log.Warn().Str("repo", g.url).
 			Str("error", err.Error()).

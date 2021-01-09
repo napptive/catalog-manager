@@ -38,7 +38,7 @@ type ManagerProvider struct {
 	// catalog with a map wit all the components in the catalog
 	catalog   map[string]grpc_catalog_manager_go.CatalogEntryResponse
 	// TODO: Hace falta?
-	*sync.Mutex
+	sync.Mutex
 }
 
 // NewManagerProvider creates a new provider manager
