@@ -84,7 +84,7 @@ func IsYamlFile (filePath string) bool {
 }
 
 // OAMComponentToCatalogEntryResponse converts a Component to a CatalogEntryResponse
-func ComponentToCatalogEntryResponse(catalogId string, entryId string, component grpc_oam_go.Component) *grpc_catalog_manager_go.CatalogEntryResponse{
+func ComponentToCatalogEntryResponse(catalogId string, entryId string, component grpc_oam_go.Component) grpc_catalog_manager_go.CatalogEntryResponse{
 
 	var name string
 	if component.Metadata != nil {
@@ -99,16 +99,14 @@ func ComponentToCatalogEntryResponse(catalogId string, entryId string, component
 		}
 	}
 
-	oamComponent := component
-
-	return &grpc_catalog_manager_go.CatalogEntryResponse{
+	return grpc_catalog_manager_go.CatalogEntryResponse{
 		CatalogId: catalogId,
 		EntryId:   entryId,
 		Name:      name,
 		Image:     image,
 		Version:   component.ApiVersion,
 		Added:     false,
-		Component: &oamComponent,
+		Component: &component,
 	}
 
 }
