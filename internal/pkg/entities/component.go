@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package config
+package entities
 
-import (
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
-)
+type Component struct {
+	ApiVersion string `protobuf:"bytes,1,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
+	Kind       string `protobuf:"bytes,1,opt,name=kind,json=kind,proto3" json:"kind,omitempty"`
+	//Metadata   string `protobuf:"bytes,1,opt,name=metadata,json=metadata,proto3" json:"metadata,omitempty"`
+	//Spec       string `protobuf:"bytes,1,opt,name=spec,json=spec,proto3" json:"spec,omitempty"`
+}
 
-var _ = ginkgo.Describe("Config tests", func() {
-
-	cfg := Config{}
-
-	ginkgo.It("Should be valid", func() {
-		gomega.Expect(cfg.IsValid()).NotTo(gomega.Succeed())
-	})
-
-})
+type ComponentEntry struct {
+	Id        string
+	Component Component
+}

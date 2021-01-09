@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package config
 
-import (
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
-)
+package utils
 
-var _ = ginkgo.Describe("Config tests", func() {
+import "os"
 
-	cfg := Config{}
-
-	ginkgo.It("Should be valid", func() {
-		gomega.Expect(cfg.IsValid()).NotTo(gomega.Succeed())
-	})
-
-})
+// RunIntegrationTests checks whether integration tests should be executed.
+func RunIntegrationTests(id string) bool {
+	var runIntegration = os.Getenv("RUN_INTEGRATION_TEST")
+	if runIntegration == "all" {
+		return true
+	}
+	return runIntegration == id
+}

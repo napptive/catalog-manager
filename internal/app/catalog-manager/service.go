@@ -18,17 +18,18 @@ package catalog_manager
 
 import (
 	"fmt"
-
+	"github.com/napptive/catalog-manager/internal/pkg/config"
+	"github.com/napptive/catalog-manager/internal/pkg/provider"
+	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
+	"github.com/napptive/grpc-catalog-manager-go"
+	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/napptive/catalog-manager/internal/pkg/config"
-	"github.com/napptive/catalog-manager/internal/pkg/git"
-
-	"github.com/rs/zerolog/log"
-
 )
 
 // Service structure in charge of launching the application.
@@ -42,93 +43,46 @@ func NewService(cfg config.Config) *Service {
 		cfg: cfg,
 	}
 }
-/*
-func (s *Service) test2() {
-	//var hostKey ssh.PublicKey
-	url := "git@github.com:napptive/catalog.git"
-	//path := "/ssh/id_rsa"
-	path := "/Users/cdelope/.ssh/id_rsa"
-	dir := "./tmp/"
 
-
-	sshKey, _ := ioutil.ReadFile(path)
-	publicKey, keyError := trans.NewPublicKeys("git", []byte(sshKey), "")
-	if keyError != nil {
-		fmt.Println(keyError)
-	}
-
-	repo,err := git.PlainClone(dir, false, &git.CloneOptions{
-		URL:      url,
-		Progress: os.Stdout,
-		Auth:     publicKey,
-	})
-	if err != nil {
-		// already exits, pull
-		log.Fatal().Str("err", err.Error()).Msg("unable to connect")
-	}
-
-	wt, _ := repo.Worktree()
-	
-	s.wt = wt
-
-	s.LookforComponent()
-}
-
-func (s *Service) LookforComponent() {
-	files, err := s.wt.Filesystem.ReadDir(".")
-	if err != nil {
-		log.Fatal().Str("err", err.Error()).Msg("unable to connect")
-	}
-	for _, file := range files {
-		s.getComponent(".", file)
-	}
-}
-
-
-func (s *Service) getComponent (path string, file os.FileInfo) {
-
-	if file.IsDir(){
-		newPath := filepath.Join(path, file.Name())
-		files, err := s.wt.Filesystem.ReadDir(filepath.Join(newPath))
-		if err != nil {
-			log.Fatal().Str("err", err.Error()).Msg("unable to connect")
-		}
-		for _, file := range files {
-			s.getComponent(newPath, file)
-		}
-	}else{
-		if strings.HasSuffix(file.Name(), ".yaml") {
-			log.Info().Str("path", path).Str("file", file.Name()).Msg("FILE")
-		}
-	}
-
-}
-*/
 // Run method starting the internal components and launching the service
-func (s *Service) Run() {
+
+
+func (s *Service) Run()  {
 	if err := s.cfg.IsValid(); err != nil {
 		log.Fatal().Err(err).Msg("invalid configuration options")
 	}
 	s.cfg.Print()
 	s.registerShutdownListener()
 
-	url := "git@github.com:napptive/catalog.git"
-	//path := "/ssh/id_rsa"
-	path := "/Users/cdelope/.ssh/id_rsa"
-	dir := "./tmp/"
+	listener := s.getNetListener(s.cfg.Port)
 
-	gitClient := git.NewGitClient(url, path, dir)
-	err := gitClient.Init()
+	// Catalog Provider
+	// Create
+	catalogProvider, err := provider.NewManagerProvider(s.cfg.ConfigPath, s.cfg.ClonePath)
 	if err != nil {
-		log.Fatal().Str("err", err.Error()).Msg("unable to init the client")
+		log.Fatal().Err(err).Msg("unable to create repository providers")
 	}
-	// load components
-	gitClient.LoadComponents()
+	// Init (clone all the repositories)
+	if err := catalogProvider.Init(); err != nil {
+		log.Fatal().Err(err).Msg("unable to init repository providers")
+	}
+	// Launch a loop to pull the repositories and view new components
+	go catalogProvider.LaunchAutomaticRepoUpdates(time.Minute * time.Duration(s.cfg.PullInterval))
 
-	// Substitute ticker loop with proper code
-	for now := range time.Tick(time.Minute) {
-		fmt.Println(now, "alive")
-		gitClient.LoadComponents()
+	manager := catalog_manager.NewManager(*catalogProvider)
+	handler := catalog_manager.NewHandler(manager)
+
+	// create gRPC server
+	gRPCServer := grpc.NewServer()
+	// register the service implementation to gRPC service
+	grpc_catalog_manager_go.RegisterComponentsServer(gRPCServer, handler)
+	if s.cfg.Debug {
+		// Register reflection service on gRPC server.
+		reflection.Register(gRPCServer)
+	}
+	// start the service
+	if err := gRPCServer.Serve(listener); err != nil {
+		log.Fatal().Errs("failed to serve: %v", []error{err})
 	}
 }
 
@@ -145,4 +99,12 @@ func (s *Service) registerShutdownListener() {
 // Shutdown code
 func (s *Service) Shutdown() {
 	log.Warn().Msg("shutting down service")
+}
+
+func (s *Service) getNetListener(port uint) net.Listener {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		log.Fatal().Msgf("failed to listen: %v", err)
+	}
+	return lis
 }

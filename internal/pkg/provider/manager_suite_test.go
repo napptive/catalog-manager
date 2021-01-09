@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package config
+package provider
 
 import (
+	"testing"
+
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 )
 
-var _ = ginkgo.Describe("Config tests", func() {
-
-	cfg := Config{}
-
-	ginkgo.It("Should be valid", func() {
-		gomega.Expect(cfg.IsValid()).NotTo(gomega.Succeed())
-	})
-
-})
+func TestProviderPackage(t *testing.T) {
+	gomega.RegisterFailHandler(ginkgo.Fail)
+	ginkgo.RunSpecs(t, "Provider package suite")
+}

@@ -32,14 +32,12 @@ var cfg config.Config
 var debugLevel bool
 var consoleLogging bool
 
-var rootCmdLongHelp = "This is an example service that you should remove when you use this template."
-var rootCmdShortHelp = "Dummy command"
-var rootCmdExample = `$ dummy`
-var rootCmdUse = "dummy"
+var rootCmdLongHelp = "Catalog-manager in charge of processing the catalogs."
+var rootCmdShortHelp = "Catalog-manager in charge of processing the catalogs"
+var rootCmdUse = "catalog-manager"
 
 var rootCmd = &cobra.Command{
 	Use:     rootCmdUse,
-	Example: rootCmdExample,
 	Short:   rootCmdShortHelp,
 	Long:    rootCmdLongHelp,
 	Version: "NaN",

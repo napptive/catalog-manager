@@ -1,0 +1,14 @@
+[
+{
+"name":"catalog",
+"url":"git@github.com:napptive/catalog.git",
+"provider":"github",
+"ssh_path":"/Users/cdelope/.ssh/id_rsa"
+},
+{
+"name":"catalog2",
+"url":"git@github.com:napptive/catalog.git",
+"provider":"github",
+"ssh_path":"/Users/cdelope/.ssh/id_rsa"
+}
+]

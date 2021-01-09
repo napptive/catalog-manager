@@ -15,17 +15,18 @@
  */
 package config
 
-import (
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
-)
+const ProviderTypeGit = "github"
 
-var _ = ginkgo.Describe("Config tests", func() {
+// Conf
+type ProviderConf struct {
+	Name         string `json:"name"`
+	Url          string `json:"url"`
+	ProviderType string `json:"provider"`
+	SSHPath      string `json:"ssh_path"`
+}
 
-	cfg := Config{}
+type ConfList []ProviderConf
 
-	ginkgo.It("Should be valid", func() {
-		gomega.Expect(cfg.IsValid()).NotTo(gomega.Succeed())
-	})
-
-})
+func (c *ProviderConf) isValid() error {
+	return nil
+}
