@@ -139,7 +139,7 @@ func (g *GitProvider) loadComponents(path string, file os.FileInfo) []CatalogEnt
 					if isComponent {
 						result = append(result, CatalogEntry{
 							EntryId:        fmt.Sprintf("%s:%s/%s",g.name, fullPath, file.Name()),
-							Component: *component,
+							Component: component,
 						})
 					}
 				}

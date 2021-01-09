@@ -24,7 +24,7 @@ type CatalogEntry struct {
 	// EntryId with the entry identifier (for now, catalogName:pathFile)
 	EntryId string
 	// Component with the Component
-	Component grpc_oam_go.Component
+	Component *grpc_oam_go.Component
 }
 
 // CatalogProvider with an interface that defines the provider methods

@@ -104,13 +104,9 @@ func (mp *ManagerProvider) loadComponents() error{
 		catalogId := provider.GetName()
 		for i:= 0; i< len(componentsList); i++ {
 			response := utils.ComponentToCatalogEntryResponse(catalogId,
-				componentsList[i].EntryId, &componentsList[i].Component)
+				componentsList[i].EntryId, componentsList[i].Component)
 			catalog[componentsList[i].EntryId] = response
 		}
-		//for _, component := range componentsList {
-		//	response := utils.ComponentToCatalogEntryResponse(catalogId, component.EntryId, &component.Component)
-		//	catalog[component.EntryId] = response
-		//}
 	}
 
 	mp.Lock()
