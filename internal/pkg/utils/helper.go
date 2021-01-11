@@ -183,8 +183,6 @@ func DecodeComponentChecking(data []byte) (*grpc_oam_go.Component, error){
 	if err != nil {
 		return nil, nerrors.NewInternalErrorFrom(err, "cannot unmarshal OAM Component message")
 	}
-
-	log.Debug().Interface("result", result).Msg("--")
-
+	
 	return &result, nil
 }
