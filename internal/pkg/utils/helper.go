@@ -173,7 +173,6 @@ func DecodeComponentChecking(data []byte) (*grpc_oam_go.Component, error){
 		return nil, err
 	}
 
-	//var result prueba.Message
 	var result grpc_oam_go.Component
 	customUnmarshaler := protojson.UnmarshalOptions{
 		AllowPartial:   true,

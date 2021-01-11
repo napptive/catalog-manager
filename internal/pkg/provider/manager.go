@@ -37,7 +37,7 @@ type ManagerProvider struct {
 	conf      config.ConfList
 	// catalog with a map wit all the components in the catalog
 	catalog   map[string]*grpc_catalog_manager_go.CatalogEntryResponse
-	// TODO: Hace falta?
+	// TODO: add a test with different threads getting a loading the catalog to check if the mutex is necessary
 	sync.Mutex
 }
 
@@ -85,6 +85,8 @@ func (mp *ManagerProvider) Init() error {
 
 // GetComponents returns  the catalog
 func (mp *ManagerProvider) GetCatalog() map[string]*grpc_catalog_manager_go.CatalogEntryResponse {
+	mp.Lock()
+	defer mp.Unlock()
 
 	return mp.catalog
 }
