@@ -13,41 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package provider
 
 import (
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
-	"github.com/rs/zerolog/log"
 )
 
+var _ = ginkgo.Describe("Decode tests", func() {
 
-var _ = ginkgo.Describe("Handler test on manager", func() {
-	var manager *ManagerProvider
+	ginkgo.It("should be able to decode a component with a int in a environment variables", func() {
 
-	if !utils.RunIntegrationTests("provider") {
-		log.Warn().Msg("Manager Provider tests are skipped")
-		return
-	}
-
-	ginkgo.It("Should be able to create the catalog providers", func() {
-		var err error
-		dir := "./tmp/"
-		cmFilePath := "./config_test"
-		manager, err = NewManagerProvider(cmFilePath, dir)
+		oam, err := utils.DecodeComponentChecking(component)
 		gomega.Expect(err).Should(gomega.Succeed())
-		gomega.Expect(manager).NotTo(gomega.BeNil())
+		gomega.Expect(oam).ShouldNot(gomega.BeNil())
 
-		err = manager.Init()
-		gomega.Expect(err).Should(gomega.Succeed())
-
-		components := manager.GetCatalog()
-		gomega.Expect(components).ShouldNot(gomega.BeNil())
-
-		err = manager.EmptyRepositories()
-		gomega.Expect(err).Should(gomega.Succeed())
 	})
 
+	ginkgo.It("should not be able to decode a component with a int in a environment variables", func() {
+
+		_, err := utils.DecodeComponent(component)
+		gomega.Expect(err).ShouldNot(gomega.Succeed())
+
+	})
 })

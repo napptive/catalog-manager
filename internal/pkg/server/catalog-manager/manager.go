@@ -19,7 +19,6 @@ package catalog_manager
 import (
 	"github.com/napptive/catalog-manager/internal/pkg/provider"
 	"github.com/napptive/grpc-catalog-manager-go"
-	"github.com/rs/zerolog/log"
 )
 
 type Manager struct {
@@ -36,12 +35,9 @@ func (m *Manager) List() (*grpc_catalog_manager_go.CatalogEntryListResponse, err
 	list := make([]*grpc_catalog_manager_go.CatalogEntryResponse, 0)
 
 	for _, component := range catalog {
-		//var toAdd = component
 		list = append(list, component)
 	}
-	for _, compo := range list {
-		log.Debug().Str("pp", compo.EntryId).Msg("---")
-	}
+
 	return &grpc_catalog_manager_go.CatalogEntryListResponse{
 		Entries: list,
 	}, nil

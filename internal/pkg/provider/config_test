@@ -1,13 +1,7 @@
 [
 {
-"name":"catalog",
-"url":"git@github.com:napptive/catalog.git",
-"provider":"github",
-"ssh_path":"/Users/cdelope/.ssh/id_rsa"
-},
-{
-"name":"catalog2",
-"url":"git@github.com:napptive/catalog.git",
+"name":"oam-samples",
+"url":"git@github.com:oam-dev/samples.git",
 "provider":"github",
 "ssh_path":"/Users/cdelope/.ssh/id_rsa"
 }

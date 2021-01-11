@@ -16,18 +16,25 @@
 package utils
 
 import (
+	"fmt"
+	"io/ioutil"
+	"strings"
+
 	"github.com/napptive/grpc-catalog-manager-go"
+
 	"github.com/napptive/grpc-oam-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
+
+	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/encoding/protojson"
-	"io/ioutil"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
-	"strings"
 )
 
 const ComponentKindStr  = "kind: Component"
+const ApiVersionStr = "apiVersion: core.oam.dev/v1alpha2"
 
 // IsComponent check if a file contains a Component definition
 func IsComponent(filepath string) (bool, *grpc_oam_go.Component, error) {
@@ -39,12 +46,21 @@ func IsComponent(filepath string) (bool, *grpc_oam_go.Component, error) {
 
 	// Find substring
 	dataStr := string(data)
-	if ind := strings.Index( dataStr, ComponentKindStr); ind != -1 {
+	ind := strings.Index( dataStr, ComponentKindStr)
+	ind2 := strings.Index( dataStr, ApiVersionStr)
+	if  ind != -1  && ind2 != -1{
+
 		oam, err := DecodeComponent(data)
 		if err != nil {
-			return true, nil, err
+			log.Warn().Str("error", err.Error()).Str("file", filepath).Msg("error decoding component, decode it checking env variables")
+			oam, err = DecodeComponentChecking(data)
+			if err != nil {
+				return true, nil, err
+			}
 		}
 		return true, oam, nil
+	}else{
+		log.Debug().Str("file", filepath).Msg("Is not a component")
 	}
 
 	return false, nil, nil
@@ -79,6 +95,7 @@ func DecodeComponent (data []byte) (*grpc_oam_go.Component, error) {
 	return &result, nil
 }
 
+// check file extension and returns if is a yaml file
 func IsYamlFile (filePath string) bool {
 	return strings.Contains(filePath, ".yaml")
 }
@@ -109,4 +126,65 @@ func ComponentToCatalogEntryResponse(catalogId string, entryId string, component
 		Component: component,
 	}
 
+}
+
+// DecodeComponentChecking try to returns an OAMComponent from a file checking the env variable value types
+// Note: the env.value in component proto message is a string,
+// if the value in the yaml file is an integer (a port for example)
+// the unmarshall function does not works, this function checks the env types and convert it into string if needed
+func DecodeComponentChecking(data []byte) (*grpc_oam_go.Component, error){
+
+	// Find substring
+	dataStr := string(data)
+	// File > yaml k8s
+	obj := &unstructured.Unstructured{}
+	yamlDecoder := yaml.NewYAMLOrJSONDecoder(strings.NewReader(dataStr), 1024)
+	err := yamlDecoder.Decode(obj)
+	if err != nil {
+		return nil, err
+	}
+	pp := obj.UnstructuredContent()
+
+	// navigate thought the unstructured object
+	interm, _ := pp["spec"].(map[string]interface{})
+	interm, _ = interm["workload"].(map[string]interface{})
+	interm, _ = interm["spec"].(map[string]interface{})
+	containers, exists := interm["containers"]
+	if exists {
+		containerList := containers.([]interface{})
+		for j := 0; j < len(containerList); j++ {
+			envs, _ := containerList[j].(map[string]interface{})["env"].([]interface{})
+			for i := 0; i < len(envs); i++ {
+				env, _ := envs[i].(map[string]interface{})
+				value := env["value"]
+				switch value.(type) {
+				case int32, int64:
+					env["value"] = fmt.Sprintf("%d", value)
+				case float32, float64:
+					env["value"] = fmt.Sprintf("%f", value)
+				}
+			}
+		}
+	}
+
+	// yaml k8s > json
+	to, err := obj.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	//var result prueba.Message
+	var result grpc_oam_go.Component
+	customUnmarshaler := protojson.UnmarshalOptions{
+		AllowPartial:   true,
+		DiscardUnknown: true,
+	}
+	err = customUnmarshaler.Unmarshal(to, &result)
+	if err != nil {
+		return nil, nerrors.NewInternalErrorFrom(err, "cannot unmarshal OAM Component message")
+	}
+
+	log.Debug().Interface("result", result).Msg("--")
+
+	return &result, nil
 }

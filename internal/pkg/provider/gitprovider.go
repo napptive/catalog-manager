@@ -134,7 +134,7 @@ func (g *GitProvider) loadComponents(path string, file os.FileInfo) []CatalogEnt
 				path := fmt.Sprintf("%s/%s/%s/%s", g.dir, g.name, fullPath, file.Name())
 				isComponent, component, err := utils.IsComponent(path)
 				if err != nil {
-					log.Warn().Str("error", err.Error()).Msg("error getting component")
+					log.Warn().Str("error", err.Error()).Str("path", path).Msg("error getting component")
 				}else{
 					if isComponent {
 						result = append(result, CatalogEntry{
