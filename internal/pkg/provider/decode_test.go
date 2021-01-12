@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package config
+package provider
 
 import (
+	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 )
 
-var _ = ginkgo.Describe("Config tests", func() {
+var _ = ginkgo.Describe("Decode tests", func() {
 
-	cfg := Config{}
+	ginkgo.It("should be able to decode a component with a int in a environment variables", func() {
 
-	ginkgo.It("Should be valid", func() {
-		gomega.Expect(cfg.IsValid()).NotTo(gomega.Succeed())
+		oam, err := utils.DecodeComponentChecking(component)
+		gomega.Expect(err).Should(gomega.Succeed())
+		gomega.Expect(oam).ShouldNot(gomega.BeNil())
+
 	})
 
+	ginkgo.It("should not be able to decode a component with a int in a environment variables", func() {
+
+		_, err := utils.DecodeComponent(component)
+		gomega.Expect(err).ShouldNot(gomega.Succeed())
+
+	})
 })

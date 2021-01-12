@@ -1,0 +1,47 @@
+/**
+ * Copyright 2020 Napptive
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package commands
+
+import (
+	"github.com/napptive/catalog-manager/internal/app/catalog-manager"
+	"github.com/spf13/cobra"
+)
+
+var runCmdLongHelp = "Launch the catalog-manager service"
+var runCmdShortHelp = "Launch the service"
+var runCmdExample = `$ catalog-manager run`
+var runCmdUse = "run"
+
+var runCmd = &cobra.Command{
+	Use:     runCmdUse,
+	Long:    runCmdLongHelp,
+	Example: runCmdExample,
+	Short:   runCmdShortHelp,
+	Run: func(cmd *cobra.Command, args []string) {
+		cfg.Debug = debugLevel
+		s := catalog_manager.NewService(cfg)
+		s.Run()
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(runCmd)
+	runCmd.Flags().UintVar(&cfg.Port, "port", 7060, "gRPC Port to launch the Catalog-manager")
+	runCmd.Flags().StringVar(&cfg.ClonePath, "clonePath", "./tmp", "ClonePath with the path where the repositories are going to be cloned")
+	runCmd.Flags().StringVar(&cfg.ConfigPath, "configPath", "", "ConfigPath with the path with the repositories configurations")
+	runCmd.Flags().IntVar(&cfg.PullInterval, "interval", 60, "Minutes between repositories pulls checking new components")
+}

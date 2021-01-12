@@ -22,6 +22,9 @@ import (
 
 // Config structure with all the options required by the service and service components.
 type Config struct {
+	// CatalogManager with all the config parameters related to catalog-manager component
+	CatalogManager
+
 	Version string
 	Commit  string
 	Debug   bool
@@ -29,11 +32,15 @@ type Config struct {
 
 // IsValid checks if the configuration options are valid.
 func (c *Config) IsValid() error {
+	if err := c.CatalogManager.IsValid(); err != nil {
+		return err
+	}
 	return nil
 }
 
 // Print the configuration using the application logger.
 func (c *Config) Print() {
 	// Use logger to print the configuration
-	log.Info().Str("version", c.Version).Str("commit", c.Commit).Msg("Orcha config")
+	log.Info().Str("version", c.Version).Str("commit", c.Commit).Msg("Application config")
+	c.CatalogManager.Print()
 }

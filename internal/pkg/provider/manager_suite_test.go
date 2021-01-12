@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package main
+package provider
 
 import (
-	"github.com/napptive/go-template/cmd/dummy/commands"
+	"testing"
+
+	"github.com/onsi/ginkgo"
+	"github.com/onsi/gomega"
 )
 
-// Version of the command
-var Version string
-
-// Commit from which the command was built
-var Commit string
-
-func main() {
-	commands.Execute(Version, Commit)
+func TestProviderPackage(t *testing.T) {
+	gomega.RegisterFailHandler(ginkgo.Fail)
+	ginkgo.RunSpecs(t, "Provider package suite")
 }

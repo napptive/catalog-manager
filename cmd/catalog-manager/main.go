@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package main
 
 import (
-	"github.com/napptive/go-template/cmd/pummy/commands"
+	"github.com/napptive/catalog-manager/cmd/catalog-manager/commands"
 )
 
 // Version of the command

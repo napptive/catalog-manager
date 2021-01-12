@@ -1,7 +1,7 @@
-# go-template
-Napptive golang template
+# catalog-manager
+Napptive catalog-manager
 
-The purpose of this project is to provide a common template to develop Golang microservices in Napptive.
+Catalog manager is the component responsible for catalog management
 
 ## Layout structure
 
@@ -44,7 +44,7 @@ This template is integrated with the Code Climate service.
 
 This template is integrated with GitHub Actions. You need to add the secret `CodeClimateRerporterID` in the repository settings.
 
-![Check changes in the Main branch](https://github.com/napptive/go-template/workflows/Check%20changes%20in%20the%20Main%20branch/badge.svg)
+![Check changes in the Main branch](https://github.com/napptive/catalog-manager/workflows/Check%20changes%20in%20the%20Main%20branch/badge.svg)
 
 ## License
 

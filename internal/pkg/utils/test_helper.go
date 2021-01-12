@@ -14,30 +14,15 @@
  * limitations under the License.
  */
 
-package commands
+package utils
 
-import (
-	"github.com/napptive/go-template/internal/app/dummy"
-	"github.com/spf13/cobra"
-)
+import "os"
 
-var runCmdLongHelp = "Launch the Dummy service"
-var runCmdShortHelp = "Lauch the service"
-var runCmdExample = `$ dummy run`
-var runCmdUse = "run"
-
-var runCmd = &cobra.Command{
-	Use:     runCmdUse,
-	Long:    runCmdLongHelp,
-	Example: runCmdExample,
-	Short:   runCmdShortHelp,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfg.Debug = debugLevel
-		s := dummy.NewService(cfg)
-		s.Run()
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(runCmd)
+// RunIntegrationTests checks whether integration tests should be executed.
+func RunIntegrationTests(id string) bool {
+	var runIntegration = os.Getenv("RUN_INTEGRATION_TEST")
+	if runIntegration == "all" {
+		return true
+	}
+	return runIntegration == id
 }
