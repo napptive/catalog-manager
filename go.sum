@@ -225,6 +225,8 @@ github.com/napptive/grpc-oam-go v0.3.0 h1:7ypd5GIJHkZYAuRwm1f1mRFMsmFoi6NmaZsFcN
 github.com/napptive/grpc-oam-go v0.3.0/go.mod h1:RCFEDaKQcQT58vDaiCp1UBUrQU0dPbA8P3lFGmMyfnY=
 github.com/napptive/grpc-oam-go v0.5.0 h1:lG2mREwSf4WzlaTLDmgYjDDxuLLWOXJF3QzvhFf55X8=
 github.com/napptive/grpc-oam-go v0.5.0/go.mod h1:RCFEDaKQcQT58vDaiCp1UBUrQU0dPbA8P3lFGmMyfnY=
+github.com/napptive/grpc-oam-go v0.14.0 h1:6lWPupWxuh4/om1xq1o6ChxHexT5dagSjUqURbQMyfc=
+github.com/napptive/grpc-oam-go v0.14.0/go.mod h1:RCFEDaKQcQT58vDaiCp1UBUrQU0dPbA8P3lFGmMyfnY=
 github.com/napptive/nerrors v0.0.0-20201210083851-43ef53e4418f h1:rAufzaWXwocf4xJblDuqaYmB87PyYIdiU+WlcOaLMiU=
 github.com/napptive/nerrors v0.0.0-20201210083851-43ef53e4418f/go.mod h1:n5nVITIhj2mCCzqEO6vwjsu6nexwVWZZ8G7fiwwNY5Q=
 github.com/napptive/nerrors v0.0.0-20201222160046-e7e6629c744d h1:Eoxs5jbGX60Q2hYbs74wh22C2zo18jP+BlpswxuyBVk=
