@@ -146,6 +146,5 @@ func (mp *ManagerProvider) GetComponent(catalogId string, componentId string) (*
 	if !exists {
 		return nil, nerrors.NewNotFoundError("component does not exit [%s]", componentId)
 	}
-	log.Debug().Interface("component", component).Msg("component retrieved")
 	return component, nil
 }
