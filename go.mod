@@ -6,7 +6,7 @@ require (
 	github.com/go-git/go-git/v5 v5.2.0
 	github.com/golang/protobuf v1.4.3
 	github.com/napptive/grpc-catalog-manager-go v0.2.0
-	github.com/napptive/grpc-oam-go v0.5.0
+	github.com/napptive/grpc-oam-go v0.14.0
 	github.com/napptive/nerrors v0.0.0-20201222160046-e7e6629c744d
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3
