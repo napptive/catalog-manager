@@ -73,9 +73,10 @@ func (mp *ManagerProvider) Init() error {
 		case config.ProviderTypeGit:
 			cp, err := NewGitProvider(conf.Name, conf.Url, conf.SSHPath, mp.clonePath)
 			if err != nil {
-				return err
+				log.Error().Str("error", nerrors.FromError(err).String()).Msg("error creating catalog provider")
+			}else {
+				mp.providers[conf.Name] = cp
 			}
-			mp.providers[conf.Name] = cp
 		default:
 			return nerrors.NewInvalidArgumentError("provider not supported [%s]", conf.ProviderType)
 		}

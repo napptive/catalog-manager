@@ -64,7 +64,7 @@ func (g *GitProvider) init() error {
 	publicKey, keyError := sshgit.NewPublicKeys("git", []byte(sshKey), "")
 	if keyError != nil {
 		log.Error().Str("error", keyError.Error()).Msg("error getting public key")
-		return nerrors.FromError(keyError)
+		return nerrors.NewInternalError(keyError.Error())
 	}
 	// Ignore known_hosts (accept any host key)
 	publicKey.HostKeyCallbackHelper = sshgit.HostKeyCallbackHelper{
@@ -79,13 +79,13 @@ func (g *GitProvider) init() error {
 	})
 	if err != nil {
 		log.Error().Str("err", err.Error()).Msg("unable to clone the repo")
-		return err
+		return nerrors.NewInternalError(keyError.Error())
 	}
 
 	wt, err := repo.Worktree()
 	if err != nil {
 		log.Error().Str("err", err.Error()).Msg("unable to get the worktree")
-		return err
+		return nerrors.NewInternalError(keyError.Error())
 	}
 	g.wt = wt
 
