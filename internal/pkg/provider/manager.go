@@ -73,7 +73,7 @@ func (mp *ManagerProvider) Init() error {
 		case config.ProviderTypeGit:
 			cp, err := NewGitProvider(conf.Name, conf.Url, conf.SSHPath, mp.clonePath)
 			if err != nil {
-				log.Error().Str("error", nerrors.FromError(err).String()).Msg("error creating catalog provider")
+				log.Error().Str("error", nerrors.FromError(err).String()).Str("catalog", conf.Name).Msg("error creating catalog provider")
 			}else {
 				mp.providers[conf.Name] = cp
 			}
