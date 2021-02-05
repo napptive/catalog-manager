@@ -15,6 +15,7 @@ spec:
       labels:
         app: catalog-manager
     spec:
+      priorityClassName: napptive-high-priority
       containers:
       - name: catalog-manager
         image: TARGET_DOCKER_REGISTRY/catalog-manager:VERSION
