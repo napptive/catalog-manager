@@ -19,9 +19,6 @@ package catalog_manager
 import (
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
-	"github.com/napptive/catalog-manager/internal/pkg/provider"
-	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
-	"github.com/napptive/grpc-catalog-manager-go"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -29,7 +26,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 // Service structure in charge of launching the application.
@@ -45,9 +41,7 @@ func NewService(cfg config.Config) *Service {
 }
 
 // Run method starting the internal components and launching the service
-
-
-func (s *Service) Run()  {
+func (s *Service) Run() {
 	if err := s.cfg.IsValid(); err != nil {
 		log.Fatal().Err(err).Msg("invalid configuration options")
 	}
@@ -56,26 +50,8 @@ func (s *Service) Run()  {
 
 	listener := s.getNetListener(s.cfg.Port)
 
-	// Catalog Provider
-	// Create
-	catalogProvider, err := provider.NewManagerProvider(s.cfg.ConfigPath, s.cfg.ClonePath)
-	if err != nil {
-		log.Fatal().Err(err).Msg("unable to create repository providers")
-	}
-	// Init (clone all the repositories)
-	if err := catalogProvider.Init(); err != nil {
-		log.Fatal().Err(err).Msg("unable to init repository providers")
-	}
-	// Launch a loop to pull the repositories and view new components
-	go catalogProvider.LaunchAutomaticRepoUpdates(time.Minute * time.Duration(s.cfg.PullInterval))
-
-	manager := catalog_manager.NewManager(catalogProvider)
-	handler := catalog_manager.NewHandler(manager)
-
 	// create gRPC server
 	gRPCServer := grpc.NewServer()
-	// register the service implementation to gRPC service
-	grpc_catalog_manager_go.RegisterComponentsServer(gRPCServer, handler)
 	if s.cfg.Debug {
 		// Register reflection service on gRPC server.
 		reflection.Register(gRPCServer)

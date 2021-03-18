@@ -1,8 +1,0 @@
-[
-{
-"name":"oam-samples",
-"url":"git@github.com:oam-dev/samples.git",
-"provider":"github",
-"ssh_path":"/Users/cdelope/.ssh/id_rsa"
-}
-]
