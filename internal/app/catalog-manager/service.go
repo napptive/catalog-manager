@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 // Service structure in charge of launching the application.
@@ -45,9 +47,18 @@ func (s *Service) Run() {
 	}
 	s.cfg.Print()
 	s.registerShutdownListener()
-	// Substitute ticker loop with proper code
-	for now := range time.Tick(time.Minute) {
-		fmt.Println(now, "alive")
+
+	listener := s.getNetListener(s.cfg.Port)
+
+	// create gRPC server
+	gRPCServer := grpc.NewServer()
+	if s.cfg.Debug {
+		// Register reflection service on gRPC server.
+		reflection.Register(gRPCServer)
+	}
+	// start the service
+	if err := gRPCServer.Serve(listener); err != nil {
+		log.Fatal().Errs("failed to serve: %v", []error{err})
 	}
 }
 
@@ -64,4 +75,12 @@ func (s *Service) registerShutdownListener() {
 // Shutdown code
 func (s *Service) Shutdown() {
 	log.Warn().Msg("shutting down service")
+}
+
+func (s *Service) getNetListener(port uint) net.Listener {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		log.Fatal().Msgf("failed to listen: %v", err)
+	}
+	return lis
 }
