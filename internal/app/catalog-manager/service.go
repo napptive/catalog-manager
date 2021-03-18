@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/rs/zerolog/log"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -65,12 +64,4 @@ func (s *Service) registerShutdownListener() {
 // Shutdown code
 func (s *Service) Shutdown() {
 	log.Warn().Msg("shutting down service")
-}
-
-func (s *Service) getNetListener(port uint) net.Listener {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		log.Fatal().Msgf("failed to listen: %v", err)
-	}
-	return lis
 }
