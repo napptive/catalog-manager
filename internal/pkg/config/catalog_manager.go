@@ -24,33 +24,15 @@ import (
 type CatalogManager struct {
 	// Port with the port on which the service will be listening
 	Port uint
-	// ClonePath with the path where the repositories are going to be cloned
-	ClonePath string
-	// ConfigPath with the path with the repositories configurations
-	ConfigPath string
-	// Minutes between repositories pulls checking new components
-	PullInterval int
 }
 
 func (c *CatalogManager) IsValid() error {
 	if c.Port <= 0 {
 		return fmt.Errorf("invalid port number")
 	}
-	if c.ClonePath == "" {
-		return fmt.Errorf("clone path must be filled")
-	}
-	if c.ConfigPath == "" {
-		return fmt.Errorf("config path must be filled")
-	}
-	if c.PullInterval == 0 {
-		return fmt.Errorf("pull_interval must be more than 0 minutes")
-	}
 	return nil
 }
 
 func (c *CatalogManager) Print() {
-	log.Info().Str("ClonePath", c.ClonePath).Msg("Path where to clone the repos")
-	log.Info().Str("ConfigPath", c.ConfigPath).Msg("Repositories configuration path")
-	log.Info().Int("PullInterval", c.PullInterval).Msg("Minutes between repositories pulls checking new components")
 	log.Info().Uint("Port", c.Port).Msg("grpc Port")
 }

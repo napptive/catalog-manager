@@ -20,8 +20,6 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/napptive/grpc-catalog-manager-go"
-
 	"github.com/napptive/grpc-oam-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 
@@ -30,7 +28,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
-
 )
 
 const ComponentKindStr  = "kind: Component"
@@ -100,33 +97,7 @@ func IsYamlFile (filePath string) bool {
 	return strings.Contains(filePath, ".yaml")
 }
 
-// OAMComponentToCatalogEntryResponse converts a Component to a CatalogEntryResponse
-func ComponentToCatalogEntryResponse(catalogId string, entryId string, component *grpc_oam_go.Component) *grpc_catalog_manager_go.CatalogEntryResponse{
 
-	var name string
-	if component.Metadata != nil {
-		name = component.Metadata.Name
-	}
-	var image string
-	if component.Spec != nil && component.Spec.Workload != nil  && component.Spec.Workload.Spec != nil && len(component.Spec.Workload.Spec.Containers) > 0{
-		image = component.Spec.Workload.Spec.Containers[0].Image
-	} else {
-		if component.Spec != nil && component.Spec.Settings != nil && len(component.Spec.Settings.Containers) > 0 {
-			image = component.Spec.Settings.Containers[0].Image
-		}
-	}
-
-	return &grpc_catalog_manager_go.CatalogEntryResponse{
-		CatalogId: catalogId,
-		EntryId:   entryId,
-		Name:      name,
-		Image:     image,
-		Version:   component.ApiVersion,
-		Added:     false,
-		Component: component,
-	}
-
-}
 
 // DecodeComponentChecking try to returns an OAMComponent from a file checking the env variable value types
 // Note: the env.value in component proto message is a string,

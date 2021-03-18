@@ -16,13 +16,6 @@
 
 package catalog_manager
 
-import (
-	"context"
-
-	"github.com/napptive/grpc-catalog-manager-go"
-	"github.com/napptive/nerrors/pkg/nerrors"
-)
-
 type Handler struct {
 	manager *Manager
 }
@@ -31,26 +24,5 @@ func NewHandler(manager *Manager) *Handler {
 	return &Handler{manager: manager}
 }
 
-// List the available components.
-func (h *Handler) List(ctx context.Context, request *grpc_catalog_manager_go.ListComponentsRequest) (*grpc_catalog_manager_go.CatalogEntryListResponse, error){
-	// Validate
-	if err := request.Validate(); err != nil {
-		return nil, nerrors.FromError(err).ToGRPC()
-	}
-
-	return h.manager.List()
-}
-
-// Get retrieves a specific component
-func (h *Handler) Get(ctx context.Context, request *grpc_catalog_manager_go.GetComponentRequest) (*grpc_catalog_manager_go.CatalogEntryResponse, error){
-
-	// Validate
-	if err := request.Validate(); err != nil {
-		return nil, nerrors.FromError(err).ToGRPC()
-	}
-
-	return h.manager.Get(request.CatalogId, request.EntryId)
-
-}
 
 

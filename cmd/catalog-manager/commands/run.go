@@ -41,7 +41,4 @@ var runCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.Flags().UintVar(&cfg.Port, "port", 7060, "gRPC Port to launch the Catalog-manager")
-	runCmd.Flags().StringVar(&cfg.ClonePath, "clonePath", "./tmp", "ClonePath with the path where the repositories are going to be cloned")
-	runCmd.Flags().StringVar(&cfg.ConfigPath, "configPath", "", "ConfigPath with the path with the repositories configurations")
-	runCmd.Flags().IntVar(&cfg.PullInterval, "interval", 60, "Minutes between repositories pulls checking new components")
 }

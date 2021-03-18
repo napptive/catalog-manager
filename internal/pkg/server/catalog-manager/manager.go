@@ -16,32 +16,11 @@
 
 package catalog_manager
 
-import (
-	"github.com/napptive/catalog-manager/internal/pkg/provider"
-	"github.com/napptive/grpc-catalog-manager-go"
-)
-
 type Manager struct {
-	ManagerProvider *provider.ManagerProvider
 }
 
 // NewManager returns a new object of manager
-func NewManager(provider *provider.ManagerProvider) *Manager {
-	return &Manager{ManagerProvider: provider}
+func NewManager() *Manager {
+	return &Manager{}
 }
 
-func (m *Manager) List() (*grpc_catalog_manager_go.CatalogEntryListResponse, error) {
-	catalog := m.ManagerProvider.GetCatalog()
-	list := make([]*grpc_catalog_manager_go.CatalogEntryResponse, 0)
-
-	for _, component := range catalog {
-		list = append(list, component)
-	}
-
-	return &grpc_catalog_manager_go.CatalogEntryListResponse{
-		Entries: list,
-	}, nil
-}
-func (m *Manager) Get(catalogId string, entryId string) (*grpc_catalog_manager_go.CatalogEntryResponse, error) {
-	return m.ManagerProvider.GetComponent(catalogId, entryId)
-}
