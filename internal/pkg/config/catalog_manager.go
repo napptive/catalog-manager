@@ -16,7 +16,7 @@
 package config
 
 import (
-	"fmt"
+	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -24,15 +24,27 @@ import (
 type CatalogManager struct {
 	// Port with the port on which the service will be listening
 	Port uint
+	// ElasticAddress with the address to connect to Elastic
+	ElasticAddress string
+	// Index with the name of the elastic index
+	Index string
+	// RepositoryPath with the path of the repository
+	RepositoryPath string
 }
 
 func (c *CatalogManager) IsValid() error {
 	if c.Port <= 0 {
-		return fmt.Errorf("invalid port number")
+		return nerrors.NewFailedPreconditionError("invalid port number")
 	}
+	if c.ElasticAddress == "" {
+		return nerrors.NewFailedPreconditionError("ElasticAddress must be filled")
+	}
+
 	return nil
 }
 
 func (c *CatalogManager) Print() {
 	log.Info().Uint("Port", c.Port).Msg("grpc Port")
+	log.Info().Str("ElasticAddress", c.ElasticAddress).Str("Index", c.Index).Msg("Elastic Search Address")
+	log.Info().Str("RepositoryPath", c.RepositoryPath).Msg("Repository base path")
 }

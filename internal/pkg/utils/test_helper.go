@@ -16,7 +16,11 @@
 
 package utils
 
-import "os"
+import (
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
+	"os"
+	"syreclabs.com/go/faker"
+)
 
 // RunIntegrationTests checks whether integration tests should be executed.
 func RunIntegrationTests(id string) bool {
@@ -25,4 +29,17 @@ func RunIntegrationTests(id string) bool {
 		return true
 	}
 	return runIntegration == id
+}
+
+
+func CreateApplicationMetadata () *entities.ApplicationMetadata {
+
+	return &entities.ApplicationMetadata{
+		Url:             faker.Internet().Url(),
+		Repository:      faker.Name().FirstName(),
+		ApplicationName: faker.App().Name(),
+		Tag:             faker.App().Version(),
+		Readme:          faker.Lorem().Paragraph(10),
+		Metadata:        faker.Lorem().Paragraph(10),
+	}
 }

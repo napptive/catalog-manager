@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-manager
+  namespace: TARGET_K8S_NAMESPACE
+  labels:
+    app: catalog-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-manager
+  template:
+    metadata:
+      labels:
+        app: catalog-manager
+    spec:
+      priorityClassName: napptive-high-priority
+      containers:
+      - name: catalog-manager
+        image: TARGET_DOCKER_REGISTRY/catalog-manager:VERSION
+        imagePullPolicy: Always
+        args:
+          - "run"
+          - "--elasticAddress=elastic.TARGET_K8S_NAMESPACE:9200"
+          - "--repositoryPath=/napptive/repository/"
+        volumeMounts:
+          - name: repository-path
+            mountPath: "/napptive/repository"
+      volumes:
+        #mount an pvc
+      - name: repository-path
+        emptyDir: {}

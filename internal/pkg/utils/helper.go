@@ -17,6 +17,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"io/ioutil"
 	"strings"
 
@@ -28,6 +29,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/yaml"
+
+	"encoding/json"
 )
 
 const ComponentKindStr  = "kind: Component"
@@ -155,4 +158,14 @@ func DecodeComponentChecking(data []byte) (*grpc_oam_go.Component, error){
 	}
 	
 	return &result, nil
+}
+
+// ApplicationMetadataToJSON converts an ApplicationMetadata struct into a JSON
+func ApplicationMetadataToJSON(metadata entities.ApplicationMetadata) (string, error) {
+
+	bRes, err := json.Marshal(metadata)
+	if err != nil {
+		return "", err
+	}
+	return string(bRes), nil
 }

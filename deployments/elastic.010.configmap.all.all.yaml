@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elastic-config
+  namespace: TARGET_K8S_NAMESPACE
+  labels:
+    app: elastic-search
+data:
+  elasticsearch.yml: |-
+    path.data: /data
+    discovery.type: single-node
+    network.host: _site_
+    cluster.name: TARGET_K8S_NAMESPACE

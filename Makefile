@@ -82,12 +82,12 @@ build-linux: $(addsuffix .linux,$(BUILD_TARGETS))
 
 # Trigger the build operation for the local environment. Notice that the suffix is removed.
 %.local:
-	@echo "Build darwin binary $@"
+	@echo "Building local binary $@"
 	@$(GO_BUILD) $(GO_LDFLAGS) -o $(BIN_FOLDER)/local/$(basename $@) ./cmd/$(basename $@)/main.go
 
 # Trigger the build operation for darwin. Notice that the suffix is removed as it is only used for Makefile expansion purposes.
 %.darwin:
-	@echo "Build darwin binary $@"
+	@echo "Building darwin binary $@"
 	@GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 $(GO_BUILD) $(GO_LDFLAGS) -o $(BIN_FOLDER)/darwin/$(basename $@) ./cmd/$(basename $@)/main.go
 
 # Trigger the build operation for linux. Notice that the suffix is removed as it is only used for Makefile expansion purposes.
@@ -95,6 +95,22 @@ build-linux: $(addsuffix .linux,$(BUILD_TARGETS))
 	@ echo "Building linux binary $@"
 	@GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GO_BUILD) $(GO_LDFLAGS) -o $(BIN_FOLDER)/linux/$(basename $@) ./cmd/$(basename $@)/main.go
 
+.PHONY: artifacts
+artifacts: clean $(addsuffix .pkg-darwin,$(BUILD_TARGETS)) $(addsuffix .pkg-linux,$(BUILD_TARGETS))
+
+%.pkg-darwin: %.darwin
+	@echo "Packaging darwin binary"
+	@mkdir -p build/compressed/darwin/$(basename $@)
+	@mv build/bin/darwin/* build/compressed/darwin/$(basename $@)/.
+	@cp README_public.md build/compressed/darwin/$(basename $@)/README.md
+	@cd build/compressed/darwin && tar cvzf playground_$(VERSION).tgz playground
+
+%.pkg-linux: %.linux
+	@echo "Packaging linux binary"
+	@mkdir -p build/compressed/linux/$(basename $@)
+	@mv build/bin/linux/* build/compressed/linux/$(basename $@)/.
+	@cp README_public.md build/compressed/linux/$(basename $@)/README.md
+	@cd build/compressed/linux && tar cvzf playground_$(VERSION).tgz playground
 
 .PHONY: docker-prep
 docker-prep: $(addsuffix .docker-prep, $(BUILD_TARGETS))
@@ -126,19 +142,29 @@ docker-push: $(addsuffix .docker-push, $(BUILD_TARGETS))
 
 .PHONY: k8s
 k8s:
-	@rm -r $(K8S_FOLDER) || true
-	@mkdir -p $(K8S_FOLDER)
-	@cp deployments/*.yaml $(K8S_FOLDER)/.
-	@$(SED) -i 's/TARGET_K8S_NAMESPACE/$(TARGET_K8S_NAMESPACE)/' $(K8S_FOLDER)/*.yaml
-	@$(SED) -i 's/TARGET_DOCKER_REGISTRY/'$(TARGET_DOCKER_REGISTRY)'/' $(K8S_FOLDER)/*.yaml
-	@$(SED) -i 's/VERSION/$(VERSION)/' $(K8S_FOLDER)/*.yaml
-	@echo "Kubernetes files ready at $(K8S_FOLDER)/"
-
+	@if [ ! -d "deployments" ]; then \
+		echo "Skipping k8s, no deployments found"; exit 0;\
+	else \
+		rm -r $(K8S_FOLDER) || true ; \
+		mkdir -p $(K8S_FOLDER); \
+		cp deployments/*.yaml $(K8S_FOLDER)/. ; \
+		$(SED) -i 's/TARGET_K8S_NAMESPACE/$(TARGET_K8S_NAMESPACE)/' $(K8S_FOLDER)/*.yaml ;\
+		$(SED) -i 's/TARGET_DOCKER_REGISTRY/'$(TARGET_DOCKER_REGISTRY)'/' $(K8S_FOLDER)/*.yaml ;\
+		$(SED) -i 's/VERSION/$(VERSION)/' $(K8S_FOLDER)/*.yaml ;\
+		echo "Kubernetes files ready at $(K8S_FOLDER)/"; \
+	fi
 .PHONY: release
 
-release: clean build-darwin build-linux k8s
-	@cp README.md $(BUILD_FOLDER) 
-	@tar -czvf $(BUILD_FOLDER)/$(PROJECT_NAME)_$(VERSION).tar.gz -C $(BUILD_FOLDER) bin k8s README.md
+release: clean build-darwin build-linux
+	@mkdir -p $(BUILD_FOLDER)
+	@cp README.md $(BUILD_FOLDER)
+	@if [ -d "deployments" ]; then \
+		tar -czvf $(BUILD_FOLDER)/$(PROJECT_NAME)_$(VERSION).tar.gz -C $(BUILD_FOLDER) bin k8s README.md; \
+	elif [ -d $(BIN_FOLDER) ]; then \
+		tar -czvf $(BUILD_FOLDER)/$(PROJECT_NAME)_$(VERSION).tar.gz -C $(BUILD_FOLDER)  bin README.md; \
+	else \
+		tar -czvf $(BUILD_FOLDER)/$(PROJECT_NAME)_$(VERSION).tar.gz -C $(BUILD_FOLDER)  README.md; \
+	fi
 	@echo "::set-output name=release_file::$(BUILD_FOLDER)/$(PROJECT_NAME)_$(VERSION).tar.gz"
 	@echo "::set-output name=release_name::$(PROJECT_NAME)_$(VERSION).tar.gz"
 	

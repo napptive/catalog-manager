@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elastic
+  namespace: TARGET_K8S_NAMESPACE
+  labels:
+    app: elastic
+spec:
+  serviceName: "elastic"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elastic
+  template:
+    metadata:
+      labels:
+        app: elastic
+    spec:
+      priorityClassName: napptive-high-priority
+      containers:
+        - name: elastic
+          image: elasticsearch:7.11.2
+          imagePullPolicy: "IfNotPresent"
+          env:
+            - name: node.name
+              value: elastic
+            #  valueFrom:
+            #    fieldRef:
+            #      fieldPath: metadata.name
+            - name: ES_JAVA_OPTS
+              value: -Xms1g -Xmx1g
+            #- name: processors
+            #  valueFrom:
+            #    resourceFieldRef:
+            #      resource: limits.cpu
+          ports:
+            - containerPort: 9200
+              name: http
+            - containerPort: 9300
+              name: transport
+          volumeMounts:
+            - name: storage
+              mountPath: /data
+            - name: config
+              mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+              subPath: elasticsearch.yml
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            defaultMode: 0644
+            name: elastic-config
+  volumeClaimTemplates:
+    - metadata:
+        name: storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: "standard"
+        resources:
+          requests:
+            storage: 1Gi

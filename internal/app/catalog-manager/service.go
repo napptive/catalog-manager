@@ -19,6 +19,12 @@ package catalog_manager
 import (
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
+	"github.com/napptive/catalog-manager/internal/pkg/provider"
+	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
+	"github.com/napptive/catalog-manager/internal/pkg/storage"
+
+	"github.com/napptive/grpc-catalog-go"
+
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -27,6 +33,20 @@ import (
 	"os/signal"
 	"syscall"
 )
+
+var mapping = `{
+    "mappings": {
+        "properties": {
+          "id":         		{ "type": "keyword" },
+          "Url":  				{ "type": "keyword" },
+          "Repository":  		{ "type": "keyword" },
+          "ApplicationName":	{ "type": "keyword" },
+          "Tag":         		{ "type": "keyword" },
+          "Readme": 			{ "type": "text" },
+          "Metadata":  			{ "type": "text" }
+      }
+    }
+}`
 
 // Service structure in charge of launching the application.
 type Service struct {
@@ -40,6 +60,30 @@ func NewService(cfg config.Config) *Service {
 	}
 }
 
+type Providers struct {
+	elasticProvider provider.MetadataProvider
+}
+
+type Clients struct {
+	 repoStorage *storage.StorageManager
+}
+
+func (s *Service) getClients () *Clients {
+	return &Clients{repoStorage: storage.NewStorageManager(s.cfg.RepositoryPath)}
+}
+
+func (s *Service) getProviders () (*Providers, error) {
+	pr, err  := provider.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress)
+	if err != nil {
+		return nil, err
+	}
+	err = pr.CreateIndex(mapping)
+	if err != nil {
+		return nil, err
+	}
+	return &Providers{elasticProvider: pr}, nil
+}
+
 // Run method starting the internal components and launching the service
 func (s *Service) Run() {
 	if err := s.cfg.IsValid(); err != nil {
@@ -50,8 +94,20 @@ func (s *Service) Run() {
 
 	listener := s.getNetListener(s.cfg.Port)
 
+	clients := s.getClients()
+	providers, err := s.getProviders()
+	if err != nil {
+		log.Fatal().Err(err).Msg("error creating providers")
+	}
+
+	manager := catalog_manager.NewManager(clients.repoStorage, providers.elasticProvider)
+	handler := catalog_manager.NewHandler(manager)
+
 	// create gRPC server
 	gRPCServer := grpc.NewServer()
+
+	grpc_catalog_go.RegisterCatalogServer(gRPCServer, handler)
+
 	if s.cfg.Debug {
 		// Register reflection service on gRPC server.
 		reflection.Register(gRPCServer)
