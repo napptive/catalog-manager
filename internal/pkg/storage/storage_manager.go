@@ -67,6 +67,9 @@ func (s *StorageManager) RepositoryExists(name string) (bool, error) {
 	defer dir.Close()
 
 	repositories, err := dir.Readdirnames(0)
+	if err != nil {
+		return false, err
+	}
 
 	for _, repo := range repositories {
 		log.Debug().Str("repo", repo).Msg("Repository Name")
@@ -105,16 +108,17 @@ func (s *StorageManager) StorageApplication(repo string, name string, version st
 	}
 
 	// 3.- Create the files and storage them
-	for i, appFile := range files {
-		log.Debug().Int("i", i).Str("file", appFile.Path).Msg("File")
+	for i:=0; i<len(files); i++{
+		appFile := files[i]
 		// Check if the file is in a new directory
 		splited := strings.Split(appFile.Path, "/")
 		// create directory
 		if len(splited) > 1 {
-			var pp []string
-			pp = splited[:len(splited)-1]
+			pp := splited[:len(splited)-1]
 			log.Debug().Str("new directory", fmt.Sprintf("%s/%s", dir, strings.Join(pp, "/"))).Msg("+++++")
-			s.createDirectory(fmt.Sprintf("%s/%s", dir, strings.Join(pp, "/")))
+			if err := s.createDirectory(fmt.Sprintf("%s/%s", dir, strings.Join(pp, "/"))); err != nil {
+				return err
+			}
 		}
 		file, err := os.Create(fmt.Sprintf("%s/%s", dir, appFile.Path))
 		if err != nil {
@@ -129,7 +133,9 @@ func (s *StorageManager) StorageApplication(repo string, name string, version st
 			return err
 		}
 
-		file.Sync()
+		if err := file.Sync(); err != nil {
+			return err
+		}
 	}
 
 	return nil

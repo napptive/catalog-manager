@@ -42,7 +42,8 @@ func ApplicationMetadataToJSON(metadata entities.ApplicationMetadata) (string, e
 // getFile looks for a file by name in the array retrieved and returns the data or nil if the file does not exist
 func GetFile(fileName string, files []grpc_catalog_go.FileInfo) []byte {
 
-	for _, file := range files {
+	for i:=0; i<len(files); i++ {
+		file := files[i]
 		if strings.HasSuffix(strings.ToLower(file.Path), strings.ToLower(fileName)) {
 			return file.Data
 		}

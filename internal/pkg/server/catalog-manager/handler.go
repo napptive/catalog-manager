@@ -17,13 +17,15 @@
 package catalog_manager
 
 import (
-	"fmt"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 	"io"
 )
+
+
+const appAddedMsg = "Application added successfully"
 
 type Handler struct {
 	manager *Manager
@@ -55,7 +57,7 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 				return server.SendAndClose(&grpc_catalog_common_go.OpResponse{
 					Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
 					StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
-					UserInfo:   fmt.Sprintf("Application added successfully"),
+					UserInfo:   appAddedMsg,
 				})
 			}
 		}
@@ -78,8 +80,6 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 		applicationFiles = append(applicationFiles, *request.File)
 
 	}
-
-	return nil
 }
 
 // Download an application from catalog

@@ -93,7 +93,8 @@ func (m *Manager) decomposeRepositoryName(name string) (*entities.ApplicationID,
 // getApplicationMetadataFile looks for the application metadata yaml file
 func (m *Manager) getApplicationMetadataFile(files []grpc_catalog_go.FileInfo) []byte {
 
-	for _, file := range files {
+	for i:= 0; i< len(files); i++{
+		file := files[i]
 		// 1.- the files must have .yaml extension
 		if utils.IsYamlFile(strings.ToLower(file.Path)) {
 			// 2.- Get Metadata
