@@ -27,7 +27,7 @@ var mapping = `{
 
 var _ = ginkgo.Describe("Elastic Provider test", func() {
 
-	if !utils.RunIntegrationTests("provider")  {
+	if !utils.RunIntegrationTests("provider") {
 		log.Warn().Msg("elastic provider tests are skipped")
 		return
 	}
@@ -41,7 +41,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		err := provider.CreateIndex(mapping)
 		gomega.Expect(err).Should(gomega.Succeed())
 	})
-	ginkgo.AfterSuite(func(){
+	ginkgo.AfterSuite(func() {
 		err := provider.DeleteIndex()
 		gomega.Expect(err).Should(gomega.Succeed())
 	})

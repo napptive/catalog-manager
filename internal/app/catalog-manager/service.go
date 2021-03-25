@@ -65,15 +65,15 @@ type Providers struct {
 }
 
 type Clients struct {
-	 repoStorage *storage.StorageManager
+	repoStorage *storage.StorageManager
 }
 
-func (s *Service) getClients () *Clients {
+func (s *Service) getClients() *Clients {
 	return &Clients{repoStorage: storage.NewStorageManager(s.cfg.RepositoryPath)}
 }
 
-func (s *Service) getProviders () (*Providers, error) {
-	pr, err  := provider.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress)
+func (s *Service) getProviders() (*Providers, error) {
+	pr, err := provider.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress)
 	if err != nil {
 		return nil, err
 	}

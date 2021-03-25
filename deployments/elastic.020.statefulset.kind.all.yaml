@@ -20,19 +20,14 @@ spec:
       containers:
         - name: elastic
           image: elasticsearch:7.11.2
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "250m"
           imagePullPolicy: "IfNotPresent"
-          env:
-            - name: node.name
-              value: elastic
-            #  valueFrom:
-            #    fieldRef:
-            #      fieldPath: metadata.name
-            - name: ES_JAVA_OPTS
-              value: -Xms1g -Xmx1g
-            #- name: processors
-            #  valueFrom:
-            #    resourceFieldRef:
-            #      resource: limits.cpu
           ports:
             - containerPort: 9200
               name: http
@@ -45,6 +40,35 @@ spec:
               mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
               subPath: elasticsearch.yml
               readOnly: true
+          env:
+            - name: node.name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ES_JAVA_OPTS
+              #value: -Xms2g -Xmx2g
+              value: -Xms512m -Xmx512m
+            - name: cluster.initial_master_nodes
+              value: elastic-0
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chown -R 1000:1000 /data"]
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: storage
+              mountPath: /data
+        - name: increase-vm-max-map
+          image: busybox
+          command: ["sysctl", "-w", "vm.max_map_count=262144"]
+          securityContext:
+            privileged: true
+        - name: increase-fd-ulimit
+          image: busybox
+          command: ["sh", "-c", "ulimit -n 65536"]
+          securityContext:
+            privileged: true
       volumes:
         - name: config
           configMap:
@@ -59,4 +83,4 @@ spec:
         storageClassName: "standard"
         resources:
           requests:
-            storage: 1Gi
+            storage: 512Mi

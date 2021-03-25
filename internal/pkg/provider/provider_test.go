@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-func RunTests (provider MetadataProvider) {
+func RunTests(provider MetadataProvider) {
 
 	ginkgo.Context("Adding application metadata", func() {
 		ginkgo.It("Should be able to add an application metadata", func() {

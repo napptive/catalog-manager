@@ -30,6 +30,8 @@ type CatalogManager struct {
 	Index string
 	// RepositoryPath with the path of the repository
 	RepositoryPath string
+	//RepositoryUrl with the url of the repository (napptive repository must be nil)
+	RepositoryUrl string
 }
 
 func (c *CatalogManager) IsValid() error {
@@ -38,6 +40,12 @@ func (c *CatalogManager) IsValid() error {
 	}
 	if c.ElasticAddress == "" {
 		return nerrors.NewFailedPreconditionError("ElasticAddress must be filled")
+	}
+	if c.Index == "" {
+		return nerrors.NewFailedPreconditionError("Index must be filled")
+	}
+	if c.RepositoryPath == "" {
+		return nerrors.NewFailedPreconditionError("RepositoryPath must be filled")
 	}
 
 	return nil

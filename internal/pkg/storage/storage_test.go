@@ -26,7 +26,7 @@ import (
 
 var _ = ginkgo.Describe("Elastic Provider test", func() {
 
-	if !utils.RunIntegrationTests("storage")  {
+	if !utils.RunIntegrationTests("storage") {
 		log.Warn().Msg("Storage manager tests are skipped")
 		return
 	}
@@ -71,7 +71,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		manager := NewStorageManager(basePath)
 		repo := faker.Name().FirstName()
 		appName := faker.App().Name()
-		files := []grpc_catalog_go.FileInfo {
+		files := []grpc_catalog_go.FileInfo{
 			{Path: "app_config.yaml", Data: []byte("appconf")},
 			{Path: "component1.yaml", Data: []byte("component1")},
 			{Path: "component2.yaml", Data: []byte("component2")}}
@@ -83,7 +83,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		manager := NewStorageManager(basePath)
 		repo := faker.Name().FirstName()
 		appName := faker.App().Name()
-		files := []grpc_catalog_go.FileInfo {
+		files := []grpc_catalog_go.FileInfo{
 			{Path: "app_config.yaml", Data: []byte("appconf")},
 			{Path: "component1.yaml", Data: []byte("component1")},
 			{Path: "component2.yaml", Data: []byte("component2")}}

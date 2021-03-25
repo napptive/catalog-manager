@@ -17,6 +17,7 @@
 package catalog_manager
 
 import (
+	"fmt"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
@@ -34,13 +35,6 @@ func NewHandler(manager *Manager) *Handler {
 	return &Handler{manager: manager}
 }
 
-type AppFile struct {
-	// Path with the path of the file
-	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	// Data with the file content
-	Data []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-}
-
 // Add a new application in the catalog
 func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 
@@ -53,24 +47,21 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 		// https://grpc.io/docs/languages/go/basics/
 		request, err := server.Recv()
 		log.Debug().Interface("request", request).Msg("Add")
-		if err == io.EOF /*|| request == nil */{
+		if err == io.EOF /*|| request == nil */ {
 			log.Debug().Msg("io.EOF")
 			if err := h.manager.Add(applicationName, applicationFiles); err != nil {
-				// TODO: ¿devolver un OpStatus ERROR?? para hacer el SendAndClose
-				return  err
-			}else{
-				return  server.SendAndClose(&grpc_catalog_common_go.OpResponse{
+				return nerrors.FromError(err).ToGRPC()
+			} else {
+				return server.SendAndClose(&grpc_catalog_common_go.OpResponse{
 					Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
 					StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
-					UserInfo:   "",
+					UserInfo:   fmt.Sprintf("Application added successfully"),
 				})
 			}
 		}
 		if err != nil {
-			return err
+			return nerrors.FromError(err).ToGRPC()
 		}
-
-		log.Debug().Msg("Load Files")
 
 		// the first time save the application name
 		if applicationName == "" {
@@ -80,7 +71,8 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 		// if the name is other than the saved one -> ERROR
 		// it is not allowed sending different applications in the same stream
 		if request.ApplicationName != applicationName {
-			return nerrors.NewFailedPreconditionError("not allowed sending different applications in the same stream")
+			sErr := nerrors.NewFailedPreconditionError("not allowed sending different applications in the same stream")
+			return nerrors.FromError(sErr).ToGRPC()
 		}
 		// Append the files
 		applicationFiles = append(applicationFiles, *request.File)
@@ -92,8 +84,5 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 
 // Download an application from catalog
 func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, server grpc_catalog_go.Catalog_DownloadServer) error {
-	return nerrors.NewInternalError( "not implemented yet!")
+	return nerrors.NewInternalError("not implemented yet!")
 }
-
-
-

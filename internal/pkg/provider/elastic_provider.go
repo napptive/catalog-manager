@@ -31,12 +31,11 @@ import (
 	"github.com/napptive/nerrors/pkg/nerrors"
 
 	"github.com/rs/zerolog/log"
-
 )
 
 const (
-	urlField = "Url"
-	RepositoryField = "Repository"
+	urlField         = "Url"
+	RepositoryField  = "Repository"
 	ApplicationField = "ApplicationName"
 )
 
@@ -57,15 +56,15 @@ type envelopeResponse struct {
 }
 
 type ElasticProvider struct {
-	client *elasticsearch.Client
-	indexName  string
+	client    *elasticsearch.Client
+	indexName string
 }
 
 // NewElasticProvider returns new Elastic provider
 func NewElasticProvider(index string, address string) (*ElasticProvider, error) {
 	// TODO: Change DefaultClient to NewClient(cfg Config)
 	conf := elasticsearch.Config{
-		Addresses:             []string{address},
+		Addresses: []string{address},
 	}
 	es, err := elasticsearch.NewClient(conf)
 	//es, err := elasticsearch.NewDefaultClient()
@@ -74,13 +73,13 @@ func NewElasticProvider(index string, address string) (*ElasticProvider, error) 
 		return nil, err
 	}
 	return &ElasticProvider{
-		client: es,
-		indexName:  index,
+		client:    es,
+		indexName: index,
 	}, nil
 }
 
 // CreateIndex creates an index with the mapping received
-func (e *ElasticProvider) CreateIndex (mapping string) error {
+func (e *ElasticProvider) CreateIndex(mapping string) error {
 
 	exists, err := esapi.IndicesExistsRequest{
 		Index: []string{e.indexName},
@@ -108,13 +107,12 @@ func (e *ElasticProvider) CreateIndex (mapping string) error {
 	}
 	defer exists.Body.Close()
 
-
 	return nil
 }
 
 // DeleteIndex removes a elastic index
 func (e *ElasticProvider) DeleteIndex() error {
-	if _ , err := e.client.Indices.Delete([]string{e.indexName}); err != nil {
+	if _, err := e.client.Indices.Delete([]string{e.indexName}); err != nil {
 		return err
 	}
 	return nil
@@ -122,19 +120,19 @@ func (e *ElasticProvider) DeleteIndex() error {
 
 // CreateID generates the documentID to store the application metadata
 // The url must be escaped
-func (e *ElasticProvider)CreateID(metadata entities.ApplicationMetadata) string {
-	id := fmt.Sprintf("%s%s%s%s", url.PathEscape(metadata.Url) , metadata.Repository, metadata.ApplicationName, metadata.Tag)
+func (e *ElasticProvider) CreateID(metadata entities.ApplicationMetadata) string {
+	id := fmt.Sprintf("%s%s%s%s", url.PathEscape(metadata.Url), metadata.Repository, metadata.ApplicationName, metadata.Tag)
 	return id
 }
 
 // CreateIDFromAppID creates the documentID from ApplicationID
-func (e *ElasticProvider)CreateIDFromAppID(metadata entities.ApplicationID) string {
-	id := fmt.Sprintf("%s%s%s%s",url.PathEscape(metadata.Url), metadata.Repository, metadata.ApplicationName, metadata.Tag)
+func (e *ElasticProvider) CreateIDFromAppID(metadata entities.ApplicationID) string {
+	id := fmt.Sprintf("%s%s%s%s", url.PathEscape(metadata.Url), metadata.Repository, metadata.ApplicationName, metadata.Tag)
 	return id
 }
 
 // buildTerm creates a term field to search
-func (e *ElasticProvider) buildTerm(field string, value string) map[string]interface{}{
+func (e *ElasticProvider) buildTerm(field string, value string) map[string]interface{} {
 	return map[string]interface{}{
 		"term": map[string]interface{}{
 			field: value,
@@ -146,16 +144,15 @@ func (e *ElasticProvider) buildTerm(field string, value string) map[string]inter
 // this method is used to ask about ALL the files (url, repo, appName and tag)
 func (e *ElasticProvider) buildQuery(appID entities.ApplicationID) map[string]interface{} {
 
-	url :=  e.buildTerm(urlField, appID.Url)
-	repo :=e.buildTerm(RepositoryField, appID.Repository)
+	url := e.buildTerm(urlField, appID.Url)
+	repo := e.buildTerm(RepositoryField, appID.Repository)
 	appName := e.buildTerm(ApplicationField, appID.ApplicationName)
 	tag := e.buildTerm("Tag", appID.Tag)
 
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
-				"must": []interface{}{url, repo, appName, tag,
-				},
+				"must": []interface{}{url, repo, appName, tag},
 			},
 		},
 	}
@@ -212,7 +209,7 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 
 	var buf bytes.Buffer
 
-	 query := e.buildQuery(appID)
+	query := e.buildQuery(appID)
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
 		log.Err(err).Msg("Error encoding query")
 	}
@@ -254,7 +251,7 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 	}
 
 	var application entities.ApplicationMetadata
-	if err := json.Unmarshal( r.Hits.Hits[0].Source, &application); err != nil {
+	if err := json.Unmarshal(r.Hits.Hits[0].Source, &application); err != nil {
 		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
 	}
 
@@ -267,7 +264,7 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 }
 
 // Exists checks if the application Metadata already exists
-func (e *ElasticProvider)  Exists(appID entities.ApplicationID) (bool, error){
+func (e *ElasticProvider) Exists(appID entities.ApplicationID) (bool, error) {
 	res, err := e.client.Exists(e.indexName, e.CreateIDFromAppID(appID))
 	if err != nil {
 		return false, err
@@ -318,18 +315,18 @@ func (e *ElasticProvider) GetByID(appID entities.ApplicationID) (*entities.Appli
 	}
 
 	type envelopeResponse struct {
-		ID         string          `json:"_id"`
-		Source     json.RawMessage `json:"_source"`
+		ID     string          `json:"_id"`
+		Source json.RawMessage `json:"_source"`
 	}
 
 	//var r  map[string]interface{}
-	var r  envelopeResponse
+	var r envelopeResponse
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		log.Err(err).Msg("Error parsing the response body")
 		return nil, err
 	}
 	var application entities.ApplicationMetadata
-	if err := json.Unmarshal( r.Source, &application); err != nil {
+	if err := json.Unmarshal(r.Source, &application); err != nil {
 		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
 	}
 

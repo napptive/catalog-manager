@@ -4,10 +4,9 @@ metadata:
   name: elastic-config
   namespace: TARGET_K8S_NAMESPACE
   labels:
-    app: elastic-search
+    app: elastic
 data:
   elasticsearch.yml: |-
     path.data: /data
-    discovery.type: single-node
-    network.host: _site_
+    network.host: 0.0.0.0
     cluster.name: TARGET_K8S_NAMESPACE

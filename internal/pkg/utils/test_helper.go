@@ -31,8 +31,7 @@ func RunIntegrationTests(id string) bool {
 	return runIntegration == id
 }
 
-
-func CreateApplicationMetadata () *entities.ApplicationMetadata {
+func CreateApplicationMetadata() *entities.ApplicationMetadata {
 
 	return &entities.ApplicationMetadata{
 		Url:             faker.Internet().Url(),

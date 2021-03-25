@@ -18,26 +18,34 @@ package entities
 // ApplicationMetadata with the metadata of application, this will be the application info showed
 type ApplicationMetadata struct {
 	// Url with the catalog URL
-	Url             string
+	Url string
 	// Repository with the repository name
-	Repository      string
+	Repository string
 	// ApplicationName with the name of the application
 	ApplicationName string
 	// Tag with the tag/version of the application
-	Tag             string
+	Tag string
 	// Readme with the content of the README file
-	Readme          string
+	Readme string
 	// Metadata with the metadata.yaml file
-	Metadata        string
+	Metadata string
 }
 
+// ApplicationID with the application identifier (URL-Repo-AppName-tag)
+// these four fields must be unique
 type ApplicationID struct {
 	// Url with the catalog URL
-	Url             string
+	Url string
 	// Repository with the repository name
-	Repository      string
+	Repository string
 	// ApplicationName with the name of the application
 	ApplicationName string
 	// Tag with the tag/version of the application
-	Tag             string
+	Tag string
+}
+
+// AppHeader is a struct to load the kind and api_version of a file to check if it is an applicationConfiguration
+type AppHeader struct {
+	APIVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
 }

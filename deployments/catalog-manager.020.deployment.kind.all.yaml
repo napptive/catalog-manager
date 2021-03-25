@@ -22,7 +22,7 @@ spec:
         imagePullPolicy: Always
         args:
           - "run"
-          - "--elasticAddress=elastic.TARGET_K8S_NAMESPACE:9200"
+          - "--elasticAddress=http://elastic.TARGET_K8S_NAMESPACE:9200"
           - "--repositoryPath=/napptive/repository/"
         volumeMounts:
           - name: repository-path

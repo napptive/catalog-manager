@@ -20,17 +20,16 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/provider"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
+	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
-	"sigs.k8s.io/yaml"
 	"strings"
 )
 
 const (
 	defaultVersion = "latest"
 	readmeFile     = "readme.md"
-	appFile        = "app_cfg.yaml"
 	apiVersion     = "core.oam.dev/v1alpha2"
 	kind           = "ApplicationMetadata"
 )
@@ -38,6 +37,8 @@ const (
 type Manager struct {
 	stManager *storage.StorageManager
 	provider  provider.MetadataProvider
+	// repositoryURL is the URL of the repository managed by this catalog
+	repositoryURL string
 }
 
 // NewManager returns a new object of manager
@@ -89,40 +90,17 @@ func (m *Manager) decomposeRepositoryName(name string) (*entities.ApplicationID,
 	}, nil
 }
 
-// getFile looks for a file by name in the array retrieved and return the data
-func (m *Manager) getFile(fileName string, files []grpc_catalog_go.FileInfo) []byte {
-
-	for _, file := range files {
-		if strings.HasSuffix(strings.ToLower(file.Path), strings.ToLower(fileName)) {
-			return file.Data
-		}
-	}
-
-	return []byte{}
-}
-
-// AppHeader is a struct to load the kind and apiversion of a file to check if it is an applicationConfiguration
-type AppHeader struct {
-	APIVersion string `yaml:"apiVersion"`
-	Kind       string `yaml:"kind"`
-}
-
 // getApplicationMetadataFile looks for the application metadata yaml file
 func (m *Manager) getApplicationMetadataFile(files []grpc_catalog_go.FileInfo) []byte {
 
 	for _, file := range files {
 		// 1.- the files must have .yaml extension
-		if strings.HasSuffix(strings.ToLower(file.Path), "yaml") {
-			var a AppHeader
-			// 2.- apiVersion: core.oam.dev/v1alpha2 and
-			// 3.- kind: ApplicationConfiguration
-			err := yaml.Unmarshal(file.Data, &a)
-			if err == nil {
-				log.Debug().Interface("App", a).Str("name", file.Path).Msg("appconfig")
-				if a.APIVersion == apiVersion && a.Kind == kind {
-					log.Debug().Interface("App", a).Str("name", file.Path).Msg("appconfig FOUND")
-					return file.Data
-				}
+		if utils.IsYamlFile(strings.ToLower(file.Path)) {
+			// 2.- Get Metadata
+			isMetadata := utils.CheckKindAndVersion(file.Data, apiVersion, kind)
+			if isMetadata {
+				log.Debug().Str("name", file.Path).Msg("Metadata found")
+				return file.Data
 			}
 		}
 	}
@@ -142,7 +120,15 @@ func (m *Manager) Add(name string, files []grpc_catalog_go.FileInfo) error {
 		log.Err(err).Str("name", name).Msg("Error decomposing the application name")
 		return err
 	}
-	readme := m.getFile(readmeFile, files)
+
+	// check that the url of the application matches the url of the catalog
+	// we avoid including applications in catalogs that do not correspond
+	if appID.Url != m.repositoryURL {
+		log.Err(err).Str("name", name).Msg("Error adding application. The application url does not match the one in the catalog")
+		return nerrors.NewInternalError("The application url does not match the one in the catalog")
+	}
+
+	readme := utils.GetFile(readmeFile, files)
 	// appConfig := m.getFile(appFile, files)
 	appMetadata := m.getApplicationMetadataFile(files)
 
