@@ -16,8 +16,8 @@
 package storage
 
 import (
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
@@ -71,7 +71,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		manager := NewStorageManager(basePath)
 		repo := faker.Name().FirstName()
 		appName := faker.App().Name()
-		files := []grpc_catalog_go.FileInfo{
+		files := []*entities.FileInfo{
 			{Path: "app_config.yaml", Data: []byte("appconf")},
 			{Path: "component1.yaml", Data: []byte("component1")},
 			{Path: "component2.yaml", Data: []byte("component2")}}
@@ -83,7 +83,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		manager := NewStorageManager(basePath)
 		repo := faker.Name().FirstName()
 		appName := faker.App().Name()
-		files := []grpc_catalog_go.FileInfo{
+		files := []*entities.FileInfo{
 			{Path: "app_config.yaml", Data: []byte("appconf")},
 			{Path: "component1.yaml", Data: []byte("component1")},
 			{Path: "component2.yaml", Data: []byte("component2")}}

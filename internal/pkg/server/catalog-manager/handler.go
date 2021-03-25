@@ -17,6 +17,7 @@
 package catalog_manager
 
 import (
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
@@ -43,7 +44,7 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 	// comprobar que no tenemos varias aplicaciones en el stream
 	// mapa para los ficheros para comprobar que no los envian varias veces
 	applicationName := ""
-	var applicationFiles []grpc_catalog_go.FileInfo
+	var applicationFiles []*entities.FileInfo
 
 	for {
 		// https://grpc.io/docs/languages/go/basics/
@@ -77,7 +78,7 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 			return nerrors.FromError(sErr).ToGRPC()
 		}
 		// Append the files
-		applicationFiles = append(applicationFiles, *request.File)
+		applicationFiles = append(applicationFiles, entities.NewFileInfo(request.File))
 
 	}
 }

@@ -17,7 +17,6 @@ package utils
 
 import (
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"sigs.k8s.io/yaml"
 	"strings"
 
@@ -40,10 +39,9 @@ func ApplicationMetadataToJSON(metadata entities.ApplicationMetadata) (string, e
 }
 
 // getFile looks for a file by name in the array retrieved and returns the data or nil if the file does not exist
-func GetFile(fileName string, files []grpc_catalog_go.FileInfo) []byte {
+func GetFile(fileName string, files []*entities.FileInfo) []byte {
 
-	for i:=0; i<len(files); i++ {
-		file := files[i]
+	for _, file := range files {
 		if strings.HasSuffix(strings.ToLower(file.Path), strings.ToLower(fileName)) {
 			return file.Data
 		}

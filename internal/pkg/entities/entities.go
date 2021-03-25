@@ -15,6 +15,8 @@
  */
 package entities
 
+import grpc_catalog_go "github.com/napptive/grpc-catalog-go"
+
 // ApplicationMetadata with the metadata of application, this will be the application info showed
 type ApplicationMetadata struct {
 	// Url with the catalog URL
@@ -48,4 +50,19 @@ type ApplicationID struct {
 type AppHeader struct {
 	APIVersion string `yaml:"apiVersion"`
 	Kind       string `yaml:"kind"`
+}
+
+// FileInfo represents a file
+type FileInfo struct {
+	// path with the File path
+	Path string
+	// data with the content of the file
+	Data []byte
+}
+
+func NewFileInfo(info *grpc_catalog_go.FileInfo) *FileInfo{
+	return &FileInfo{
+		Path: info.Path,
+		Data: info.Data,
+	}
 }

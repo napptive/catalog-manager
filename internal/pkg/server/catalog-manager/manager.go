@@ -21,7 +21,6 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/provider"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 	"strings"
@@ -91,7 +90,7 @@ func (m *Manager) decomposeRepositoryName(name string) (*entities.ApplicationID,
 }
 
 // getApplicationMetadataFile looks for the application metadata yaml file
-func (m *Manager) getApplicationMetadataFile(files []grpc_catalog_go.FileInfo) []byte {
+func (m *Manager) getApplicationMetadataFile(files []*entities.FileInfo) []byte {
 
 	for i:= 0; i< len(files); i++{
 		file := files[i]
@@ -109,7 +108,7 @@ func (m *Manager) getApplicationMetadataFile(files []grpc_catalog_go.FileInfo) [
 }
 
 // Add Adds a new application in the repository.
-func (m *Manager) Add(name string, files []grpc_catalog_go.FileInfo) error {
+func (m *Manager) Add(name string, files []*entities.FileInfo) error {
 
 	// TODO: here, validate the application
 

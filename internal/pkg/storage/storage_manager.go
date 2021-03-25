@@ -18,7 +18,7 @@ package storage
 
 import (
 	"fmt"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/rs/zerolog/log"
 	"os"
 	"strings"
@@ -92,7 +92,7 @@ func (s *StorageManager) RemoveRepository(name string) error {
 }
 
 // StorageApplication save all files in their corresponding path
-func (s *StorageManager) StorageApplication(repo string, name string, version string, files []grpc_catalog_go.FileInfo) error {
+func (s *StorageManager) StorageApplication(repo string, name string, version string, files []*entities.FileInfo) error {
 	// 1.- Remove the old application
 	// baseUrl/repo/application/tag
 	dir := fmt.Sprintf("%s/%s/%s/%s", s.basePath, repo, name, version)
@@ -108,8 +108,7 @@ func (s *StorageManager) StorageApplication(repo string, name string, version st
 	}
 
 	// 3.- Create the files and storage them
-	for i:=0; i<len(files); i++{
-		appFile := files[i]
+	for _, appFile := range files{
 		// Check if the file is in a new directory
 		splited := strings.Split(appFile.Path, "/")
 		// create directory

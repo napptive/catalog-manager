@@ -279,7 +279,6 @@ func (e *ElasticProvider) Exists(appID entities.ApplicationID) (bool, error) {
 		return false, nerrors.NewInternalError(res.Status())
 	}
 
-	return false, nil
 }
 
 // GetByID return the application metadata requested
