@@ -15,12 +15,12 @@
  */
 package entities
 
-import grpc_catalog_go "github.com/napptive/grpc-catalog-go"
+import "github.com/napptive/grpc-catalog-go"
 
 // ApplicationMetadata with the metadata of application, this will be the application info showed
 type ApplicationMetadata struct {
-	// Url with the catalog URL
-	Url string
+	 // CatalogID with an internal identifier
+	CatalogID string
 	// Repository with the repository name
 	Repository string
 	// ApplicationName with the name of the application
@@ -36,8 +36,6 @@ type ApplicationMetadata struct {
 // ApplicationID with the application identifier (URL-Repo-AppName-tag)
 // these four fields must be unique
 type ApplicationID struct {
-	// Url with the catalog URL
-	Url string
 	// Repository with the repository name
 	Repository string
 	// ApplicationName with the name of the application

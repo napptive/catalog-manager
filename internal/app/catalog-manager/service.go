@@ -34,20 +34,6 @@ import (
 	"syscall"
 )
 
-var mapping = `{
-    "mappings": {
-        "properties": {
-          "id":         		{ "type": "keyword" },
-          "Url":  				{ "type": "keyword" },
-          "Repository":  		{ "type": "keyword" },
-          "ApplicationName":	{ "type": "keyword" },
-          "Tag":         		{ "type": "keyword" },
-          "Readme": 			{ "type": "text" },
-          "Metadata":  			{ "type": "text" }
-      }
-    }
-}`
-
 // Service structure in charge of launching the application.
 type Service struct {
 	cfg config.Config
@@ -60,28 +46,26 @@ func NewService(cfg config.Config) *Service {
 	}
 }
 
+// Providers with all the providers needed
 type Providers struct {
+	// elasticProvider with a elastic provider to store metadata
 	elasticProvider provider.MetadataProvider
-}
-
-type Clients struct {
+	// repoStorage to store the applications
 	repoStorage *storage.StorageManager
 }
 
-func (s *Service) getClients() *Clients {
-	return &Clients{repoStorage: storage.NewStorageManager(s.cfg.RepositoryPath)}
-}
-
+// getProviders creates and initializes all the providers
 func (s *Service) getProviders() (*Providers, error) {
 	pr, err := provider.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress)
 	if err != nil {
 		return nil, err
 	}
-	err = pr.CreateIndex(mapping)
+	err = pr.Init()
 	if err != nil {
 		return nil, err
 	}
-	return &Providers{elasticProvider: pr}, nil
+	return &Providers{elasticProvider: pr,
+		repoStorage: storage.NewStorageManager(s.cfg.RepositoryPath)}, nil
 }
 
 // Run method starting the internal components and launching the service
@@ -94,13 +78,12 @@ func (s *Service) Run() {
 
 	listener := s.getNetListener(s.cfg.Port)
 
-	clients := s.getClients()
 	providers, err := s.getProviders()
 	if err != nil {
 		log.Fatal().Err(err).Msg("error creating providers")
 	}
 
-	manager := catalog_manager.NewManager(clients.repoStorage, providers.elasticProvider)
+	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider)
 	handler := catalog_manager.NewHandler(manager)
 
 	// create gRPC server

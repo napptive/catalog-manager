@@ -11,19 +11,6 @@ import (
 	"time"
 )
 
-var mapping = `{
-    "mappings": {
-        "properties": {
-          "id":         		{ "type": "keyword" },
-          "Url":  				{ "type": "keyword" },
-          "Repository":  		{ "type": "keyword" },
-          "ApplicationName":	{ "type": "keyword" },
-          "Tag":         		{ "type": "keyword" },
-          "Readme": 			{ "type": "text" },
-          "Metadata":  			{ "type": "text" }
-      }
-    }
-}`
 
 var _ = ginkgo.Describe("Elastic Provider test", func() {
 
@@ -33,12 +20,13 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 	}
 
 	index := strings.ToLower(faker.App().Name())
+	index = strings.Replace(index, " ", "", -1)
 	log.Debug().Str("index", index).Msg("Elastic index")
 	provider, err := NewElasticProvider(index, "http://localhost:9200")
 	gomega.Expect(err).Should(gomega.Succeed())
 
 	ginkgo.BeforeSuite(func() {
-		err := provider.CreateIndex(mapping)
+		err := provider.Init()
 		gomega.Expect(err).Should(gomega.Succeed())
 	})
 	ginkgo.AfterSuite(func() {
@@ -48,20 +36,20 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 
 	RunTests(provider)
 
-	ginkgo.FIt("Getting an application metadata by ID", func() {
+	ginkgo.FIt("Getting an application metadata by Search Method", func() {
 		app := utils.CreateApplicationMetadata()
 
-		err := provider.Add(*app)
+		returned, err := provider.Add(app)
 		gomega.Expect(err).Should(gomega.Succeed())
+		gomega.Expect(returned).ShouldNot(gomega.BeNil())
 
 		// wait to be stored
 		time.Sleep(time.Second * 2)
 
-		retrieved, err := provider.GetByID(entities.ApplicationID{
-			Url:             app.Url,
-			Repository:      app.Repository,
-			ApplicationName: app.ApplicationName,
-			Tag:             app.Tag,
+		retrieved, err := provider.SearchByApplicationID(entities.ApplicationID{
+			Repository:      returned.Repository,
+			ApplicationName: returned.ApplicationName,
+			Tag:             returned.Tag,
 		})
 		gomega.Expect(err).Should(gomega.Succeed())
 		gomega.Expect(retrieved).ShouldNot(gomega.BeNil())

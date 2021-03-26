@@ -34,7 +34,6 @@ func RunIntegrationTests(id string) bool {
 func CreateApplicationMetadata() *entities.ApplicationMetadata {
 
 	return &entities.ApplicationMetadata{
-		Url:             faker.Internet().Url(),
 		Repository:      faker.Name().FirstName(),
 		ApplicationName: faker.App().Name(),
 		Tag:             faker.App().Version(),

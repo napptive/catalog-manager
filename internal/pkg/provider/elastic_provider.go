@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v8"
@@ -34,13 +33,32 @@ import (
 )
 
 const (
-	urlField         = "Url"
+	// RepositoryField with the name of the field where we store the name of the repository
 	RepositoryField  = "Repository"
+	// ApplicationField with the name of the field where we store the name of the application
 	ApplicationField = "ApplicationName"
+	// TagField with the name of the field where we store the name of tag/version
+	TagField         = "Tag"
+	// CatalogIDField with the name of the field where we store the internal ID
+	CatalogIDField   = "CatalogID"
 )
 
-// envelopeResponse is an struct used to load a search result
-type envelopeResponse struct {
+// mapping with the elastic-schema
+var mapping = `{
+    "mappings": {
+        "properties": {
+          "CatalogID":  		{ "type": "keyword" },
+          "Repository":  		{ "type": "keyword" },
+          "ApplicationName":	{ "type": "keyword" },
+          "Tag":         		{ "type": "keyword" },
+          "Readme": 			{ "type": "text" },
+          "Metadata":  			{ "type": "text" }
+      }
+    }
+}`
+
+// responseWrapper is an struct used to load a search result
+type responseWrapper struct {
 	Took int
 	Hits struct {
 		Total struct {
@@ -77,56 +95,82 @@ func NewElasticProvider(index string, address string) (*ElasticProvider, error) 
 	}, nil
 }
 
-// CreateIndex creates an index with the mapping received
-func (e *ElasticProvider) CreateIndex(mapping string) error {
+// Init creates the index and the necessary index
+func (e *ElasticProvider) Init() error {
+	log.Info().Msg("Initializing elastic provider")
+	return e.CreateIndex(mapping)
+}
+
+// IndexExists check if an index exists
+func (e *ElasticProvider) IndexExists() (bool, error) {
 
 	exists, err := esapi.IndicesExistsRequest{
 		Index: []string{e.indexName},
 	}.Do(context.Background(), e.client)
 
 	if err != nil {
-		return err
+		return false, nerrors.FromError(err)
 	}
+	defer exists.Body.Close()
+
 	if exists.IsError() {
 		switch exists.StatusCode {
 		case 404:
-			res, err := e.client.Indices.Create(e.indexName, e.client.Indices.Create.WithBody(strings.NewReader(mapping)))
-			if err != nil {
-				return err
-			}
-			if res.IsError() {
-				log.Warn().Str("err", res.String()).Msg("error creating index")
-				return nerrors.NewInternalError("error creating index")
-			}
-			defer res.Body.Close()
+			return false, nil
 		default:
-			return nerrors.NewInternalError("error checking index. %s", exists.Status())
+			return false, nerrors.NewInternalError("error checking index. %s", exists.Status())
 		}
 
 	}
-	defer exists.Body.Close()
+	return true, nil
+}
+
+// CreateIndex creates an index with the mapping received
+func (e *ElasticProvider) CreateIndex(mapping string) error {
+
+	exists, err := e.IndexExists()
+	if err != nil {
+		return err
+	}
+	// if not exist -> create it
+	if !exists {
+		res, err := e.client.Indices.Create(e.indexName, e.client.Indices.Create.WithBody(strings.NewReader(mapping)))
+		if err != nil {
+			return err
+		}
+
+		defer res.Body.Close()
+
+		if res.IsError() {
+			log.Warn().Str("err", res.String()).Msg("error creating index")
+			return nerrors.NewInternalError("error creating index")
+		}
+	}
 
 	return nil
 }
 
 // DeleteIndex removes a elastic index
 func (e *ElasticProvider) DeleteIndex() error {
-	if _, err := e.client.Indices.Delete([]string{e.indexName}); err != nil {
+	resp, err := e.client.Indices.Delete([]string{e.indexName})
+	if err != nil {
 		return err
 	}
+
+	resp.Body.Close()
+
 	return nil
 }
 
 // CreateID generates the documentID to store the application metadata
-// The url must be escaped
 func (e *ElasticProvider) CreateID(metadata entities.ApplicationMetadata) string {
-	id := fmt.Sprintf("%s%s%s%s", url.PathEscape(metadata.Url), metadata.Repository, metadata.ApplicationName, metadata.Tag)
+	id := fmt.Sprintf("%s/%s:%s", metadata.Repository, metadata.ApplicationName, metadata.Tag)
 	return id
 }
 
 // CreateIDFromAppID creates the documentID from ApplicationID
 func (e *ElasticProvider) CreateIDFromAppID(metadata entities.ApplicationID) string {
-	id := fmt.Sprintf("%s%s%s%s", url.PathEscape(metadata.Url), metadata.Repository, metadata.ApplicationName, metadata.Tag)
+	id := fmt.Sprintf("%s/%s:%s", metadata.Repository, metadata.ApplicationName, metadata.Tag)
 	return id
 }
 
@@ -143,33 +187,37 @@ func (e *ElasticProvider) buildTerm(field string, value string) map[string]inter
 // this method is used to ask about ALL the files (url, repo, appName and tag)
 func (e *ElasticProvider) buildQuery(appID entities.ApplicationID) map[string]interface{} {
 
-	url := e.buildTerm(urlField, appID.Url)
 	repo := e.buildTerm(RepositoryField, appID.Repository)
 	appName := e.buildTerm(ApplicationField, appID.ApplicationName)
-	tag := e.buildTerm("Tag", appID.Tag)
+	tag := e.buildTerm(TagField, appID.Tag)
 
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
-				"must": []interface{}{url, repo, appName, tag},
+				"must": []interface{}{repo, appName, tag},
 			},
 		},
 	}
+
 	return query
 }
 
 // Add stores new application metadata or updates it if it exists
-func (e *ElasticProvider) Add(metadata entities.ApplicationMetadata) error {
+func (e *ElasticProvider) Add(metadata *entities.ApplicationMetadata) (*entities.ApplicationMetadata, error) {
+
+	// Fill Internal ID
+	metadata.CatalogID = e.CreateID(*metadata)
 
 	// convert the metadata to JSON
-	metadataJSON, err := utils.ApplicationMetadataToJSON(metadata)
+	metadataJSON, err := utils.ApplicationMetadataToJSON(*metadata)
 	if err != nil {
 		log.Error().Err(err).Msg("error converting metadata to JSON")
-		return err
+		return nil, err
 	}
+
+
 	req := esapi.IndexRequest{
 		Index:      e.indexName,
-		DocumentID: e.CreateID(metadata),
 		Body:       strings.NewReader(metadataJSON),
 		Timeout:    0,
 		Pretty:     false,
@@ -181,30 +229,22 @@ func (e *ElasticProvider) Add(metadata entities.ApplicationMetadata) error {
 	res, err := req.Do(context.Background(), e.client)
 	if err != nil {
 		log.Error().Err(err).Msg("error adding metadata")
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
 		log.Warn().Str("err", res.Status()).Msg("Error indexing document")
-		return nerrors.NewInternalError("Error indexing document: [%s]", res.Status())
+		return nil, nerrors.NewInternalError("Error indexing document: [%s]", res.Status())
 
-	} else {
-		// Deserialize the response into a map.
-		var r map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-			log.Printf("Error parsing the response body: %s", err)
-		} else {
-			// Print the response status and indexed document version.
-			log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
-		}
 	}
 
-	return nil
+	return metadata, nil
 }
 
-// Get returns the application metadata requested
-func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.ApplicationMetadata, error) {
+// SearchByApplicationID returns the application metadata requested
+// Right now it is not used neither tested
+func (e *ElasticProvider) SearchByApplicationID(appID entities.ApplicationID) (*entities.ApplicationMetadata, error) {
 
 	var buf bytes.Buffer
 
@@ -237,7 +277,7 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 		}
 	}
 
-	var r envelopeResponse
+	var r responseWrapper
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		return nil, err
 	}
@@ -253,7 +293,6 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 	if err := json.Unmarshal(r.Hits.Hits[0].Source, &application); err != nil {
 		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
 	}
-
 
 	return &application, nil
 }
@@ -276,24 +315,34 @@ func (e *ElasticProvider) Exists(appID entities.ApplicationID) (bool, error) {
 
 }
 
-// GetByID return the application metadata requested
-func (e *ElasticProvider) GetByID(appID entities.ApplicationID) (*entities.ApplicationMetadata, error) {
-
+// Get returns the application metadata requested
+func (e *ElasticProvider) Get(catalogID string) (*entities.ApplicationMetadata, error) {
 	var buf bytes.Buffer
 
-	query := e.buildQuery(appID)
+	// Query Field
+	 query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"term": map[string]interface{}{
+					CatalogIDField: catalogID,
+			},
+		},
+	}
+
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
 		log.Err(err).Msg("Error encoding query")
+		return nil, nerrors.NewInternalErrorFrom(err, "error getting metadata by ID")
 	}
 
 	// Perform the search request.
-	var req = esapi.GetRequest{Index: e.indexName, DocumentID: e.CreateIDFromAppID(appID)}
-	res, err := req.Do(context.Background(), e.client)
+	res, err := e.client.Search(
+		e.client.Search.WithContext(context.Background()),
+		e.client.Search.WithIndex(e.indexName),
+		e.client.Search.WithBody(&buf),
+		e.client.Search.WithTrackTotalHits(true),
+	)
 	if err != nil {
 		log.Err(err).Msg("Error getting response")
-		return nil, err
 	}
-
 	defer res.Body.Close()
 
 	if res.IsError() {
@@ -308,23 +357,26 @@ func (e *ElasticProvider) GetByID(appID entities.ApplicationID) (*entities.Appli
 		}
 	}
 
-	type envelopeResponse struct {
-		ID     string          `json:"_id"`
-		Source json.RawMessage `json:"_source"`
-	}
-
-	//var r  map[string]interface{}
-	var r envelopeResponse
+	var r responseWrapper
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		log.Err(err).Msg("Error parsing the response body")
 		return nil, err
 	}
-	var application entities.ApplicationMetadata
-	if err := json.Unmarshal(r.Source, &application); err != nil {
-		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+
+	// Print the response status, number of results, and request duration.
+	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("request operation")
+
+	if r.Hits.Total.Value == 0 {
+		return nil, nerrors.NewNotFoundError("application metadata not found")
+	}
+	if r.Hits.Total.Value != 1 {
+		log.Error().Str("catalogID", catalogID).Msg("Error getting application metadata, duplicated entries")
+		return nil, nerrors.NewInternalError("Error getting application metadata, duplicated entries")
 	}
 
-	log.Debug().Interface("application", application).Msg("---")
+	var application entities.ApplicationMetadata
+	if err := json.Unmarshal(r.Hits.Hits[0].Source, &application); err != nil {
+		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+	}
 
 	return &application, nil
 

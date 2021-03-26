@@ -16,7 +16,6 @@
 package provider
 
 import (
-	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -29,18 +28,19 @@ func RunTests(provider MetadataProvider) {
 		ginkgo.It("Should be able to add an application metadata", func() {
 			app := utils.CreateApplicationMetadata()
 
-			err := provider.Add(*app)
+			returned, err := provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 
 		})
 
 		ginkgo.It("Should be able to add an application metadata twice (update)", func() {
 			app := utils.CreateApplicationMetadata()
 
-			err := provider.Add(*app)
+			_, err := provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
 
-			err = provider.Add(*app)
+			_, err = provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
 		})
 
@@ -51,31 +51,20 @@ func RunTests(provider MetadataProvider) {
 		ginkgo.It("Should be able to get an application metadata", func() {
 			app := utils.CreateApplicationMetadata()
 
-			err := provider.Add(*app)
+			returned, err := provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
 
 			// wait to be stored
 			time.Sleep(time.Second * 2)
 
-			retrieved, err := provider.Get(entities.ApplicationID{
-				Url:             app.Url,
-				Repository:      app.Repository,
-				ApplicationName: app.ApplicationName,
-				Tag:             app.Tag,
-			})
+			retrieved, err := provider.Get(returned.CatalogID)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(retrieved).ShouldNot(gomega.BeNil())
 			gomega.Expect(*retrieved).Should(gomega.Equal(*app))
 		})
 
 		ginkgo.It("Should not be able to get an application metadata if it does not exist", func() {
-			app := utils.CreateApplicationMetadata()
-			_, err := provider.Get(entities.ApplicationID{
-				Url:             app.Url,
-				Repository:      app.Repository,
-				ApplicationName: app.ApplicationName,
-				Tag:             app.Tag,
-			})
+			_, err := provider.Get("repoTest/appTest:version")
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 

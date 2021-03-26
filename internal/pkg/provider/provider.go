@@ -18,8 +18,9 @@ package provider
 
 import "github.com/napptive/catalog-manager/internal/pkg/entities"
 
+// MetadataProvider is an interface with the methods of a metadata provider must implement
 type MetadataProvider interface {
-	Add(metadata entities.ApplicationMetadata) error
-	Get(appID entities.ApplicationID) (*entities.ApplicationMetadata, error)
+	Add(metadata *entities.ApplicationMetadata) (*entities.ApplicationMetadata, error)
+	Get(appID string) (*entities.ApplicationMetadata, error)
 	Exists(appID entities.ApplicationID) (bool, error)
 }

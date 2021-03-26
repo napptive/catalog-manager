@@ -41,17 +41,15 @@ func NewHandler(manager *Manager) *Handler {
 // Add a new application in the catalog
 func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 
-	// comprobar que no tenemos varias aplicaciones en el stream
-	// mapa para los ficheros para comprobar que no los envian varias veces
+	// TODO: create a map to load the files and avoid send a file twice
 	applicationName := ""
 	var applicationFiles []*entities.FileInfo
 
 	for {
-		// https://grpc.io/docs/languages/go/basics/
+		// From https://grpc.io/docs/languages/go/basics/#server-side-streaming-rpc-1
 		request, err := server.Recv()
 		log.Debug().Interface("request", request).Msg("Add")
-		if err == io.EOF /*|| request == nil */ {
-			log.Debug().Msg("io.EOF")
+		if err == io.EOF {
 			if err := h.manager.Add(applicationName, applicationFiles); err != nil {
 				return nerrors.FromError(err).ToGRPC()
 			} else {
