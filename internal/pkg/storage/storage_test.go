@@ -75,7 +75,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 			{Path: "app_config.yaml", Data: []byte("appconf")},
 			{Path: "component1.yaml", Data: []byte("component1")},
 			{Path: "component2.yaml", Data: []byte("component2")}}
-		err := manager.StorageApplication(repo, appName, "latest", files)
+		err := manager.StoreApplication(repo, appName, "latest", files)
 		gomega.Expect(err).Should(gomega.Succeed())
 	})
 
@@ -87,10 +87,10 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 			{Path: "app_config.yaml", Data: []byte("appconf")},
 			{Path: "component1.yaml", Data: []byte("component1")},
 			{Path: "component2.yaml", Data: []byte("component2")}}
-		err := manager.StorageApplication(repo, appName, "latest", files)
+		err := manager.StoreApplication(repo, appName, "latest", files)
 		gomega.Expect(err).Should(gomega.Succeed())
 
-		err = manager.StorageApplication(repo, appName, "v0.0.1", files)
+		err = manager.StoreApplication(repo, appName, "v0.0.1", files)
 		gomega.Expect(err).Should(gomega.Succeed())
 	})
 
