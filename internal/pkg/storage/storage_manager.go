@@ -19,6 +19,7 @@ package storage
 import (
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
+	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 	"os"
 	"strings"
@@ -36,14 +37,14 @@ func NewStorageManager(basePath string) *StorageManager {
 
 func (s *StorageManager) removeDirectory(name string) error {
 	if err := os.RemoveAll(name); err != nil {
-		return err
+		return nerrors.FromError(err)
 	}
 	return nil
 }
 
 func (s *StorageManager) createDirectory(name string) error {
 	if err := os.MkdirAll(name, 0755); err != nil {
-		return err
+		return nerrors.FromError(err)
 	}
 	return nil
 }
@@ -62,13 +63,13 @@ func (s *StorageManager) CreateRepository(name string) error {
 func (s *StorageManager) RepositoryExists(name string) (bool, error) {
 	dir, err := os.Open(s.basePath)
 	if err != nil {
-		return false, err
+		return false, nerrors.FromError(err)
 	}
 	defer dir.Close()
 
 	repositories, err := dir.Readdirnames(0)
 	if err != nil {
-		return false, err
+		return false, nerrors.FromError(err)
 	}
 
 	for _, repo := range repositories {
@@ -91,8 +92,8 @@ func (s *StorageManager) RemoveRepository(name string) error {
 	return nil
 }
 
-// StorageApplication save all files in their corresponding path
-func (s *StorageManager) StorageApplication(repo string, name string, version string, files []*entities.FileInfo) error {
+// StoreApplication save all files in their corresponding path
+func (s *StorageManager) StoreApplication(repo string, name string, version string, files []*entities.FileInfo) error {
 	// 1.- Remove the old application
 	// baseUrl/repo/application/tag
 	dir := fmt.Sprintf("%s/%s/%s/%s", s.basePath, repo, name, version)
@@ -123,17 +124,19 @@ func (s *StorageManager) StorageApplication(repo string, name string, version st
 		if err != nil {
 			log.Err(err).Str("application", dir).Msg("Error storing application file, unable to create the file")
 			// TODO: remove all stored
-			return err
+			return nerrors.FromError(err)
 		}
 		defer file.Close()
 
 		if _, err = file.Write(appFile.Data); err != nil {
 			log.Err(err).Str("application", dir).Msg("Error storing application file, unable to save the file")
-			return err
+			// TODO: when get/list applications are implemented,
+			// test all cases where the add metadata fails and see if it should be rolled back
+			return nerrors.FromError(err)
 		}
 
 		if err := file.Sync(); err != nil {
-			return err
+			return nerrors.FromError(err)
 		}
 	}
 
@@ -142,10 +145,10 @@ func (s *StorageManager) StorageApplication(repo string, name string, version st
 
 // ApplicationExists checks if an application exists
 func (s *StorageManager) ApplicationExists(name string) (bool, error) {
-	return false, nil
+	return false, nerrors.NewUnimplementedError("not implemented yet!")
 }
 
 // RemoveApplication removes an application, returns an error if it does not exist
 func (s *StorageManager) RemoveApplication(name string) (bool, error) {
-	return false, nil
+	return false, nerrors.NewUnimplementedError("not implemented yet!")
 }
