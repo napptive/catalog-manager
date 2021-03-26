@@ -52,6 +52,7 @@ func (c *CatalogManager) IsValid() error {
 }
 
 func (c *CatalogManager) Print() {
+         log.Info().Str("version", c.Version).Str("commit", c.Commit).Msg("Application config")
 	log.Info().Uint("Port", c.Port).Msg("grpc Port")
 	log.Info().Str("ElasticAddress", c.ElasticAddress).Str("Index", c.Index).Msg("Elastic Search Address")
 	log.Info().Str("RepositoryPath", c.RepositoryPath).Msg("Repository base path")
