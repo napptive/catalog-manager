@@ -39,10 +39,10 @@ func ApplicationMetadataToJSON(metadata entities.ApplicationMetadata) (string, e
 }
 
 // getFile looks for a file by name in the array retrieved and returns the data or nil if the file does not exist
-func GetFile(fileName string, files []*entities.FileInfo) []byte {
+func GetFile(relativeFileName string, files []*entities.FileInfo) []byte {
 
 	for _, file := range files {
-		if strings.HasSuffix(strings.ToLower(file.Path), strings.ToLower(fileName)) {
+		if strings.HasSuffix(strings.ToLower(file.Path), strings.ToLower(relativeFileName)) {
 			return file.Data
 		}
 	}
