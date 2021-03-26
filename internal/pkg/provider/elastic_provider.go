@@ -254,10 +254,6 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
 	}
 
-	// Print the ID and document source for each hit.
-	for _, hit := range r.Hits.Hits {
-		log.Debug().Str("ID", hit.ID).Str("source", string(hit.Source)).Msg("Application")
-	}
 
 	return &application, nil
 }
