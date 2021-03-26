@@ -67,7 +67,6 @@ func NewElasticProvider(index string, address string) (*ElasticProvider, error) 
 		Addresses: []string{address},
 	}
 	es, err := elasticsearch.NewClient(conf)
-	//es, err := elasticsearch.NewDefaultClient()
 	if err != nil {
 		log.Err(err).Msg("error creating elastic client")
 		return nil, err
