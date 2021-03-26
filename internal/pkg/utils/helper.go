@@ -25,7 +25,7 @@ import (
 
 // check file extension and returns if is a yaml file
 func IsYamlFile(filePath string) bool {
-	return strings.Contains(filePath, ".yaml")
+	return strings.Contains(filePath, ".yaml") || strings.Contains(filePath, ".yml")
 }
 
 // ApplicationMetadataToJSON converts an ApplicationMetadata struct into a JSON
