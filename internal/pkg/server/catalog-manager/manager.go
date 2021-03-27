@@ -152,6 +152,10 @@ func (m *Manager) Add(name string, files []*entities.FileInfo) error {
 	// 2.- store the files into the repository storage
 	if err = m.stManager.StoreApplication(appID.Repository, appID.ApplicationName, appID.Tag, files); err != nil {
 		log.Err(err).Str("name", name).Msg("Error storing application")
+		// rollback operation
+		if rErr := m.provider.Remove(appID); rErr != nil {
+			log.Err(err).Interface("appID", appID).Msg("Error in rollback operation, metadata can not be removed")
+		}
 		return err
 	}
 

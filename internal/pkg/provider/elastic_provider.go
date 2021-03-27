@@ -34,13 +34,13 @@ import (
 
 const (
 	// RepositoryField with the name of the field where we store the name of the repository
-	RepositoryField  = "Repository"
+	RepositoryField = "Repository"
 	// ApplicationField with the name of the field where we store the name of the application
 	ApplicationField = "ApplicationName"
 	// TagField with the name of the field where we store the name of tag/version
-	TagField         = "Tag"
+	TagField = "Tag"
 	// CatalogIDField with the name of the field where we store the internal ID
-	CatalogIDField   = "CatalogID"
+	CatalogIDField = "CatalogID"
 )
 
 // mapping with the elastic-schema
@@ -71,6 +71,23 @@ type responseWrapper struct {
 			Sort       []interface{}   `json:"sort"`
 		}
 	}
+}
+
+// deleteResponseWrapper is an struct used to load a delete result
+type deleteResponseWrapper struct {
+		Batches           int
+		Deleted           int
+		Noops             int
+		Retries           struct {
+			Bulk   int
+			Search int
+		}
+		ThrottledMllis       int  `json:"throttled_millis"`
+		ThrottledUntilMillis int  `json:"throttled_until_millis"`
+		TimedOut             bool `json:"timed_out"`
+		Took                 int
+		Total                int
+		VersionConflicts     int `json:"version_conflicts"`
 }
 
 type ElasticProvider struct {
@@ -215,7 +232,6 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationMetadata) (*entities
 		return nil, err
 	}
 
-
 	req := esapi.IndexRequest{
 		Index:      e.indexName,
 		Body:       strings.NewReader(metadataJSON),
@@ -279,11 +295,11 @@ func (e *ElasticProvider) SearchByApplicationID(appID entities.ApplicationID) (*
 
 	var r responseWrapper
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		return nil, err
+		return nil, nerrors.FromError(err)
 	}
 
 	// Print the response status, number of results, and request duration.
-	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("request operation")
+	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("SearchByApplicationID operation")
 
 	if r.Hits.Total.Value == 0 {
 		return nil, nerrors.NewNotFoundError("application metadata not found")
@@ -298,8 +314,8 @@ func (e *ElasticProvider) SearchByApplicationID(appID entities.ApplicationID) (*
 }
 
 // Exists checks if the application Metadata already exists
-func (e *ElasticProvider) Exists(appID entities.ApplicationID) (bool, error) {
-	res, err := e.client.Exists(e.indexName, e.CreateIDFromAppID(appID))
+func (e *ElasticProvider) Exists(appID *entities.ApplicationID) (bool, error) {
+	res, err := e.client.Exists(e.indexName, e.CreateIDFromAppID(*appID))
 	if err != nil {
 		return false, err
 	}
@@ -316,14 +332,15 @@ func (e *ElasticProvider) Exists(appID entities.ApplicationID) (bool, error) {
 }
 
 // Get returns the application metadata requested
-func (e *ElasticProvider) Get(catalogID string) (*entities.ApplicationMetadata, error) {
+func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.ApplicationMetadata, error) {
+	catalogID := e.CreateIDFromAppID(appID)
 	var buf bytes.Buffer
 
 	// Query Field
-	 query := map[string]interface{}{
+	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"term": map[string]interface{}{
-					CatalogIDField: catalogID,
+				CatalogIDField: catalogID,
 			},
 		},
 	}
@@ -359,11 +376,11 @@ func (e *ElasticProvider) Get(catalogID string) (*entities.ApplicationMetadata, 
 
 	var r responseWrapper
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		return nil, err
+		return nil, nerrors.FromError(err)
 	}
 
 	// Print the response status, number of results, and request duration.
-	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("request operation")
+	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("Get operation")
 
 	if r.Hits.Total.Value == 0 {
 		return nil, nerrors.NewNotFoundError("application metadata not found")
@@ -380,4 +397,57 @@ func (e *ElasticProvider) Get(catalogID string) (*entities.ApplicationMetadata, 
 
 	return &application, nil
 
+}
+
+func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
+
+	catalogID := e.CreateIDFromAppID(*appID)
+	var buf bytes.Buffer
+
+	// Query Field
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"term": map[string]interface{}{
+				CatalogIDField: catalogID,
+			},
+		},
+	}
+
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		log.Err(err).Msg("Error deleting metadata. Error encoding query")
+		return nerrors.NewInternalErrorFrom(err, "error deleting metadata by ID")
+	}
+
+	req := esapi.DeleteByQueryRequest{
+		Index: []string{e.indexName},
+		Body:  strings.NewReader(buf.String()),
+	}
+
+	// Perform the request with the client.
+	res, err := req.Do(context.Background(), e.client)
+	if err != nil {
+		log.Err(err).Msg("Error deleting metadata")
+		return nerrors.NewInternalErrorFrom(err, "error deleting metadata by ID")
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		log.Err(err).Str("status", res.Status()).Msg("Error deleting metadata")
+		return nerrors.NewInternalError("error deleting metadata by ID [%s]", res.Status())
+	}
+
+		var d deleteResponseWrapper
+		if err := json.NewDecoder(res.Body).Decode(&d); err != nil {
+			return nerrors.FromError(err)
+		}
+
+		if d.Deleted == 0 {
+			return nerrors.NewNotFoundError("unable to delete the application metadata")
+		}
+
+		// Print the response status, number of results, and request duration.
+		log.Debug().Str("Status", res.Status()).Int("total", d.Total).Int("took(ms)", d.Took).Msg("Delete operation")
+
+
+	return nil
 }

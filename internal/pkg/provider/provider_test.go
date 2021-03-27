@@ -16,6 +16,7 @@
 package provider
 
 import (
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -55,19 +56,58 @@ func RunTests(provider MetadataProvider) {
 			gomega.Expect(err).Should(gomega.Succeed())
 
 			// wait to be stored
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second)
 
-			retrieved, err := provider.Get(returned.CatalogID)
+			retrieved, err := provider.Get(entities.ApplicationID{
+				Repository:      returned.Repository,
+				ApplicationName: returned.ApplicationName,
+				Tag:             returned.Tag,
+			})
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(retrieved).ShouldNot(gomega.BeNil())
 			gomega.Expect(*retrieved).Should(gomega.Equal(*app))
 		})
 
 		ginkgo.It("Should not be able to get an application metadata if it does not exist", func() {
-			_, err := provider.Get("repoTest/appTest:version")
+			_, err := provider.Get(entities.ApplicationID{
+				Repository:      "repoTest",
+				ApplicationName: "applName",
+				Tag:             "",
+			})
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 
+	})
+
+	ginkgo.Context("Removing application metadata", func() {
+		ginkgo.It("Should be able to delete an application metadata", func() {
+			app := utils.CreateApplicationMetadata()
+
+			returned, err := provider.Add(app)
+			gomega.Expect(err).Should(gomega.Succeed())
+
+			// wait to be stored
+			time.Sleep(time.Second)
+
+			err = provider.Remove(&entities.ApplicationID{
+				Repository:      returned.Repository,
+				ApplicationName: returned.ApplicationName,
+				Tag:             returned.Tag,
+			})
+			gomega.Expect(err).Should(gomega.Succeed())
+
+		})
+		ginkgo.It("Should not be able to delete an application metadata if it does not exist", func() {
+			app := utils.CreateApplicationMetadata()
+
+			err := provider.Remove(&entities.ApplicationID{
+				Repository:      app.Repository,
+				ApplicationName: app.ApplicationName,
+				Tag:             app.Tag,
+			})
+			gomega.Expect(err).ShouldNot(gomega.Succeed())
+
+		})
 	})
 
 }

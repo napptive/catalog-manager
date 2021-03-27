@@ -36,7 +36,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 
 	RunTests(provider)
 
-	ginkgo.FIt("Getting an application metadata by Search Method", func() {
+	ginkgo.It("Getting an application metadata by Search Method", func() {
 		app := utils.CreateApplicationMetadata()
 
 		returned, err := provider.Add(app)
@@ -44,7 +44,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		gomega.Expect(returned).ShouldNot(gomega.BeNil())
 
 		// wait to be stored
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second)
 
 		retrieved, err := provider.SearchByApplicationID(entities.ApplicationID{
 			Repository:      returned.Repository,
