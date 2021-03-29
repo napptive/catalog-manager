@@ -30,8 +30,8 @@ type CatalogManager struct {
 	Index string
 	// RepositoryPath with the path of the repository
 	RepositoryPath string
-	//RepositoryUrl with the url of the repository (napptive repository must be nil)
-	RepositoryUrl string
+	//CatalogUrl with the url of the repository (napptive repository must be nil)
+	CatalogUrl string
 }
 
 func (c *CatalogManager) IsValid() error {
@@ -54,5 +54,6 @@ func (c *CatalogManager) IsValid() error {
 func (c *CatalogManager) Print() {
 	log.Info().Uint("Port", c.Port).Msg("grpc Port")
 	log.Info().Str("ElasticAddress", c.ElasticAddress).Str("Index", c.Index).Msg("Elastic Search Address")
+	log.Info().Str("CatalogUrl", c.CatalogUrl).Msg("Catalog URL")
 	log.Info().Str("RepositoryPath", c.RepositoryPath).Msg("Repository base path")
 }

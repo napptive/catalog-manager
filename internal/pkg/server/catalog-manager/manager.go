@@ -38,17 +38,22 @@ const (
 	appMetadataKind           = "ApplicationMetadata"
 )
 
-type Manager struct {
-	stManager *storage.StorageManager
+type Manager interface {
+	Add(name string, files []*entities.FileInfo) error
+	Download (request *grpc_catalog_go.DownloadApplicationRequest) ([]*entities.FileInfo, error)
+}
+
+type manager struct {
+	stManager storage.StorageManager
 	provider  provider.MetadataProvider
-	// repositoryURL is the URL of the repository managed by this catalog
-	repositoryURL string
+	// catalogURL is the URL of the repository managed by this catalog
+	catalogURL string
 }
 
 // NewManager returns a new object of manager
-func NewManager(manager *storage.StorageManager, provider provider.MetadataProvider) *Manager {
-	return &Manager{
-		stManager: manager,
+func NewManager(stManager storage.StorageManager, provider provider.MetadataProvider) Manager {
+	return &manager{
+		stManager: stManager,
 		provider:  provider,
 	}
 }
@@ -56,7 +61,7 @@ func NewManager(manager *storage.StorageManager, provider provider.MetadataProvi
 // decomposeRepositoryName gets the url, repo, application and version from repository name
 // and returns the url, the applicationID and an error it something fails
 // [repoURL/]repoName/appName[:tag]
-func (m *Manager) decomposeRepositoryName(name string) (string, *entities.ApplicationID, error) {
+func (m *manager) decomposeRepositoryName(name string) (string, *entities.ApplicationID, error) {
 	var version string
 	var applicationName string
 	var repoName string
@@ -95,7 +100,7 @@ func (m *Manager) decomposeRepositoryName(name string) (string, *entities.Applic
 }
 
 // getApplicationMetadataFile looks for the application metadata yaml file
-func (m *Manager) getApplicationMetadataFile(files []*entities.FileInfo) []byte {
+func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) []byte {
 
 	for _, file := range files {
 		// 1.- the files must have .yaml extension
@@ -112,7 +117,7 @@ func (m *Manager) getApplicationMetadataFile(files []*entities.FileInfo) []byte 
 }
 
 // Add Adds a new application in the repository.
-func (m *Manager) Add(name string, files []*entities.FileInfo) error {
+func (m *manager) Add(name string, files []*entities.FileInfo) error {
 
 	// TODO: here, validate the application
 
@@ -127,7 +132,7 @@ func (m *Manager) Add(name string, files []*entities.FileInfo) error {
 
 	// check that the url of the application matches the url of the catalog
 	// we avoid including applications in catalogs that do not correspond
-	if url != m.repositoryURL {
+	if url != m.catalogURL {
 		log.Err(err).Str("name", name).Msg("Error adding application. The application url does not match the one in the catalog")
 		return nerrors.NewInternalError("The application url does not match the one in the catalog")
 	}
@@ -164,7 +169,7 @@ func (m *Manager) Add(name string, files []*entities.FileInfo) error {
 }
 
 // Download returns the files of an application
-func (m *Manager) Download (request *grpc_catalog_go.DownloadApplicationRequest) ([]*entities.FileInfo, error) {
+func (m *manager) Download (request *grpc_catalog_go.DownloadApplicationRequest) ([]*entities.FileInfo, error) {
 
 	_, appID, err := m.decomposeRepositoryName(request.ApplicationName)
 	if err != nil {

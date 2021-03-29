@@ -29,12 +29,12 @@ import (
 const appAddedMsg = "Application added successfully"
 
 type Handler struct {
-	manager *Manager
+	manager Manager
 }
 
 // TODO: Check update/get concurrency
 
-func NewHandler(manager *Manager) *Handler {
+func NewHandler(manager Manager) *Handler {
 	return &Handler{manager: manager}
 }
 
