@@ -27,6 +27,7 @@ COMMIT=$(shell git log -1 --pretty=format:"%H")
 # Tools
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
+GO_GENERATE=$(GO_CMD) generate
 GO_TEST=$(GO_CMD) test
 GO_LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X=main.Commit=$(COMMIT)"
 
@@ -59,6 +60,12 @@ clean:
 test:
 	@echo "Executing golang tests"
 	@$(GO_TEST) -v ./...
+
+.PHONY: generate
+# Generate the code objects.
+generate:
+	@echo "Generating golang extra files"
+	@$(GO_GENERATE) -v ./...
 
 .PHONY: coverage
 # Create a coverage report for all golang files in the curdir
