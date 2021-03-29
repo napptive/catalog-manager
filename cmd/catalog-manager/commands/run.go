@@ -41,4 +41,8 @@ var runCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.Flags().UintVar(&cfg.Port, "port", 7060, "gRPC Port to launch the Catalog-manager")
+	runCmd.Flags().StringVar(&cfg.ElasticAddress, "elasticAddress", "http://localhost:9200", "address to connect to Elastic Search")
+	runCmd.Flags().StringVar(&cfg.Index, "index", "napptive", "Elastic Index to store the repositories")
+	runCmd.Flags().StringVar(&cfg.RepositoryPath, "repositoryPath", "/napptive/repository/", "base path to store the repositories")
+	runCmd.Flags().StringVar(&cfg.RepositoryPath, "repositoryUrl", "", "Repository URL")
 }

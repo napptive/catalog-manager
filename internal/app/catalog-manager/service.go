@@ -19,6 +19,12 @@ package catalog_manager
 import (
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
+	"github.com/napptive/catalog-manager/internal/pkg/provider"
+	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
+	"github.com/napptive/catalog-manager/internal/pkg/storage"
+
+	"github.com/napptive/grpc-catalog-go"
+
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -40,6 +46,28 @@ func NewService(cfg config.Config) *Service {
 	}
 }
 
+// Providers with all the providers needed
+type Providers struct {
+	// elasticProvider with a elastic provider to store metadata
+	elasticProvider provider.MetadataProvider
+	// repoStorage to store the applications
+	repoStorage *storage.StorageManager
+}
+
+// getProviders creates and initializes all the providers
+func (s *Service) getProviders() (*Providers, error) {
+	pr, err := provider.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress)
+	if err != nil {
+		return nil, err
+	}
+	err = pr.Init()
+	if err != nil {
+		return nil, err
+	}
+	return &Providers{elasticProvider: pr,
+		repoStorage: storage.NewStorageManager(s.cfg.RepositoryPath)}, nil
+}
+
 // Run method starting the internal components and launching the service
 func (s *Service) Run() {
 	if err := s.cfg.IsValid(); err != nil {
@@ -50,8 +78,19 @@ func (s *Service) Run() {
 
 	listener := s.getNetListener(s.cfg.Port)
 
+	providers, err := s.getProviders()
+	if err != nil {
+		log.Fatal().Err(err).Msg("error creating providers")
+	}
+
+	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider)
+	handler := catalog_manager.NewHandler(manager)
+
 	// create gRPC server
 	gRPCServer := grpc.NewServer()
+
+	grpc_catalog_go.RegisterCatalogServer(gRPCServer, handler)
+
 	if s.cfg.Debug {
 		// Register reflection service on gRPC server.
 		reflection.Register(gRPCServer)
