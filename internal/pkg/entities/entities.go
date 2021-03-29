@@ -64,3 +64,10 @@ func NewFileInfo(info *grpc_catalog_go.FileInfo) *FileInfo{
 		Data: info.Data,
 	}
 }
+
+func (fi *FileInfo) ToGRPC () *grpc_catalog_go.FileInfo {
+	return &grpc_catalog_go.FileInfo{
+		Path: fi.Path,
+		Data: fi.Data,
+	}
+}

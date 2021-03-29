@@ -21,6 +21,7 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/provider"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
+	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 	"strings"
@@ -160,4 +161,15 @@ func (m *Manager) Add(name string, files []*entities.FileInfo) error {
 	}
 
 	return nil
+}
+
+// Download returns the files of an application
+func (m *Manager) Download (request *grpc_catalog_go.DownloadApplicationRequest) ([]*entities.FileInfo, error) {
+
+	_, appID, err := m.decomposeRepositoryName(request.ApplicationName)
+	if err != nil {
+		return nil, nerrors.NewFailedPreconditionErrorFrom(err, "unable to download the application")
+	}
+
+	return m.stManager.GetApplication(appID.Repository, appID.ApplicationName, appID.Tag)
 }

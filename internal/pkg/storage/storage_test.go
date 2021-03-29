@@ -21,6 +21,7 @@ import (
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
+	"os"
 	"syreclabs.com/go/faker"
 )
 
@@ -31,7 +32,10 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		return
 	}
 
-	var basePath = "/tmp/repositories"
+	var basePath = os.Getenv("REPO_BASE_PATH")
+	if basePath == "" {
+		ginkgo.Fail("missing environment variables [REPO_BASE_PATH]")
+	}
 
 	ginkgo.It("should be able to create a repository", func() {
 		manager := NewStorageManager(basePath)
@@ -94,4 +98,21 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		gomega.Expect(err).Should(gomega.Succeed())
 	})
 
+	ginkgo.It("Should be able to find a repository", func () {
+		manager := NewStorageManager(basePath)
+		repo := faker.Name().FirstName()
+		appName := faker.App().Name()
+		files := []*entities.FileInfo{
+			{Path: "app_config.yaml", Data: []byte("appconf")},
+			{Path: "component1.yaml", Data: []byte("component1")},
+			{Path: "component2.yaml", Data: []byte("component2")}}
+		err := manager.StoreApplication(repo, appName, "latest", files)
+		gomega.Expect(err).Should(gomega.Succeed())
+
+		returned, err := manager.GetApplication(repo, appName, "latest")
+		gomega.Expect(err).Should(gomega.Succeed())
+		gomega.Expect(returned).ShouldNot(gomega.BeNil())
+		gomega.Expect(returned).ShouldNot(gomega.BeEmpty())
+		gomega.Expect(len(returned)).Should(gomega.Equal(len(files)))
+	})
 })

@@ -21,6 +21,7 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
+	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -109,13 +110,12 @@ func (s *StorageManager) StoreApplication(repo string, name string, version stri
 	}
 
 	// 3.- Create the files and storage them
-	for _, appFile := range files{
+	for _, appFile := range files {
 		// Check if the file is in a new directory
 		splited := strings.Split(appFile.Path, "/")
 		// create directory
 		if len(splited) > 1 {
 			pp := splited[:len(splited)-1]
-			log.Debug().Str("new directory", fmt.Sprintf("%s/%s", dir, strings.Join(pp, "/"))).Msg("+++++")
 			if err := s.createDirectory(fmt.Sprintf("%s/%s", dir, strings.Join(pp, "/"))); err != nil {
 				return err
 			}
@@ -151,4 +151,44 @@ func (s *StorageManager) ApplicationExists(name string) (bool, error) {
 // RemoveApplication removes an application, returns an error if it does not exist
 func (s *StorageManager) RemoveApplication(name string) (bool, error) {
 	return false, nerrors.NewUnimplementedError("not implemented yet!")
+}
+
+func (s *StorageManager) GetApplication(repo string, name string, version string) ([]*entities.FileInfo, error) {
+
+	// Find the application directory
+	path := fmt.Sprintf("%s/%s/%s/%s", s.basePath, repo, name, version)
+	return s.loadAppFile(path)
+}
+
+func (s *StorageManager) loadAppFile(path string) ([]*entities.FileInfo, error) {
+
+	fileInfo, err := ioutil.ReadDir(path)
+	// TODO: ver como puedo identificar un errorNotFound de otro
+	if err != nil {
+		return nil, nerrors.NewNotFoundErrorFrom(err, "Application not found")
+	}
+
+	var filesToReturn []*entities.FileInfo
+	for _, file := range fileInfo {
+		if file.IsDir() {
+			files, err := s.loadAppFile(fmt.Sprintf("%s/%s", path, file.Name()))
+			if err != nil {
+				return nil, err
+			}
+			filesToReturn = append(filesToReturn, files...)
+		} else {
+			newPath := fmt.Sprintf("%s/%s", path, file.Name())
+			data, err := ioutil.ReadFile(newPath)
+			if err != nil {
+				return nil, nerrors.NewInternalErrorFrom(err, "Error reading file")
+			}
+			filesToReturn = append(filesToReturn, &entities.FileInfo{
+				Path: newPath,
+				Data: data,
+			})
+		}
+
+	}
+
+	return filesToReturn, nil
 }
