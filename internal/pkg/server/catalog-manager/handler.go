@@ -95,7 +95,7 @@ func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, 
 
 	for _, file := range files {
 		if err := server.Send(file.ToGRPC()); err != nil {
-			return nerrors.NewInternalErrorFrom(err, "Unable to download the file").ToGRPC()
+			return nerrors.NewInternalErrorFrom(err, "unable to send the file").ToGRPC()
 		}
 	}
 
