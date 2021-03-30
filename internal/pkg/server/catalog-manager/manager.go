@@ -44,6 +44,10 @@ type Manager interface {
 	Download(appName string) ([]*entities.FileInfo, error)
 	// Remove removes an application from the repository
 	Remove(appName string) error
+	// Get returns a given application metadata
+	Get(appName string) (*entities.ApplicationMetadata, error)
+	// List returns a list of applications (without metadata and readme content)
+	List () ([]*entities.ApplicationMetadata, error)
 }
 
 type manager struct {
@@ -211,4 +215,20 @@ func (m *manager) Remove(appName string) error {
 	}
 
 	return nil
+}
+
+// Get returns the application metadata for a given application
+func (m *manager) Get(appName string) (*entities.ApplicationMetadata, error) {
+
+	_, appID, err := m.decomposeRepositoryName(appName)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.provider.Get(*appID)
+}
+
+// List returns a list of applications (without metadata and readme content)
+func (m *manager) List () ([]*entities.ApplicationMetadata, error) {
+	return m.provider.List()
 }

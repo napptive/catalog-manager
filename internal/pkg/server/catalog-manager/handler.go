@@ -120,9 +120,34 @@ func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApp
 
 // List returns a list with all the applications
 func (h *Handler) List(ctx context.Context, request *grpc_catalog_common_go.EmptyRequest) (*grpc_catalog_go.ApplicationList, error){
-	return nil, nerrors.NewUnimplementedError("not implemented yet!")
+	returned, err := h.manager.List()
+	if err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	summaryList := make ([]*grpc_catalog_go.ApplicationSummary, 0)
+	for _, app := range returned {
+		summaryList = append(summaryList, app.ToApplicationSummary())
+	}
+	return &grpc_catalog_go.ApplicationList{Applications: summaryList}, nil
+
 }
+
 // Info returns the detail of a given application
 func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplicationRequest) (*grpc_catalog_go.InfoApplicationResponse, error) {
-	return nil, nerrors.NewUnimplementedError("not implemented yet!")
+	if err := request.Validate(); err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	retrieved, err := h.manager.Get(request.ApplicationName)
+	if err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+	return &grpc_catalog_go.InfoApplicationResponse{
+		RepositoryName:  retrieved.Repository,
+		ApplicationName: retrieved.ApplicationName,
+		Tag:             retrieved.Tag,
+		MedataFile:      []byte(retrieved.Metadata),
+		AppConfFile:     []byte(retrieved.Readme),
+	}, nil
 }

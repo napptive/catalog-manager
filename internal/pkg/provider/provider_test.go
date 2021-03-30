@@ -20,6 +20,7 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
+	"syreclabs.com/go/faker"
 	"time"
 )
 
@@ -110,4 +111,63 @@ func RunTests(provider MetadataProvider) {
 		})
 	})
 
+	ginkgo.Context("Getting an application metadata", func() {
+		ginkgo.It("should be able to get an application metadata", func() {
+			app := utils.CreateApplicationMetadata()
+
+			returned, err := provider.Add(app)
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
+
+			// wait
+			time.Sleep(time.Second)
+
+			retrieved, err := provider.Get(entities.ApplicationID{
+				Repository:      app.Repository,
+				ApplicationName: app.ApplicationName,
+				Tag:             app.Tag,
+			})
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(retrieved).ShouldNot(gomega.BeNil())
+			gomega.Expect(returned.CatalogID).Should(gomega.Equal(retrieved.CatalogID))
+		})
+		ginkgo.It("should not be able to return a non existing application metadata", func() {
+			app := utils.CreateApplicationMetadata()
+
+			_, err := provider.Get(entities.ApplicationID{
+				Repository:      app.Repository,
+				ApplicationName: app.ApplicationName,
+				Tag:             app.Tag,
+			})
+			gomega.Expect(err).ShouldNot(gomega.Succeed())
+		})
+
+	})
+
+	ginkgo.Context("Listing applications", func () {
+		ginkgo.It("Should be able to list applications", func () {
+			app := utils.CreateApplicationMetadata()
+
+			for i:=0; i<5; i++ {
+				app.Tag = faker.App().Version()
+				returned, err := provider.Add(app)
+				gomega.Expect(err).Should(gomega.Succeed())
+				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
+			}
+			time.Sleep(time.Second)
+
+			listRetrieved, err := provider.List()
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(listRetrieved).ShouldNot(gomega.BeEmpty())
+			gomega.Expect(len(listRetrieved)).Should(gomega.Equal(5))
+
+
+		})
+		ginkgo.It("Should be able to list an empty list of applications", func () {
+
+			listRetrieved, err := provider.List()
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(listRetrieved).Should(gomega.BeEmpty())
+		})
+	})
 }

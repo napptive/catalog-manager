@@ -35,6 +35,16 @@ type ApplicationMetadata struct {
 	MetadataName string
 }
 
+
+func (a *ApplicationMetadata) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary {
+	return &grpc_catalog_go.ApplicationSummary{
+		RepositoryName:  a.Repository,
+		ApplicationName: a.ApplicationName,
+		Tag:             a.Tag,
+		MetadataName:    a.MetadataName,
+	}
+}
+
 // ApplicationID with the application identifier (URL-Repo-AppName-tag)
 // these four fields must be unique
 type ApplicationID struct {

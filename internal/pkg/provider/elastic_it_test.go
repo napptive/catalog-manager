@@ -25,11 +25,11 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 	provider, err := NewElasticProvider(index, "http://localhost:9200")
 	gomega.Expect(err).Should(gomega.Succeed())
 
-	ginkgo.BeforeSuite(func() {
+	ginkgo.BeforeEach(func() {
 		err := provider.Init()
 		gomega.Expect(err).Should(gomega.Succeed())
 	})
-	ginkgo.AfterSuite(func() {
+	ginkgo.AfterEach(func() {
 		err := provider.DeleteIndex()
 		gomega.Expect(err).Should(gomega.Succeed())
 	})

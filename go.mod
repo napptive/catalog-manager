@@ -10,6 +10,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/napptive/grpc-catalog-common-go v0.1.0
 	github.com/napptive/grpc-catalog-go v0.5.0
+	github.com/napptive/mockup-generator v1.0.0
 	github.com/napptive/nerrors v1.0.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/onsi/ginkgo v1.15.0

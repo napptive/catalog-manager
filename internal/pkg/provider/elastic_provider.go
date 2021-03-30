@@ -451,3 +451,48 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 
 	return nil
 }
+
+// List returns all the applications stored
+func (e *ElasticProvider)List () ([]*entities.ApplicationMetadata, error) {
+	// Perform the search request.
+	res, err := e.client.Search(
+		e.client.Search.WithContext(context.Background()),
+		e.client.Search.WithIndex(e.indexName),
+		e.client.Search.WithTrackTotalHits(true),
+	)
+	if err != nil {
+		log.Err(err).Msg("Error getting response")
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		var e map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+			log.Err(err).Msg("Error parsing the response body")
+			return nil, nerrors.NewInternalError("Error getting application. Error parsing the response body")
+		} else {
+			// Print the response status and error information.
+			log.Err(err).Str("status", res.Status()).Msg("error")
+			return nil, nerrors.NewInternalError(res.Status())
+		}
+	}
+
+	var r responseWrapper
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, nerrors.FromError(err)
+	}
+
+	// Print the response status, number of results, and request duration.
+	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("Get operation")
+
+	applications := make([]*entities.ApplicationMetadata, 0)
+	for _, app := range r.Hits.Hits {
+		var application entities.ApplicationMetadata
+		if err := json.Unmarshal(app.Source, &application); err != nil {
+			return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+		}
+		applications = append(applications, &application)
+	}
+	return applications, nil
+
+}
