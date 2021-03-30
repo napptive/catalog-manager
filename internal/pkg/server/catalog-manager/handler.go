@@ -91,7 +91,6 @@ func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, 
 	if err != nil {
 		return nerrors.FromError(err).ToGRPC()
 	}
-	log.Debug().Interface("files", files).Msg("Files returned")
 
 	for _, file := range files {
 		if err := server.Send(file.ToGRPC()); err != nil {
