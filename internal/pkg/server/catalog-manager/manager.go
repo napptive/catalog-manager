@@ -31,16 +31,17 @@ const (
 	// defaultVersion contains the default version, when a user does not fill the version, defaultVersion is used
 	defaultVersion = "latest"
 	// readmeFile with the name of the readme file
-	readmeFile     = "readme.md"
+	readmeFile = "readme.md"
 	// apiMetadataVersion with the version of the metadata entity
-	apiMetadataVersion     = "core.oam.dev/v1alpha1"
+	apiMetadataVersion = "core.oam.dev/v1alpha1"
 	// appMetadataKind with the kind of the metadata entity
-	appMetadataKind           = "ApplicationMetadata"
+	appMetadataKind = "ApplicationMetadata"
 )
 
 type Manager interface {
 	Add(name string, files []*entities.FileInfo) error
-	Download (request *grpc_catalog_go.DownloadApplicationRequest) ([]*entities.FileInfo, error)
+	Download(request *grpc_catalog_go.DownloadApplicationRequest) ([]*entities.FileInfo, error)
+	Remove(appName string) error
 }
 
 type manager struct {
@@ -169,7 +170,7 @@ func (m *manager) Add(name string, files []*entities.FileInfo) error {
 }
 
 // Download returns the files of an application
-func (m *manager) Download (request *grpc_catalog_go.DownloadApplicationRequest) ([]*entities.FileInfo, error) {
+func (m *manager) Download(request *grpc_catalog_go.DownloadApplicationRequest) ([]*entities.FileInfo, error) {
 
 	_, appID, err := m.decomposeRepositoryName(request.ApplicationName)
 	if err != nil {
@@ -177,4 +178,29 @@ func (m *manager) Download (request *grpc_catalog_go.DownloadApplicationRequest)
 	}
 
 	return m.stManager.GetApplication(appID.Repository, appID.ApplicationName, appID.Tag)
+}
+
+func (m *manager) Remove(appName string) error {
+
+	// - Validate the appName
+	_, appID, err := m.decomposeRepositoryName(appName)
+	if err != nil {
+		return nerrors.NewFailedPreconditionErrorFrom(err, "unable to remove application, wrong name")
+	}
+
+	// - Remove from metadata provider
+	err = m.provider.Remove(appID)
+	if err != nil {
+		log.Err(err).Str("appName", appName).Msg("Unable to remove application metadata")
+		return err
+	}
+
+	// - Remove from storage
+	err = m.stManager.RemoveApplication(appID.Repository, appID.ApplicationName, appID.Tag)
+	if err != nil {
+		log.Err(err).Str("appName", appName).Msg("Unable to remove application metadata")
+		return err
+	}
+
+	return nil
 }

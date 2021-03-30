@@ -115,4 +115,64 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		gomega.Expect(returned).ShouldNot(gomega.BeEmpty())
 		gomega.Expect(len(returned)).Should(gomega.Equal(len(files)))
 	})
+
+	ginkgo.It("Should be able to check if an application exists", func() {
+		manager := NewStorageManager(basePath)
+		repo := faker.Name().FirstName()
+		appName := faker.App().Name()
+		version := "latest"
+		files := []*entities.FileInfo{
+			{Path: "app_config.yaml", Data: []byte("appconf")},
+			{Path: "component1.yaml", Data: []byte("component1")},
+			{Path: "component2.yaml", Data: []byte("component2")}}
+		err := manager.StoreApplication(repo, appName, version, files)
+		gomega.Expect(err).Should(gomega.Succeed())
+
+		exists, err := manager.ApplicationExists(repo, appName, version)
+		gomega.Expect(err).Should(gomega.Succeed())
+		gomega.Expect(exists).Should(gomega.BeTrue())
+
+	})
+
+	ginkgo.It("Should be able to check if an application does not exist", func() {
+		manager := NewStorageManager(basePath)
+		repo := faker.Name().FirstName()
+		appName := faker.App().Name()
+		version := "latest"
+
+		exists, err := manager.ApplicationExists(repo, appName, version)
+		gomega.Expect(err).Should(gomega.Succeed())
+		gomega.Expect(exists).ShouldNot(gomega.BeTrue())
+	})
+
+	ginkgo.It("should be able to delete an application", func() {
+		manager := NewStorageManager(basePath)
+		repo := faker.Name().FirstName()
+		appName := faker.App().Name()
+		version := "latest"
+		files := []*entities.FileInfo{
+			{Path: "app_config.yaml", Data: []byte("appconf")},
+			{Path: "component1.yaml", Data: []byte("component1")},
+			{Path: "component2.yaml", Data: []byte("component2")}}
+		err := manager.StoreApplication(repo, appName, version, files)
+		gomega.Expect(err).Should(gomega.Succeed())
+
+		err = manager.RemoveApplication(repo, appName, version)
+		gomega.Expect(err).Should(gomega.Succeed())
+
+		exists, err := manager.ApplicationExists(repo, appName, version)
+		gomega.Expect(err).Should(gomega.Succeed())
+		gomega.Expect(exists).ShouldNot(gomega.BeTrue())
+	})
+
+	ginkgo.It("should not be able to delete an application if it does not exists", func() {
+		manager := NewStorageManager(basePath)
+		repo := faker.Name().FirstName()
+		appName := faker.App().Name()
+		version := "latest"
+
+		err := manager.RemoveApplication(repo, appName, version)
+		gomega.Expect(err).ShouldNot(gomega.Succeed())
+
+	})
 })
