@@ -117,3 +117,12 @@ func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApp
 		UserInfo:   appRemovedMsg,
 	}, nil
 }
+
+// List returns a list with all the applications
+func (h *Handler) List(ctx context.Context, request *grpc_catalog_common_go.EmptyRequest) (*grpc_catalog_go.ApplicationList, error){
+	return nil, nerrors.NewUnimplementedError("not implemented yet!")
+}
+// Info returns the detail of a given application
+func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplicationRequest) (*grpc_catalog_go.InfoApplicationResponse, error) {
+	return nil, nerrors.NewUnimplementedError("not implemented yet!")
+}

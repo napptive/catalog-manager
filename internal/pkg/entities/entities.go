@@ -19,7 +19,7 @@ import "github.com/napptive/grpc-catalog-go"
 
 // ApplicationMetadata with the metadata of application, this will be the application info showed
 type ApplicationMetadata struct {
-	 // CatalogID with an internal identifier
+	// CatalogID with an internal identifier
 	CatalogID string
 	// Repository with the repository name
 	Repository string
@@ -31,6 +31,8 @@ type ApplicationMetadata struct {
 	Readme string
 	// Metadata with the metadata.yaml file
 	Metadata string
+	//MedataName with the name defined in metadata file
+	MetadataName string
 }
 
 // ApplicationID with the application identifier (URL-Repo-AppName-tag)
@@ -44,10 +46,13 @@ type ApplicationID struct {
 	Tag string
 }
 
-// AppHeader is a struct to load the kind and api_version of a file to check if it is an applicationConfiguration
+// AppHeader is a struct to load the kind and api_version of a file to check if it is metadata file
 type AppHeader struct {
-	APIVersion string `yaml:"apiVersion"`
-	Kind       string `yaml:"kind"`
+	APIVersion  string `yaml:"apiVersion"`
+	Kind        string `yaml:"kind"`
+	Name        string `yaml:"name"`
+	Version     string `yaml:"version"`
+	Description string `yaml:"description"`
 }
 
 // FileInfo represents a file
@@ -58,14 +63,14 @@ type FileInfo struct {
 	Data []byte
 }
 
-func NewFileInfo(info *grpc_catalog_go.FileInfo) *FileInfo{
+func NewFileInfo(info *grpc_catalog_go.FileInfo) *FileInfo {
 	return &FileInfo{
 		Path: info.Path,
 		Data: info.Data,
 	}
 }
 
-func (fi *FileInfo) ToGRPC () *grpc_catalog_go.FileInfo {
+func (fi *FileInfo) ToGRPC() *grpc_catalog_go.FileInfo {
 	return &grpc_catalog_go.FileInfo{
 		Path: fi.Path,
 		Data: fi.Data,

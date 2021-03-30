@@ -103,20 +103,20 @@ func (m *manager) decomposeRepositoryName(name string) (string, *entities.Applic
 }
 
 // getApplicationMetadataFile looks for the application metadata yaml file
-func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) []byte {
+func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte, *entities.AppHeader) {
 
 	for _, file := range files {
 		// 1.- the files must have .yaml extension
 		if utils.IsYamlFile(strings.ToLower(file.Path)) {
 			// 2.- Get Metadata
-			isMetadata := utils.CheckKindAndVersion(file.Data, apiMetadataVersion, appMetadataKind)
+			isMetadata, header := utils.CheckKindAndVersion(file.Data, apiMetadataVersion, appMetadataKind)
 			if isMetadata {
 				log.Debug().Str("name", file.Path).Msg("Metadata found")
-				return file.Data
+				return file.Data, header
 			}
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // Add Adds a new application in the repository.
@@ -141,10 +141,14 @@ func (m *manager) Add(name string, files []*entities.FileInfo) error {
 	}
 
 	readme := utils.GetFile(readmeFile, files)
-	appMetadata := m.getApplicationMetadataFile(files)
+	appMetadata, header := m.getApplicationMetadataFile(files)
 	// the metadata file is required, if is not in the Files -> return an error
 	if appMetadata == nil {
 		return nerrors.NewNotFoundError("Unable to add the application. Metadata file is required.")
+	}
+	// Metadata Name is required too
+	if header == nil || header.Name == "" {
+		return nerrors.NewFailedPreconditionError("Unable to add the application. Metadata name is required.")
 	}
 
 	if _, err := m.provider.Add(&entities.ApplicationMetadata{
@@ -153,6 +157,7 @@ func (m *manager) Add(name string, files []*entities.FileInfo) error {
 		Tag:             appID.Tag,
 		Readme:          string(readme),
 		Metadata:        string(appMetadata),
+		MetadataName:    header.Name,
 	}); err != nil {
 		log.Err(err).Str("name", name).Msg("Error storing application metadata")
 		return err

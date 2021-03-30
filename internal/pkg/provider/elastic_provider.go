@@ -52,7 +52,8 @@ var mapping = `{
           "ApplicationName":	{ "type": "keyword" },
           "Tag":         		{ "type": "keyword" },
           "Readme": 			{ "type": "text" },
-          "Metadata":  			{ "type": "text" }
+          "Metadata":  			{ "type": "text" },
+          "MetadataName":		{ "type": "text" }
       }
     }
 }`

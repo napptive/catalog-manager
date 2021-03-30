@@ -51,13 +51,13 @@ func GetFile(relativeFileName string, files []*entities.FileInfo) []byte {
 }
 
 // Check KindAn Version checks the version and type of a yaml file and returns true if they are the same as received
-func CheckKindAndVersion(data []byte, version string, kind string) bool {
+func CheckKindAndVersion(data []byte, version string, kind string) (bool, *entities.AppHeader) {
 	var a entities.AppHeader
 	err := yaml.Unmarshal(data, &a)
 	if err == nil {
 		if a.APIVersion == version && a.Kind == kind {
-			return true
+			return true, &a
 		}
 	}
-	return false
+	return false, nil
 }
