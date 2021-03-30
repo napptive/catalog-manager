@@ -28,12 +28,19 @@ import (
 )
 
 type StorageManager interface {
+	// StoreApplication save all files in their corresponding path
 	StoreApplication(repo string, name string, version string, files []*entities.FileInfo) error
+	// GetApplication returns the application files
 	GetApplication(repo string, name string, version string) ([]*entities.FileInfo, error)
+	// RemoveApplication removes an application, returns an error if it does not exist
 	RemoveApplication(repo string, name string, version string) error
+	// ApplicationExists checks if an application exists
 	ApplicationExists(repo string, name string, version string) (bool, error)
+	// CreateRepository creates a directory to storage a repository
 	CreateRepository(name string) error
+	// RepositoryExists checks if a repository exists
 	RepositoryExists(name string) (bool, error)
+	// RemoveRepository removes the repository directory. Be careful using this function
 	RemoveRepository(name string) error
 }
 
