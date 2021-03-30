@@ -21,28 +21,37 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
+	"io/ioutil"
 	"os"
 	"strings"
 )
 
+type StorageManager interface {
+	StoreApplication(repo string, name string, version string, files []*entities.FileInfo) error
+	GetApplication(repo string, name string, version string) ([]*entities.FileInfo, error)
+	CreateRepository(name string) error
+	RepositoryExists(name string) (bool, error)
+	RemoveRepository(name string) error
+}
+
 // StorageManager is a struct to manage all the storage operations
-type StorageManager struct {
+type storageManager struct {
 	// basePath with the path where the repo storage is
 	basePath string
 }
 
-func NewStorageManager(basePath string) *StorageManager {
-	return &StorageManager{basePath: basePath}
+func NewStorageManager(basePath string) StorageManager {
+	return &storageManager{basePath: basePath}
 }
 
-func (s *StorageManager) removeDirectory(name string) error {
+func (s *storageManager) removeDirectory(name string) error {
 	if err := os.RemoveAll(name); err != nil {
 		return nerrors.FromError(err)
 	}
 	return nil
 }
 
-func (s *StorageManager) createDirectory(name string) error {
+func (s *storageManager) createDirectory(name string) error {
 	if err := os.MkdirAll(name, 0755); err != nil {
 		return nerrors.FromError(err)
 	}
@@ -50,7 +59,7 @@ func (s *StorageManager) createDirectory(name string) error {
 }
 
 // CreateRepository creates a directory to storage a repository
-func (s *StorageManager) CreateRepository(name string) error {
+func (s *storageManager) CreateRepository(name string) error {
 
 	if err := s.createDirectory(fmt.Sprintf("%s/%s", s.basePath, name)); err != nil {
 		log.Err(err).Str("name", name).Msg("error creating repository")
@@ -60,7 +69,7 @@ func (s *StorageManager) CreateRepository(name string) error {
 }
 
 // RepositoryExists checks if a repository exists
-func (s *StorageManager) RepositoryExists(name string) (bool, error) {
+func (s *storageManager) RepositoryExists(name string) (bool, error) {
 	dir, err := os.Open(s.basePath)
 	if err != nil {
 		return false, nerrors.FromError(err)
@@ -84,7 +93,7 @@ func (s *StorageManager) RepositoryExists(name string) (bool, error) {
 
 // RemoveRepository removes the repository directory. Be careful using this function
 // it will remove ALL the applications
-func (s *StorageManager) RemoveRepository(name string) error {
+func (s *storageManager) RemoveRepository(name string) error {
 	if err := s.removeDirectory(fmt.Sprintf("%s/%s", s.basePath, name)); err != nil {
 		log.Err(err).Str("name", name).Msg("error removing repository")
 		return err
@@ -93,7 +102,7 @@ func (s *StorageManager) RemoveRepository(name string) error {
 }
 
 // StoreApplication save all files in their corresponding path
-func (s *StorageManager) StoreApplication(repo string, name string, version string, files []*entities.FileInfo) error {
+func (s *storageManager) StoreApplication(repo string, name string, version string, files []*entities.FileInfo) error {
 	// 1.- Remove the old application
 	// baseUrl/repo/application/tag
 	dir := fmt.Sprintf("%s/%s/%s/%s", s.basePath, repo, name, version)
@@ -109,13 +118,12 @@ func (s *StorageManager) StoreApplication(repo string, name string, version stri
 	}
 
 	// 3.- Create the files and storage them
-	for _, appFile := range files{
+	for _, appFile := range files {
 		// Check if the file is in a new directory
 		splited := strings.Split(appFile.Path, "/")
 		// create directory
 		if len(splited) > 1 {
 			pp := splited[:len(splited)-1]
-			log.Debug().Str("new directory", fmt.Sprintf("%s/%s", dir, strings.Join(pp, "/"))).Msg("+++++")
 			if err := s.createDirectory(fmt.Sprintf("%s/%s", dir, strings.Join(pp, "/"))); err != nil {
 				return err
 			}
@@ -144,11 +152,50 @@ func (s *StorageManager) StoreApplication(repo string, name string, version stri
 }
 
 // ApplicationExists checks if an application exists
-func (s *StorageManager) ApplicationExists(name string) (bool, error) {
+func (s *storageManager) ApplicationExists(name string) (bool, error) {
 	return false, nerrors.NewUnimplementedError("not implemented yet!")
 }
 
 // RemoveApplication removes an application, returns an error if it does not exist
-func (s *StorageManager) RemoveApplication(name string) (bool, error) {
+func (s *storageManager) RemoveApplication(name string) (bool, error) {
 	return false, nerrors.NewUnimplementedError("not implemented yet!")
+}
+
+func (s *storageManager) GetApplication(repo string, name string, version string) ([]*entities.FileInfo, error) {
+
+	// Find the application directory
+	path := fmt.Sprintf("%s/%s/%s/%s", s.basePath, repo, name, version)
+	return s.loadAppFile(path, fmt.Sprintf("./%s", name))
+}
+
+func (s *storageManager) loadAppFile(path string, filePath string) ([]*entities.FileInfo, error) {
+
+	fileInfo, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, nerrors.NewNotFoundErrorFrom(err, "Application not found")
+	}
+
+	var filesToReturn []*entities.FileInfo
+	for _, file := range fileInfo {
+		if file.IsDir() {
+			files, err := s.loadAppFile(fmt.Sprintf("%s/%s", path, file.Name()), fmt.Sprintf("%s/%s", filePath, file.Name()))
+			if err != nil {
+				return nil, err
+			}
+			filesToReturn = append(filesToReturn, files...)
+		} else {
+			newPath := fmt.Sprintf("%s/%s", path, file.Name())
+			data, err := ioutil.ReadFile(newPath)
+			if err != nil {
+				return nil, nerrors.NewInternalErrorFrom(err, "Error reading file")
+			}
+			filesToReturn = append(filesToReturn, &entities.FileInfo{
+				Path: fmt.Sprintf("%s/%s", filePath, file.Name()),
+				Data: data,
+			})
+		}
+
+	}
+
+	return filesToReturn, nil
 }

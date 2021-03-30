@@ -29,12 +29,12 @@ import (
 const appAddedMsg = "Application added successfully"
 
 type Handler struct {
-	manager *Manager
+	manager Manager
 }
 
 // TODO: Check update/get concurrency
 
-func NewHandler(manager *Manager) *Handler {
+func NewHandler(manager Manager) *Handler {
 	return &Handler{manager: manager}
 }
 
@@ -83,5 +83,20 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 
 // Download an application from catalog
 func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, server grpc_catalog_go.Catalog_DownloadServer) error {
-	return nerrors.NewInternalError("not implemented yet!")
+	if err := request.Validate(); err != nil {
+		return nerrors.FromError(err).ToGRPC()
+	}
+
+	files, err := h.manager.Download(request)
+	if err != nil {
+		return nerrors.FromError(err).ToGRPC()
+	}
+
+	for _, file := range files {
+		if err := server.Send(file.ToGRPC()); err != nil {
+			return nerrors.NewInternalErrorFrom(err, "unable to send the file").ToGRPC()
+		}
+	}
+
+	return nil
 }

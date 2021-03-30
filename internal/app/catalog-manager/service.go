@@ -51,7 +51,7 @@ type Providers struct {
 	// elasticProvider with a elastic provider to store metadata
 	elasticProvider provider.MetadataProvider
 	// repoStorage to store the applications
-	repoStorage *storage.StorageManager
+	repoStorage storage.StorageManager
 }
 
 // getProviders creates and initializes all the providers
