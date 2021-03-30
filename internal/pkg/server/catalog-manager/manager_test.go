@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	"github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -59,9 +58,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			storageProvider.EXPECT().GetApplication(repoName, appName, "latest").Return(filesReturned, nil)
 
 			manager := NewManager(storageProvider, metadataProvider)
-			files, err := manager.Download(&grpc_catalog_go.DownloadApplicationRequest{
-				ApplicationName: fmt.Sprintf("%s/%s", repoName, appName),
-			})
+			files, err := manager.Download(fmt.Sprintf("%s/%s", repoName, appName))
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(files).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(files).ShouldNot(gomega.BeNil())
@@ -70,9 +67,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			appName := "appName"
 
 			manager := NewManager(storageProvider, metadataProvider)
-			_, err := manager.Download(&grpc_catalog_go.DownloadApplicationRequest{
-				ApplicationName: appName,
-			})
+			_, err := manager.Download(appName)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 		ginkgo.It("should not be able to download an application if there is an error in the storage", func (){
@@ -82,9 +77,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			storageProvider.EXPECT().GetApplication(repoName, appName, "latest").Return(nil, nerrors.NewInternalError("error reading repository"))
 
 			manager := NewManager(storageProvider, metadataProvider)
-			_, err := manager.Download(&grpc_catalog_go.DownloadApplicationRequest{
-				ApplicationName: fmt.Sprintf("%s/%s", repoName, appName),
-			})
+			_, err := manager.Download(fmt.Sprintf("%s/%s", repoName, appName))
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 	})
