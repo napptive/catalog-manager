@@ -39,8 +39,11 @@ const (
 )
 
 type Manager interface {
+	// Add Adds a new application in the repository.
 	Add(name string, files []*entities.FileInfo) error
+	// Download returns the files of an application
 	Download(request *grpc_catalog_go.DownloadApplicationRequest) ([]*entities.FileInfo, error)
+	// Remove removes an application from the repository
 	Remove(appName string) error
 }
 
@@ -180,6 +183,7 @@ func (m *manager) Download(request *grpc_catalog_go.DownloadApplicationRequest) 
 	return m.stManager.GetApplication(appID.Repository, appID.ApplicationName, appID.Tag)
 }
 
+// Remove removes an application from the repository
 func (m *manager) Remove(appName string) error {
 
 	// - Validate the appName
