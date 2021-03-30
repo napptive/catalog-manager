@@ -21,16 +21,26 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 )
 
 type StorageManager interface {
+	// StoreApplication save all files in their corresponding path
 	StoreApplication(repo string, name string, version string, files []*entities.FileInfo) error
+	// GetApplication returns the application files
 	GetApplication(repo string, name string, version string) ([]*entities.FileInfo, error)
+	// RemoveApplication removes an application, returns an error if it does not exist
+	RemoveApplication(repo string, name string, version string) error
+	// ApplicationExists checks if an application exists
+	ApplicationExists(repo string, name string, version string) (bool, error)
+	// CreateRepository creates a directory to storage a repository
 	CreateRepository(name string) error
+	// RepositoryExists checks if a repository exists
 	RepositoryExists(name string) (bool, error)
+	// RemoveRepository removes the repository directory. Be careful using this function
 	RemoveRepository(name string) error
 }
 
@@ -42,6 +52,11 @@ type storageManager struct {
 
 func NewStorageManager(basePath string) StorageManager {
 	return &storageManager{basePath: basePath}
+}
+
+// getAppDirectory compose the application directory
+func (s *storageManager) getAppDirectory(repo string, name string, version string) string {
+	return fmt.Sprintf("%s/%s/%s/%s", s.basePath, repo, name, version)
 }
 
 func (s *storageManager) removeDirectory(name string) error {
@@ -152,15 +167,44 @@ func (s *storageManager) StoreApplication(repo string, name string, version stri
 }
 
 // ApplicationExists checks if an application exists
-func (s *storageManager) ApplicationExists(name string) (bool, error) {
-	return false, nerrors.NewUnimplementedError("not implemented yet!")
+func (s *storageManager) ApplicationExists(repo string, name string, version string) (bool, error) {
+	appDir := s.getAppDirectory(repo, name, version)
+	_, err := os.Stat(appDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		} else {
+			return false, nerrors.NewInternalErrorFrom(err, "unable to check if the application exists")
+		}
+	}
+	return true, nil
 }
 
 // RemoveApplication removes an application, returns an error if it does not exist
-func (s *storageManager) RemoveApplication(name string) (bool, error) {
-	return false, nerrors.NewUnimplementedError("not implemented yet!")
+func (s *storageManager) RemoveApplication(repo string, name string, version string) error {
+	appName := s.getAppDirectory(repo, name, version)
+
+	exists, err := s.ApplicationExists(repo, name, version)
+	if err != nil {
+		log.Err(err).Str("appName", appName).Msg("error deleting application")
+		return nerrors.NewInternalErrorFrom(err, "unable to delete application")
+	}
+	if !exists {
+		return nerrors.NewNotFoundError("unable to delete application")
+	}
+
+	if err := s.removeDirectory(appName); err != nil {
+		log.Err(err).Str("appName", appName).Msg("error deleting application")
+		return nerrors.NewInternalErrorFrom(err, "unable to delete application")
+	}
+	// clean directories
+	if err := s.cleanApplicationDirectory(repo, name); err != nil{
+		log.Err(err).Str("appName", appName).Msg("error cleaning application directory")
+	}
+	return nil
 }
 
+// GetApplication returns the application files
 func (s *storageManager) GetApplication(repo string, name string, version string) ([]*entities.FileInfo, error) {
 
 	// Find the application directory
@@ -168,6 +212,7 @@ func (s *storageManager) GetApplication(repo string, name string, version string
 	return s.loadAppFile(path, fmt.Sprintf("./%s", name))
 }
 
+// loadAppFile gets the content of application files
 func (s *storageManager) loadAppFile(path string, filePath string) ([]*entities.FileInfo, error) {
 
 	fileInfo, err := ioutil.ReadDir(path)
@@ -198,4 +243,56 @@ func (s *storageManager) loadAppFile(path string, filePath string) ([]*entities.
 	}
 
 	return filesToReturn, nil
+}
+
+// checkEmptyDirs check if a directory is empty
+func (s *storageManager) checkEmptyDirs(path string) (bool, error){
+
+	f, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1) // Or f.Readdir(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err // Either not empty or error, suits both cases
+}
+
+// cleanApplicationDirectory checks if application directory is empty and removes it and
+// check if repository directory is empty and removes it
+func (s *storageManager) cleanApplicationDirectory(repo string, name string) error{
+
+	// - check if the application removed was the unique version for this application
+	// basePath/repository/app
+	appPath := fmt.Sprintf("%s/%s/%s", s.basePath, repo, name)
+	last, err := s.checkEmptyDirs(appPath)
+	if err != nil {
+		return nerrors.FromError(err)
+	}
+
+	// remove the app directory
+	if last {
+		log.Debug().Str("path", appPath).Msg("removing directory")
+		if err = s.removeDirectory(appPath); err != nil {
+			return nerrors.FromError(err)
+		}
+	}
+	// basePath/repository
+	appPath = fmt.Sprintf("%s/%s", s.basePath, repo)
+	last, err = s.checkEmptyDirs(appPath)
+	if err != nil {
+		return nerrors.FromError(err)
+	}
+
+	// remove the app directory
+	if last {
+		log.Debug().Str("path", appPath).Msg("removing directory")
+		if err = s.removeDirectory(appPath); err != nil {
+			return nerrors.FromError(err)
+		}
+	}
+	return nil
 }

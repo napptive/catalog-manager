@@ -17,16 +17,17 @@
 package catalog_manager
 
 import (
+	"context"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
-	"github.com/rs/zerolog/log"
 	"io"
 )
 
 
 const appAddedMsg = "Application added successfully"
+const appRemovedMsg = "Application removed successfully"
 
 type Handler struct {
 	manager Manager
@@ -48,7 +49,6 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 	for {
 		// From https://grpc.io/docs/languages/go/basics/#server-side-streaming-rpc-1
 		request, err := server.Recv()
-		log.Debug().Interface("request", request).Msg("Add")
 		if err == io.EOF {
 			if err := h.manager.Add(applicationName, applicationFiles); err != nil {
 				return nerrors.FromError(err).ToGRPC()
@@ -87,7 +87,7 @@ func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, 
 		return nerrors.FromError(err).ToGRPC()
 	}
 
-	files, err := h.manager.Download(request)
+	files, err := h.manager.Download(request.ApplicationName)
 	if err != nil {
 		return nerrors.FromError(err).ToGRPC()
 	}
@@ -99,4 +99,21 @@ func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, 
 	}
 
 	return nil
+}
+
+//Remove an application from the catalog
+func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApplicationRequest) (*grpc_catalog_common_go.OpResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	if err := h.manager.Remove(request.ApplicationName); err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	return &grpc_catalog_common_go.OpResponse{
+		Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
+		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
+		UserInfo:   appRemovedMsg,
+	}, nil
 }

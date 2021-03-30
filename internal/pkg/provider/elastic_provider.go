@@ -75,19 +75,19 @@ type responseWrapper struct {
 
 // deleteResponseWrapper is an struct used to load a delete result
 type deleteResponseWrapper struct {
-		Batches           int
-		Deleted           int
-		Noops             int
-		Retries           struct {
-			Bulk   int
-			Search int
-		}
-		ThrottledMllis       int  `json:"throttled_millis"`
-		ThrottledUntilMillis int  `json:"throttled_until_millis"`
-		TimedOut             bool `json:"timed_out"`
-		Took                 int
-		Total                int
-		VersionConflicts     int `json:"version_conflicts"`
+	Batches int
+	Deleted int
+	Noops   int
+	Retries struct {
+		Bulk   int
+		Search int
+	}
+	ThrottledMllis       int  `json:"throttled_millis"`
+	ThrottledUntilMillis int  `json:"throttled_until_millis"`
+	TimedOut             bool `json:"timed_out"`
+	Took                 int
+	Total                int
+	VersionConflicts     int `json:"version_conflicts"`
 }
 
 type ElasticProvider struct {
@@ -436,18 +436,17 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 		return nerrors.NewInternalError("error deleting metadata by ID [%s]", res.Status())
 	}
 
-		var d deleteResponseWrapper
-		if err := json.NewDecoder(res.Body).Decode(&d); err != nil {
-			return nerrors.FromError(err)
-		}
+	var d deleteResponseWrapper
+	if err := json.NewDecoder(res.Body).Decode(&d); err != nil {
+		return nerrors.FromError(err)
+	}
 
-		if d.Deleted == 0 {
-			return nerrors.NewNotFoundError("unable to delete the application metadata")
-		}
+	if d.Deleted == 0 {
+		return nerrors.NewNotFoundError("unable to delete the application metadata")
+	}
 
-		// Print the response status, number of results, and request duration.
-		log.Debug().Str("Status", res.Status()).Int("total", d.Total).Int("took(ms)", d.Took).Msg("Delete operation")
-
+	// Print the response status, number of results, and request duration.
+	log.Debug().Str("Status", res.Status()).Int("total", d.Total).Int("took(ms)", d.Took).Msg("Delete operation")
 
 	return nil
 }

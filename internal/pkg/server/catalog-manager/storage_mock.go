@@ -34,6 +34,21 @@ func (m *MockStorageManager) EXPECT() *MockStorageManagerMockRecorder {
 	return m.recorder
 }
 
+// ApplicationExists mocks base method.
+func (m *MockStorageManager) ApplicationExists(arg0, arg1, arg2 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplicationExists", arg0, arg1, arg2)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ApplicationExists indicates an expected call of ApplicationExists.
+func (mr *MockStorageManagerMockRecorder) ApplicationExists(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplicationExists", reflect.TypeOf((*MockStorageManager)(nil).ApplicationExists), arg0, arg1, arg2)
+}
+
 // CreateRepository mocks base method.
 func (m *MockStorageManager) CreateRepository(arg0 string) error {
 	m.ctrl.T.Helper()
@@ -61,6 +76,20 @@ func (m *MockStorageManager) GetApplication(arg0, arg1, arg2 string) ([]*entitie
 func (mr *MockStorageManagerMockRecorder) GetApplication(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApplication", reflect.TypeOf((*MockStorageManager)(nil).GetApplication), arg0, arg1, arg2)
+}
+
+// RemoveApplication mocks base method.
+func (m *MockStorageManager) RemoveApplication(arg0, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveApplication", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveApplication indicates an expected call of RemoveApplication.
+func (mr *MockStorageManagerMockRecorder) RemoveApplication(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveApplication", reflect.TypeOf((*MockStorageManager)(nil).RemoveApplication), arg0, arg1, arg2)
 }
 
 // RemoveRepository mocks base method.
