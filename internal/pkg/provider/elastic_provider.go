@@ -223,6 +223,20 @@ func (e *ElasticProvider) buildQuery(appID entities.ApplicationID) map[string]in
 // Add stores new application metadata or updates it if it exists
 func (e *ElasticProvider) Add(metadata *entities.ApplicationMetadata) (*entities.ApplicationMetadata, error) {
 
+	// Check if application already exists -> remove it!
+	appID := metadata.ToApplicationID()
+	exists, err := e.Exists(appID)
+	if err != nil {
+		log.Err(err).Msg("error checking if application exists")
+		return nil, nerrors.NewInternalError("Unable to add application Metadata, unable to check if application already exists")
+	}
+
+	if exists {
+		if err = e.Remove(appID); err != nil {
+			return nil, nerrors.NewInternalError("Unable to add application Metadata, unable to remove previous application")
+		}
+	}
+
 	// Fill Internal ID
 	metadata.CatalogID = e.CreateID(*metadata)
 
@@ -316,19 +330,56 @@ func (e *ElasticProvider) SearchByApplicationID(appID entities.ApplicationID) (*
 
 // Exists checks if the application Metadata already exists
 func (e *ElasticProvider) Exists(appID *entities.ApplicationID) (bool, error) {
-	res, err := e.client.Exists(e.indexName, e.CreateIDFromAppID(*appID))
-	if err != nil {
-		return false, err
+
+	catalogID := e.CreateIDFromAppID(*appID)
+
+	var buf bytes.Buffer
+
+	// Query Field
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"term": map[string]interface{}{
+				CatalogIDField: catalogID,
+			},
+		},
 	}
 
-	switch res.StatusCode {
-	case 200:
-		return true, nil
-	case 404:
-		return false, nil
-	default:
-		return false, nerrors.NewInternalError(res.Status())
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		log.Err(err).Msg("Error encoding query")
+		return false, nerrors.NewInternalErrorFrom(err, "error getting metadata by ID")
 	}
+
+	// Perform the search request.
+	res, err := e.client.Search(
+		e.client.Search.WithContext(context.Background()),
+		e.client.Search.WithIndex(e.indexName),
+		e.client.Search.WithBody(&buf),
+		e.client.Search.WithTrackTotalHits(true),
+	)
+	if err != nil {
+		log.Err(err).Msg("Error getting response")
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		var e map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+			log.Err(err).Msg("Error parsing the response body")
+			return false, nerrors.NewInternalError("Error getting application. Error parsing the response body")
+		} else {
+			// Print the response status and error information.
+			log.Err(err).Str("status", res.Status()).Msg("error")
+			return false, nerrors.NewInternalError(res.Status())
+		}
+	}
+
+	var r responseWrapper
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return false, nerrors.FromError(err)
+	}
+
+	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("Exist operation")
+	return r.Hits.Total.Value != 0, nil
 
 }
 
@@ -453,7 +504,7 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 }
 
 // List returns all the applications stored
-func (e *ElasticProvider)List () ([]*entities.ApplicationMetadata, error) {
+func (e *ElasticProvider) List() ([]*entities.ApplicationMetadata, error) {
 	// Perform the search request.
 	res, err := e.client.Search(
 		e.client.Search.WithContext(context.Background()),

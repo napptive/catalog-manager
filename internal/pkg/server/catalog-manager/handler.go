@@ -25,7 +25,6 @@ import (
 	"io"
 )
 
-
 const appAddedMsg = "Application added successfully"
 const appRemovedMsg = "Application removed successfully"
 
@@ -119,13 +118,13 @@ func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApp
 }
 
 // List returns a list with all the applications
-func (h *Handler) List(ctx context.Context, request *grpc_catalog_common_go.EmptyRequest) (*grpc_catalog_go.ApplicationList, error){
+func (h *Handler) List(ctx context.Context, request *grpc_catalog_common_go.EmptyRequest) (*grpc_catalog_go.ApplicationList, error) {
 	returned, err := h.manager.List()
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
 
-	summaryList := make ([]*grpc_catalog_go.ApplicationSummary, 0)
+	summaryList := make([]*grpc_catalog_go.ApplicationSummary, 0)
 	for _, app := range returned {
 		summaryList = append(summaryList, app.ToApplicationSummary())
 	}
@@ -147,7 +146,8 @@ func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplica
 		RepositoryName:  retrieved.Repository,
 		ApplicationName: retrieved.ApplicationName,
 		Tag:             retrieved.Tag,
-		MedataFile:      []byte(retrieved.Metadata),
-		AppConfFile:     []byte(retrieved.Readme),
+		MetadataFile:    []byte(retrieved.Metadata),
+		ReadmeFile:      []byte(retrieved.Readme),
+		Metadata:        retrieved.MetadataObj.ToGRPC(),
 	}, nil
 }

@@ -31,10 +31,6 @@ const (
 	defaultVersion = "latest"
 	// readmeFile with the name of the readme file
 	readmeFile = "readme.md"
-	// apiMetadataVersion with the version of the metadata entity
-	apiMetadataVersion = "core.oam.dev/v1alpha1"
-	// appMetadataKind with the kind of the metadata entity
-	appMetadataKind = "ApplicationMetadata"
 )
 
 type Manager interface {
@@ -107,20 +103,22 @@ func (m *manager) decomposeRepositoryName(name string) (string, *entities.Applic
 }
 
 // getApplicationMetadataFile looks for the application metadata yaml file
-func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte, *entities.AppHeader) {
+func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte, *entities.CatalogMetadata, error) {
 
 	for _, file := range files {
 		// 1.- the files must have .yaml extension
 		if utils.IsYamlFile(strings.ToLower(file.Path)) {
 			// 2.- Get Metadata
-			isMetadata, header := utils.CheckKindAndVersion(file.Data, apiMetadataVersion, appMetadataKind)
+			isMetadata, header, err := utils.IsMetadata(file.Data)
+			if err != nil {
+				return nil, nil, err
+			}
 			if isMetadata {
-				log.Debug().Str("name", file.Path).Msg("Metadata found")
-				return file.Data, header
+				return file.Data, header, nil
 			}
 		}
 	}
-	return nil, nil
+	return nil, nil, nil
 }
 
 // Add Adds a new application in the repository.
@@ -145,7 +143,10 @@ func (m *manager) Add(name string, files []*entities.FileInfo) error {
 	}
 
 	readme := utils.GetFile(readmeFile, files)
-	appMetadata, header := m.getApplicationMetadataFile(files)
+	appMetadata, header, err := m.getApplicationMetadataFile(files)
+	if err != nil {
+		return nerrors.NewInternalErrorFrom(err, "Unable to add the application. Error getting metadata")
+	}
 	// the metadata file is required, if is not in the Files -> return an error
 	if appMetadata == nil {
 		return nerrors.NewNotFoundError("Unable to add the application. Metadata file is required.")
@@ -225,7 +226,21 @@ func (m *manager) Get(appName string) (*entities.ApplicationMetadata, error) {
 		return nil, err
 	}
 
-	return m.provider.Get(*appID)
+	app, err := m.provider.Get(*appID)
+	if err != nil {
+		return nil, err
+	}
+
+	isMetadata, metadata, err := utils.IsMetadata([]byte(app.Metadata))
+	if err != nil {
+		return nil, err
+	}
+
+	if isMetadata {
+		app.MetadataObj = *metadata
+	}
+
+	return app, nil
 }
 
 // List returns a list of applications (without metadata and readme content)

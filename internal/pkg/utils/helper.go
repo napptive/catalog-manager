@@ -17,10 +17,19 @@ package utils
 
 import (
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
+	"github.com/napptive/nerrors/pkg/nerrors"
+	"github.com/rs/zerolog/log"
 	"sigs.k8s.io/yaml"
 	"strings"
 
 	"encoding/json"
+)
+
+const (
+	// apiMetadataVersion with the version of the metadata entity
+	apiMetadataVersion = "core.oam.dev/v1alpha1"
+	// appMetadataKind with the kind of the metadata entity
+	appMetadataKind = "ApplicationMetadata"
 )
 
 // check file extension and returns if is a yaml file
@@ -50,14 +59,17 @@ func GetFile(relativeFileName string, files []*entities.FileInfo) []byte {
 	return []byte{}
 }
 
-// Check KindAn Version checks the version and type of a yaml file and returns true if they are the same as received
-func CheckKindAndVersion(data []byte, version string, kind string) (bool, *entities.AppHeader) {
-	var a entities.AppHeader
+// IsMetadata checks if the file is metadata file and returns it
+func IsMetadata(data []byte) (bool, *entities.CatalogMetadata, error) {
+	var a entities.CatalogMetadata
 	err := yaml.Unmarshal(data, &a)
-	if err == nil {
-		if a.APIVersion == version && a.Kind == kind {
-			return true, &a
-		}
+	if err != nil {
+		log.Err(err).Msg("error getting metadata")
+		return false, nil, nerrors.FromError(err)
 	}
-	return false, nil
+	if a.APIVersion == apiMetadataVersion && a.Kind == appMetadataKind {
+		return true, &a, nil
+	}
+
+	return false, nil, nil
 }
