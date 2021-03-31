@@ -31,6 +31,36 @@ func RunIntegrationTests(id string) bool {
 	return runIntegration == id
 }
 
+func CreateCatalogMetadata() *entities.CatalogMetadata {
+	return &entities.CatalogMetadata{
+		APIVersion:  "core.oam.dev/v1alpha1",
+		Kind:        "ApplicationMetadata",
+		Name:        faker.App().String(),
+		Version:     faker.App().Version(),
+		Description: "faker.App().String()",
+		Tags:        []string{"tag1, tag2"},
+		License:     "Apache License Version 2.0",
+		Url:         faker.Internet().Url(),
+		Doc:         faker.Internet().Url(),
+		Requires: entities.CatalogRequirement{
+			Traits: []string{"trait2, trait2"},
+			Scopes: []string{"scope2, scope2"},
+			K8s: []entities.KubernetesEntities{{
+				ApiVersion: "core.oam.dev/v1alpha1",
+				Kind:       "CustomEntityKind",
+				Name:       "name",
+			}},
+		},
+		Logo: []entities.ApplicationLogo{
+			{
+				Src:  faker.Internet().Url(),
+				Type: "image/png",
+				Size: "120x120",
+			},
+		},
+	}
+}
+
 func CreateApplicationMetadata() *entities.ApplicationMetadata {
 
 	return &entities.ApplicationMetadata{
@@ -39,6 +69,6 @@ func CreateApplicationMetadata() *entities.ApplicationMetadata {
 		Tag:             faker.App().Version(),
 		Readme:          faker.Lorem().Paragraph(10),
 		Metadata:        faker.Lorem().Paragraph(10),
-		MetadataName:    faker.App().String(),
+		//MetadataObj:     *CreateCatalogMetadata(),
 	}
 }

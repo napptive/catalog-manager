@@ -239,6 +239,7 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationMetadata) (*entities
 
 	// Fill Internal ID
 	metadata.CatalogID = e.CreateID(*metadata)
+//	metadata.MetadataName = metadata.MetadataObj.Name
 
 	// convert the metadata to JSON
 	metadataJSON, err := utils.ApplicationMetadataToJSON(*metadata)

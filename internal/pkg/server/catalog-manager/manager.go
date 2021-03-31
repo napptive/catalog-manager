@@ -41,9 +41,9 @@ type Manager interface {
 	// Remove removes an application from the repository
 	Remove(appName string) error
 	// Get returns a given application metadata
-	Get(appName string) (*entities.ApplicationMetadata, error)
+	Get(appName string) (*entities.ExtendedApplicationMetadata, error)
 	// List returns a list of applications (without metadata and readme content)
-	List () ([]*entities.ApplicationMetadata, error)
+	List() ([]*entities.ApplicationMetadata, error)
 }
 
 type manager struct {
@@ -109,12 +109,12 @@ func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte
 		// 1.- the files must have .yaml extension
 		if utils.IsYamlFile(strings.ToLower(file.Path)) {
 			// 2.- Get Metadata
-			isMetadata, header, err := utils.IsMetadata(file.Data)
+			isMetadata, metadataObj, err := utils.IsMetadata(file.Data)
 			if err != nil {
 				return nil, nil, err
 			}
 			if isMetadata {
-				return file.Data, header, nil
+				return file.Data, metadataObj, nil
 			}
 		}
 	}
@@ -163,6 +163,7 @@ func (m *manager) Add(name string, files []*entities.FileInfo) error {
 		Readme:          string(readme),
 		Metadata:        string(appMetadata),
 		MetadataName:    header.Name,
+		//MetadataObj:     *header,
 	}); err != nil {
 		log.Err(err).Str("name", name).Msg("Error storing application metadata")
 		return err
@@ -211,7 +212,7 @@ func (m *manager) Remove(appName string) error {
 	// - Remove from storage
 	err = m.stManager.RemoveApplication(appID.Repository, appID.ApplicationName, appID.Tag)
 	if err != nil {
-		log.Err(err).Str("appName", appName).Msg("Unable to remove application metadata")
+		log.Err(err).Str("appName", appName).Msg("Unable to remove application")
 		return err
 	}
 
@@ -219,7 +220,7 @@ func (m *manager) Remove(appName string) error {
 }
 
 // Get returns the application metadata for a given application
-func (m *manager) Get(appName string) (*entities.ApplicationMetadata, error) {
+func (m *manager) Get(appName string) (*entities.ExtendedApplicationMetadata, error) {
 
 	_, appID, err := m.decomposeRepositoryName(appName)
 	if err != nil {
@@ -231,19 +232,27 @@ func (m *manager) Get(appName string) (*entities.ApplicationMetadata, error) {
 		return nil, err
 	}
 
-	isMetadata, metadata, err := utils.IsMetadata([]byte(app.Metadata))
+	_, metadata, err := utils.IsMetadata([]byte(app.Metadata))
 	if err != nil {
 		return nil, err
 	}
-
-	if isMetadata {
-		app.MetadataObj = *metadata
+	var obj entities.CatalogMetadata
+	if metadata != nil {
+		obj = *metadata
 	}
 
-	return app, nil
+	return &entities.ExtendedApplicationMetadata{
+		CatalogID:       app.CatalogID,
+		Repository:      app.Repository,
+		ApplicationName: app.ApplicationName,
+		Tag:             app.Tag,
+		Readme:          app.Readme,
+		Metadata:        app.Metadata,
+		MetadataObj:     obj,
+	},  nil
 }
 
 // List returns a list of applications (without metadata and readme content)
-func (m *manager) List () ([]*entities.ApplicationMetadata, error) {
+func (m *manager) List() ([]*entities.ApplicationMetadata, error) {
 	return m.provider.List()
 }

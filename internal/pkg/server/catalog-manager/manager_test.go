@@ -26,6 +26,44 @@ import (
 	"github.com/onsi/gomega"
 )
 
+var metadataFile =`
+apiVersion: core.oam.dev/v1alpha1
+kind: ApplicationMetadata
+# Name of the application, not necessarily a valid k8s name.
+name: "My App Name 2"
+version: 1.0
+description: Short description for searchs. Long one plus how to goes into the README.md
+# Tags facilitate searches on the catalog
+tags:
+  - "tag1"
+  - "tag2"
+  - "tag3"
+license: "Apache License Version 2.0"
+url: "https://..."
+doc: "https://..."
+apiVersion: core.oam.dev/v1alpha1
+kind: ApplicationMetadata
+# Name of the application, not necessarily a valid k8s name.
+name: "My App Name 2"
+version: 1.0
+description: Short description for searchs. Long one plus how to goes into the README.md
+# Tags facilitate searches on the catalog
+tags:
+  - "tag1"
+  - "tag2"
+  - "tag3"
+license: "Apache License Version 2.0"
+url: "https://..."
+doc: "https://..."
+# Requires gives a list of entities that are needed to launch the application.
+requires:
+  traits:
+    - my.custom.trait
+    - my.custom.trait2
+  scopes:
+    - my.custom.scope
+`
+
 var _ = ginkgo.Describe("Catalog handler test", func() {
 
 	var ctrl *gomock.Controller
@@ -94,14 +132,16 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 				Repository:      repoName,
 				ApplicationName: appName,
 				Tag:             "latest",
-				MetadataName:    "My app",
+				MetadataName:    "My App",
+				Metadata: metadataFile,
+
 			}, nil)
 
 			manager := NewManager(storageProvider, metadataProvider)
 			metadata, err := manager.Get(fmt.Sprintf("%s/%s", repoName, appName))
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(metadata).ShouldNot(gomega.BeNil())
-			gomega.Expect(metadata.MetadataName).ShouldNot(gomega.BeEmpty())
+			gomega.Expect(metadata.MetadataObj.Name).ShouldNot(gomega.BeEmpty())
 
 		})
 		ginkgo.It("should not be able to return an application if it does not exist", func() {
@@ -126,7 +166,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 	ginkgo.Context("Listing applications", func() {
 		ginkgo.It("should be able to list applications", func() {
 
-			returned := []*entities.ApplicationMetadata {
+			returned := []*entities.ApplicationMetadata{
 				&entities.ApplicationMetadata{
 					CatalogID:       "catalog1",
 					Repository:      "repo1",
@@ -153,7 +193,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 		})
 		ginkgo.It("should be able to return an empty list of applications", func() {
 
-			returned := make ([]*entities.ApplicationMetadata,0)
+			returned := make([]*entities.ApplicationMetadata, 0)
 
 			metadataProvider.EXPECT().List().Return(returned, nil)
 

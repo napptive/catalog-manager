@@ -33,21 +33,25 @@ type ApplicationMetadata struct {
 	Readme string
 	// Metadata with the metadata.yaml file
 	Metadata string
-	//MedataName with the name defined in metadata file
+	//MedataName with the name defined in metadata file. This field is used to store it in elastic field and return it when listing
 	MetadataName string
 	// MetadataObj with the metadata object
-	MetadataObj CatalogMetadata
+	//MetadataObj CatalogMetadata
 }
 
+// ToApplicationSummary converts the ApplicationMetadata to grpc_catalog_go.ApplicationSummary
 func (a *ApplicationMetadata) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary {
+
 	return &grpc_catalog_go.ApplicationSummary{
 		RepositoryName:  a.Repository,
 		ApplicationName: a.ApplicationName,
 		Tag:             a.Tag,
+		//MetadataName:    a.MetadataObj.Name,
 		MetadataName:    a.MetadataName,
 	}
 }
 
+// ToApplicationID converts ApplicationMetadata to ApplicationID
 func (a *ApplicationMetadata) ToApplicationID() *ApplicationID {
 	return &ApplicationID{
 		Repository:      a.Repository,
@@ -85,6 +89,7 @@ type ApplicationLogo struct {
 	Size string `yaml:"size"`
 }
 
+// ToGRPC converts ApplicationLogo to grpc_catalog_go.ApplicationLogo
 func (al *ApplicationLogo) ToGRPC() *grpc_catalog_go.ApplicationLogo {
 	return &grpc_catalog_go.ApplicationLogo{
 		Src:  al.Src,
@@ -103,6 +108,7 @@ type KubernetesEntities struct {
 	Name string `yaml:"name"`
 }
 
+// ToGRPC converts KubernetesEntities to *grpc_catalog_go.KubernetesEntities
 func (k *KubernetesEntities) ToGRPC() *grpc_catalog_go.KubernetesEntities {
 	return &grpc_catalog_go.KubernetesEntities{
 		ApiVersion: k.ApiVersion,
@@ -121,8 +127,9 @@ type CatalogRequirement struct {
 	K8s []KubernetesEntities `yaml:"k8s"`
 }
 
+// ToGRPC converts CatalogRequirement to grpc_catalog_go.CatalogRequirement
 func (cr *CatalogRequirement) ToGRPC() *grpc_catalog_go.CatalogRequirement {
-	k8s := make ([]*grpc_catalog_go.KubernetesEntities, 0)
+	k8s := make([]*grpc_catalog_go.KubernetesEntities, 0)
 	for _, entity := range cr.K8s {
 		k8s = append(k8s, entity.ToGRPC())
 	}
@@ -149,8 +156,9 @@ type CatalogMetadata struct {
 	Logo        []ApplicationLogo  `yaml:"logo"`
 }
 
+// ToGRPC converts CatalogMetadata to grpc_catalog_go.CatalogMetadata
 func (c *CatalogMetadata) ToGRPC() *grpc_catalog_go.CatalogMetadata {
-	logos := make ([]*grpc_catalog_go.ApplicationLogo, 0)
+	logos := make([]*grpc_catalog_go.ApplicationLogo, 0)
 	for _, logo := range c.Logo {
 		logos = append(logos, logo.ToGRPC())
 	}
@@ -169,6 +177,26 @@ func (c *CatalogMetadata) ToGRPC() *grpc_catalog_go.CatalogMetadata {
 	}
 }
 
+
+// -- ExtendedApplicationMetadata
+// ExtendedApplicationMetadata is an object with ApplicationMetadata and a field with metadata parsed
+type ExtendedApplicationMetadata struct {
+	// CatalogID with an internal identifier
+	CatalogID string
+	// Repository with the repository name
+	Repository string
+	// ApplicationName with the name of the application
+	ApplicationName string
+	// Tag with the tag/version of the application
+	Tag string
+	// Readme with the content of the README file
+	Readme string
+	// Metadata with the metadata.yaml file
+	Metadata string
+	// MetadataObj with the metadata object
+	MetadataObj CatalogMetadata
+}
+
 // --
 
 // -- FileInfo
@@ -180,7 +208,7 @@ type FileInfo struct {
 	// data with the content of the file
 	Data []byte
 }
-
+// NewFileInfo creates FileInfo from *grpc_catalog_go.FileInfo
 func NewFileInfo(info *grpc_catalog_go.FileInfo) *FileInfo {
 	return &FileInfo{
 		Path: info.Path,
@@ -188,6 +216,7 @@ func NewFileInfo(info *grpc_catalog_go.FileInfo) *FileInfo {
 	}
 }
 
+// ToGRPC converts FileInfo to grpc_catalog_go.FileInfo
 func (fi *FileInfo) ToGRPC() *grpc_catalog_go.FileInfo {
 	return &grpc_catalog_go.FileInfo{
 		Path: fi.Path,
