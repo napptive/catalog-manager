@@ -28,4 +28,7 @@ type MetadataProvider interface {
 	Exists(appID *entities.ApplicationID) (bool, error)
 	// Remove removes an application metadata
 	Remove(appID *entities.ApplicationID) error
+	// TODO: add pagination
+	// List returns the applications stored
+	List () ([]*entities.ApplicationMetadata, error)
 }
