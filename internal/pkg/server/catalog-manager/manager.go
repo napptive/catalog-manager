@@ -163,7 +163,6 @@ func (m *manager) Add(name string, files []*entities.FileInfo) error {
 		Readme:          string(readme),
 		Metadata:        string(appMetadata),
 		MetadataName:    header.Name,
-		//MetadataObj:     *header,
 	}); err != nil {
 		log.Err(err).Str("name", name).Msg("Error storing application metadata")
 		return err
