@@ -96,7 +96,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 
 			storageProvider.EXPECT().GetApplication(repoName, appName, "latest").Return(filesReturned, nil)
 
-			manager := NewManager(storageProvider, metadataProvider)
+			manager := NewManager(storageProvider, metadataProvider, "")
 			files, err := manager.Download(fmt.Sprintf("%s/%s", repoName, appName))
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(files).ShouldNot(gomega.BeEmpty())
@@ -105,7 +105,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 		ginkgo.It("should not be able to download an application with a wrong name", func() {
 			appName := "appName"
 
-			manager := NewManager(storageProvider, metadataProvider)
+			manager := NewManager(storageProvider, metadataProvider, "")
 			_, err := manager.Download(appName)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
@@ -115,7 +115,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 
 			storageProvider.EXPECT().GetApplication(repoName, appName, "latest").Return(nil, nerrors.NewInternalError("error reading repository"))
 
-			manager := NewManager(storageProvider, metadataProvider)
+			manager := NewManager(storageProvider, metadataProvider, "")
 			_, err := manager.Download(fmt.Sprintf("%s/%s", repoName, appName))
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
@@ -137,7 +137,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 
 			}, nil)
 
-			manager := NewManager(storageProvider, metadataProvider)
+			manager := NewManager(storageProvider, metadataProvider, "")
 			metadata, err := manager.Get(fmt.Sprintf("%s/%s", repoName, appName))
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(metadata).ShouldNot(gomega.BeNil())
@@ -151,13 +151,13 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			matcher := mockups.NewStructMatcher(map[string]interface{}{"Repository": repoName, "ApplicationName": appName})
 			metadataProvider.EXPECT().Get(matcher).Return(nil, nerrors.NewNotFoundError("not found"))
 
-			manager := NewManager(storageProvider, metadataProvider)
+			manager := NewManager(storageProvider, metadataProvider, "")
 			_, err := manager.Get(fmt.Sprintf("%s/%s", repoName, appName))
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 
 		})
 		ginkgo.It("should not be able to return a invalid application", func() {
-			manager := NewManager(storageProvider, metadataProvider)
+			manager := NewManager(storageProvider, metadataProvider, "")
 			_, err := manager.Get("invalidApp")
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
@@ -185,7 +185,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 
 			metadataProvider.EXPECT().List().Return(returned, nil)
 
-			manager := NewManager(storageProvider, metadataProvider)
+			manager := NewManager(storageProvider, metadataProvider, "")
 			received, err := manager.List()
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).ShouldNot(gomega.BeEmpty())
@@ -197,7 +197,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 
 			metadataProvider.EXPECT().List().Return(returned, nil)
 
-			manager := NewManager(storageProvider, metadataProvider)
+			manager := NewManager(storageProvider, metadataProvider, "")
 			received, err := manager.List()
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).Should(gomega.BeEmpty())
