@@ -16,13 +16,15 @@
 package utils
 
 import (
+	"encoding/base32"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
-	"math/rand"
+
+	"crypto/rand"
+
 	"sigs.k8s.io/yaml"
 	"strings"
-	"time"
 
 	"encoding/json"
 )
@@ -76,19 +78,14 @@ func IsMetadata(data []byte) (bool, *entities.CatalogMetadata, error) {
 	return false, nil, nil
 }
 
-// charset is a string with letters and numbers to generate random strings
-const charset = "abcdefghijklmnopqrstuvwxyz" +
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-// seededRand a seed to generate random string
-var seededRand = rand.New(
-	rand.NewSource(time.Now().UnixNano()))
-
-// StringsWithCharset is a method to generate a random string with a determinate length
-func StringWithCharset(length int) string {
+// GenerateRandomString is a method to generate a random string with a determinate length
+func GenerateRandomString(length int) (string, error) {
 	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
+	_, err := rand.Read(b)
+	// Note that err == nil only if we read len(b) bytes.
+	if err != nil {
+		return "", err
 	}
-	return string(b)
+
+	return base32.StdEncoding.EncodeToString(b)[:length], nil
 }

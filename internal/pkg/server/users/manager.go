@@ -52,7 +52,10 @@ func (m *Manager) generateSaltedPassword (password string, salt string) (string,
 
 // CreateUser stores new user
 func (m *Manager) CreateUser (username string, password string) error{
-	salt := utils.StringWithCharset(12)
+	salt, err := utils.GenerateRandomString(16)
+	if err != nil {
+		return nerrors.NewInternalErrorFrom(err, "error creating user")
+	}
 
 	// Generate
 	saltedPassword, err := m.generateSaltedPassword(password, salt)
