@@ -61,11 +61,11 @@ func (m *Manager) CreateUser (username string, password string) error{
 
 	// Create Provider
 	conn, err := rdbms.NewRDBMS().PoolConnect(context.Background(), m.connString)
-
-	provider := user_provider.NewUserProvider(conn, time.Second *10)
 	if err != nil {
 		return err
 	}
+	provider := user_provider.NewUserProvider(conn, time.Second *10)
+
 	_, err = provider.Add(&entities.User{
 		Username:       username,
 		Salt:           salt,
@@ -96,7 +96,9 @@ func (m *Manager) CheckPassword(b64Password string, password string) error {
 func (m *Manager) LoginUser (username string, password string) error{
 	// Create Provider
 	conn, err := rdbms.NewRDBMS().PoolConnect(context.Background(), m.connString)
-
+	if err != nil {
+		return err
+	}
 	provider := user_provider.NewUserProvider(conn, time.Second *10)
 
 	user, err := provider.Get(username)
