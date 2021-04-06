@@ -24,7 +24,6 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/napptive/rdbms/pkg/rdbms"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
 	"time"
@@ -54,7 +53,6 @@ func (m *Manager) generateSaltedPassword (password string, salt string) (string,
 // CreateUser stores new user
 func (m *Manager) CreateUser (username string, password string) error{
 	salt := utils.StringWithCharset(12)
-	log.Debug().Str("salt", salt).Msg("---")
 
 	// Generate
 	saltedPassword, err := m.generateSaltedPassword(password, salt)
