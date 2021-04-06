@@ -83,7 +83,7 @@ func (s *Service) Run() {
 		log.Fatal().Err(err).Msg("error creating providers")
 	}
 
-	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider)
+	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider, s.cfg.CatalogUrl)
 	handler := catalog_manager.NewHandler(manager)
 
 	// create gRPC server
