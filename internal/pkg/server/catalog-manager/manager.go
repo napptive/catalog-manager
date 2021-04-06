@@ -54,10 +54,11 @@ type manager struct {
 }
 
 // NewManager returns a new object of manager
-func NewManager(stManager storage.StorageManager, provider provider.MetadataProvider) Manager {
+func NewManager(stManager storage.StorageManager, provider provider.MetadataProvider, catalogURL string) Manager {
 	return &manager{
-		stManager: stManager,
-		provider:  provider,
+		stManager:  stManager,
+		provider:   provider,
+		catalogURL: catalogURL,
 	}
 }
 
@@ -137,7 +138,7 @@ func (m *manager) Add(name string, files []*entities.FileInfo) error {
 
 	// check that the url of the application matches the url of the catalog
 	// we avoid including applications in catalogs that do not correspond
-	if url != m.catalogURL {
+	if url != "" &&  url != m.catalogURL {
 		log.Err(err).Str("name", name).Msg("Error adding application. The application url does not match the one in the catalog")
 		return nerrors.NewInternalError("The application url does not match the one in the catalog")
 	}
@@ -248,7 +249,7 @@ func (m *manager) Get(appName string) (*entities.ExtendedApplicationMetadata, er
 		Readme:          app.Readme,
 		Metadata:        app.Metadata,
 		MetadataObj:     obj,
-	},  nil
+	}, nil
 }
 
 // List returns a list of applications (without metadata and readme content)

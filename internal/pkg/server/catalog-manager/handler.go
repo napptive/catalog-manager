@@ -18,6 +18,7 @@ package catalog_manager
 
 import (
 	"context"
+	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
@@ -25,8 +26,8 @@ import (
 	"io"
 )
 
-const appAddedMsg = "Application added successfully"
-const appRemovedMsg = "Application removed successfully"
+const appAddedMsg = "%s added to catalog"
+const appRemovedMsg = "%s removed from catalog"
 
 type Handler struct {
 	manager Manager
@@ -55,7 +56,7 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 				return server.SendAndClose(&grpc_catalog_common_go.OpResponse{
 					Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
 					StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
-					UserInfo:   appAddedMsg,
+					UserInfo:   fmt.Sprintf(appAddedMsg, applicationName),
 				})
 			}
 		}
@@ -113,7 +114,7 @@ func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApp
 	return &grpc_catalog_common_go.OpResponse{
 		Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
 		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
-		UserInfo:   appRemovedMsg,
+		UserInfo:   fmt.Sprintf(appRemovedMsg, request.ApplicationName),
 	}, nil
 }
 

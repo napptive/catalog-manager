@@ -239,7 +239,7 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationMetadata) (*entities
 
 	// Fill Internal ID
 	metadata.CatalogID = e.CreateID(*metadata)
-//	metadata.MetadataName = metadata.MetadataObj.Name
+	//	metadata.MetadataName = metadata.MetadataObj.Name
 
 	// convert the metadata to JSON
 	metadataJSON, err := utils.ApplicationMetadataToJSON(*metadata)
@@ -318,7 +318,7 @@ func (e *ElasticProvider) SearchByApplicationID(appID entities.ApplicationID) (*
 	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("SearchByApplicationID operation")
 
 	if r.Hits.Total.Value == 0 {
-		return nil, nerrors.NewNotFoundError("application metadata not found")
+		return nil, nerrors.NewNotFoundError("%s metadata is not available", appID.String())
 	}
 
 	var application entities.ApplicationMetadata
@@ -436,7 +436,7 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("Get operation")
 
 	if r.Hits.Total.Value == 0 {
-		return nil, nerrors.NewNotFoundError("application metadata not found")
+		return nil, nerrors.NewNotFoundError("%s metadata is not available", appID.String())
 	}
 	if r.Hits.Total.Value != 1 {
 		log.Error().Str("catalogID", catalogID).Msg("Error getting application metadata, duplicated entries")
@@ -495,7 +495,7 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 	}
 
 	if d.Deleted == 0 {
-		return nerrors.NewNotFoundError("unable to delete the application metadata")
+		return nerrors.NewNotFoundError("%s metadata is not available", appID.String())
 	}
 
 	// Print the response status, number of results, and request duration.

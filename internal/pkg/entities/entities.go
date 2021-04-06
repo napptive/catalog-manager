@@ -15,7 +15,10 @@
  */
 package entities
 
-import "github.com/napptive/grpc-catalog-go"
+import (
+	"fmt"
+	"github.com/napptive/grpc-catalog-go"
+)
 
 // -- ApplicationMetadata
 
@@ -47,7 +50,7 @@ func (a *ApplicationMetadata) ToApplicationSummary() *grpc_catalog_go.Applicatio
 		ApplicationName: a.ApplicationName,
 		Tag:             a.Tag,
 		//MetadataName:    a.MetadataObj.Name,
-		MetadataName:    a.MetadataName,
+		MetadataName: a.MetadataName,
 	}
 }
 
@@ -73,6 +76,10 @@ type ApplicationID struct {
 	ApplicationName string
 	// Tag with the tag/version of the application
 	Tag string
+}
+
+func (a *ApplicationID) String() string {
+	return fmt.Sprintf("%s/%s:%s", a.Repository, a.ApplicationName, a.Tag)
 }
 
 // --
@@ -177,7 +184,6 @@ func (c *CatalogMetadata) ToGRPC() *grpc_catalog_go.CatalogMetadata {
 	}
 }
 
-
 // -- ExtendedApplicationMetadata
 // ExtendedApplicationMetadata is an object with ApplicationMetadata and a field with metadata parsed
 type ExtendedApplicationMetadata struct {
@@ -208,6 +214,7 @@ type FileInfo struct {
 	// data with the content of the file
 	Data []byte
 }
+
 // NewFileInfo creates FileInfo from *grpc_catalog_go.FileInfo
 func NewFileInfo(info *grpc_catalog_go.FileInfo) *FileInfo {
 	return &FileInfo{
