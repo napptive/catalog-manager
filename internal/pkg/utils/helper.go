@@ -19,8 +19,10 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
+	"math/rand"
 	"sigs.k8s.io/yaml"
 	"strings"
+	"time"
 
 	"encoding/json"
 )
@@ -72,4 +74,21 @@ func IsMetadata(data []byte) (bool, *entities.CatalogMetadata, error) {
 	}
 
 	return false, nil, nil
+}
+
+// charset is a string with letters and numbers to generate random strings
+const charset = "abcdefghijklmnopqrstuvwxyz" +
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+// seededRand a seed to generate random string
+var seededRand = rand.New(
+	rand.NewSource(time.Now().UnixNano()))
+
+// StringsWithCharset is a method to generate a random string with a determinate length
+func StringWithCharset(length int) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
 }

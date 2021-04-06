@@ -19,7 +19,7 @@ package catalog_manager
 import (
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
-	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata-provider"
+	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
 	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
 
@@ -49,14 +49,14 @@ func NewService(cfg config.Config) *Service {
 // Providers with all the providers needed
 type Providers struct {
 	// elasticProvider with a elastic provider to store metadata
-	elasticProvider metadata_provider.MetadataProvider
+	elasticProvider metadata.MetadataProvider
 	// repoStorage to store the applications
 	repoStorage storage.StorageManager
 }
 
 // getProviders creates and initializes all the providers
 func (s *Service) getProviders() (*Providers, error) {
-	pr, err := metadata_provider.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress)
+	pr, err := metadata.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress)
 	if err != nil {
 		return nil, err
 	}

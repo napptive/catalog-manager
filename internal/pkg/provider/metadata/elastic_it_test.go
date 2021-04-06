@@ -1,4 +1,4 @@
-package metadata_provider
+package metadata
 
 import (
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
