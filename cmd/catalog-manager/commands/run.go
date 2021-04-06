@@ -44,5 +44,5 @@ func init() {
 	runCmd.Flags().StringVar(&cfg.ElasticAddress, "elasticAddress", "http://localhost:9200", "address to connect to Elastic Search")
 	runCmd.Flags().StringVar(&cfg.Index, "index", "napptive", "Elastic Index to store the repositories")
 	runCmd.Flags().StringVar(&cfg.RepositoryPath, "repositoryPath", "/napptive/repository/", "base path to store the repositories")
-	runCmd.Flags().StringVar(&cfg.RepositoryPath, "repositoryUrl", "", "Repository URL")
+	runCmd.Flags().StringVar(&cfg.CatalogUrl, "repositoryUrl", "", "Repository URL")
 }
