@@ -30,7 +30,7 @@ func RunTests(provider UserProvider) {
 			user, err := provider.Add(&entities.User{
 				Username:       faker.Internet().UserName(),
 				Salt:           faker.Lorem().Characters(10),
-				SaltedPassword: []byte(faker.Lorem().Characters(24)),
+				SaltedPassword: faker.Lorem().Characters(24),
 			})
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(user).ShouldNot(gomega.BeNil())
@@ -39,7 +39,7 @@ func RunTests(provider UserProvider) {
 			user := &entities.User{
 				Username:       faker.Internet().UserName(),
 				Salt:           faker.Lorem().Characters(10),
-				SaltedPassword: []byte(faker.Lorem().Characters(24)),
+				SaltedPassword: faker.Lorem().Characters(24),
 			}
 			retrieved, err := provider.Add(user)
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -55,7 +55,7 @@ func RunTests(provider UserProvider) {
 			user := &entities.User{
 				Username:       faker.Internet().UserName(),
 				Salt:           faker.Lorem().Characters(10),
-				SaltedPassword: []byte(faker.Lorem().Characters(24)),
+				SaltedPassword: faker.Lorem().Characters(24),
 			}
 
 			retrieved, err := provider.Add(user)
@@ -70,7 +70,7 @@ func RunTests(provider UserProvider) {
 			user := &entities.User{
 				Username:       faker.Internet().UserName(),
 				Salt:           faker.Lorem().Characters(10),
-				SaltedPassword: []byte(faker.Lorem().Characters(24)),
+				SaltedPassword: faker.Lorem().Characters(24),
 			}
 
 			err := provider.Remove(user.Username)
@@ -83,7 +83,7 @@ func RunTests(provider UserProvider) {
 			user := &entities.User{
 				Username:       faker.Internet().UserName(),
 				Salt:           faker.Lorem().Characters(10),
-				SaltedPassword: []byte(faker.Lorem().Characters(24)),
+				SaltedPassword: faker.Lorem().Characters(24),
 			}
 			_, err := provider.Add(user)
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -100,7 +100,7 @@ func RunTests(provider UserProvider) {
 			user := &entities.User{
 				Username:       faker.Internet().UserName(),
 				Salt:           faker.Lorem().Characters(10),
-				SaltedPassword: []byte(faker.Lorem().Characters(24)),
+				SaltedPassword: faker.Lorem().Characters(24),
 			}
 
 			_, err := provider.Get(user.Username)
@@ -116,7 +116,7 @@ func RunTests(provider UserProvider) {
 				user := &entities.User{
 					Username:       faker.Internet().UserName(),
 					Salt:           faker.Lorem().Characters(10),
-					SaltedPassword: []byte((faker.Lorem().Characters(24))),
+					SaltedPassword: faker.Lorem().Characters(24),
 				}
 				retrieved, err := provider.Add(user)
 				gomega.Expect(err).Should(gomega.Succeed())
