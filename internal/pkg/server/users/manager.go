@@ -64,6 +64,7 @@ func (m *Manager) CreateUser (username string, password string) error{
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 	provider := user_provider.NewUserProvider(conn, time.Second *10)
 
 	_, err = provider.Add(&entities.User{
@@ -99,6 +100,7 @@ func (m *Manager) LoginUser (username string, password string) error{
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 	provider := user_provider.NewUserProvider(conn, time.Second *10)
 
 	user, err := provider.Get(username)
