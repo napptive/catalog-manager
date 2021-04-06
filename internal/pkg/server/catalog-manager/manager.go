@@ -18,7 +18,7 @@ package catalog_manager
 
 import (
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	"github.com/napptive/catalog-manager/internal/pkg/provider"
+	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata-provider"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/napptive/nerrors/pkg/nerrors"
@@ -48,13 +48,13 @@ type Manager interface {
 
 type manager struct {
 	stManager storage.StorageManager
-	provider  provider.MetadataProvider
+	provider  metadata_provider.MetadataProvider
 	// catalogURL is the URL of the repository managed by this catalog
 	catalogURL string
 }
 
 // NewManager returns a new object of manager
-func NewManager(stManager storage.StorageManager, provider provider.MetadataProvider) Manager {
+func NewManager(stManager storage.StorageManager, provider metadata_provider.MetadataProvider) Manager {
 	return &manager{
 		stManager: stManager,
 		provider:  provider,

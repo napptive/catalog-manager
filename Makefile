@@ -100,7 +100,7 @@ build-linux: $(addsuffix .linux,$(BUILD_TARGETS))
 # Trigger the build operation for linux. Notice that the suffix is removed as it is only used for Makefile expansion purposes.
 %.linux:
 	@ echo "Building linux binary $@"
-	@GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GO_BUILD) $(GO_LDFLAGS) -o $(BIN_FOLDER)/linux/$(basename $@) ./cmd/$(basename $@)/main.go
+	@GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_LDFLAGS) -o $(BIN_FOLDER)/linux/$(basename $@) ./cmd/$(basename $@)/main.go
 
 .PHONY: artifacts
 artifacts: clean $(addsuffix .pkg-darwin,$(BUILD_TARGETS)) $(addsuffix .pkg-linux,$(BUILD_TARGETS))
