@@ -31,7 +31,13 @@ func NewUserCli() *UserCli {
 // CreateNewUser adds new user in database
 func (uc *UserCli) CreateNewUser(username string, password string, connString string) error {
 	userManager := users.NewManager(connString)
-	return userManager.CreateUser(username, password)
+	err := userManager.CreateUser(username, password)
+	if err != nil {
+		fmt.Println(nerrors.FromError(err).String())
+	} else {
+		fmt.Printf("User created")
+	}
+	return nil
 }
 
 // LoginUser check
