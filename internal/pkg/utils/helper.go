@@ -16,9 +16,13 @@
 package utils
 
 import (
+	"encoding/base32"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
+
+	"crypto/rand"
+
 	"sigs.k8s.io/yaml"
 	"strings"
 
@@ -72,4 +76,16 @@ func IsMetadata(data []byte) (bool, *entities.CatalogMetadata, error) {
 	}
 
 	return false, nil, nil
+}
+
+// GenerateRandomString is a method to generate a random string with a determinate length
+func GenerateRandomString(length int) (string, error) {
+	b := make([]byte, length)
+	_, err := rand.Read(b)
+	// Note that err == nil only if we read len(b) bytes.
+	if err != nil {
+		return "", err
+	}
+
+	return base32.StdEncoding.EncodeToString(b)[:length], nil
 }

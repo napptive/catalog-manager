@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: catalog-manager-load-job
+  namespace: napptive
+  labels:
+    app: catalog-manager-load
+spec:
+  template:
+    spec:
+      containers:
+        - name: catalog-manager-load-job
+          image: napptive/rdbms:v1.0.0-rc1
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          args:
+            - "schema"
+            - "load"
+            - "--scriptLoadPath=/napptive/catalog-config/catalog-manager-sql-script.yaml"
+            - "-c=host=postgres.napptive port=5432 user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) dbname=$(POSTGRES_DB)"
+
+          volumeMounts:
+            - name:  catalog-manager-config
+              mountPath: "/napptive/catalog-config"
+              readOnly: true
+      volumes:
+        - name: catalog-manager-config
+          configMap:
+            name: catalog-manager-load-config
+      restartPolicy: Never
+  backoffLimit: 4

@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package provider
+package config
 
-import (
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
-	"testing"
-)
-
-func TestProviderPackage(t *testing.T) {
-	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "Provider package suite")
+// UserSQL contains all the configuration to connect to database
+type UserSQL struct {
+	// ConnStr with the connection string to connect to database
+	ConnStr string
 }
