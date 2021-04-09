@@ -22,8 +22,11 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
 	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
+	"github.com/napptive/njwt/pkg/interceptors"
 
 	"github.com/napptive/grpc-catalog-go"
+
+	njwtConfig "github.com/napptive/njwt/pkg/config"
 
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
@@ -70,6 +73,7 @@ func (s *Service) getProviders() (*Providers, error) {
 
 // Run method starting the internal components and launching the service
 func (s *Service) Run() {
+	// TODO: lanzar el http service
 	if err := s.cfg.IsValid(); err != nil {
 		log.Fatal().Err(err).Msg("invalid configuration options")
 	}
@@ -87,7 +91,18 @@ func (s *Service) Run() {
 	handler := catalog_manager.NewHandler(manager)
 
 	// create gRPC server
-	gRPCServer := grpc.NewServer()
+	var gRPCServer *grpc.Server
+	if s.cfg.AuthEnabled {
+		// interceptor
+		config := njwtConfig.JWTConfig{
+			Secret: s.cfg.JWTConfig.Secret,
+			Header: s.cfg.JWTConfig.Header,
+		}
+
+		gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(interceptors.JwtInterceptor(config)))
+	}else {
+		gRPCServer = grpc.NewServer()
+	}
 
 	grpc_catalog_go.RegisterCatalogServer(gRPCServer, handler)
 

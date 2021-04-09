@@ -45,4 +45,7 @@ func init() {
 	runCmd.Flags().StringVar(&cfg.Index, "index", "napptive", "Elastic Index to store the repositories")
 	runCmd.Flags().StringVar(&cfg.RepositoryPath, "repositoryPath", "/napptive/repository/", "base path to store the repositories")
 	runCmd.Flags().StringVar(&cfg.CatalogUrl, "repositoryUrl", "", "Repository URL")
+	runCmd.Flags().BoolVar(&cfg.JWTConfig.AuthEnabled, "authEnabled", true, "Enable Authentication")
+	runCmd.Flags().StringVar(&cfg.JWTConfig.Header, "authHeader", "authorization", "Authorization header name")
+	runCmd.Flags().StringVar(&cfg.JWTConfig.Secret, "authSecret", "secret", "Authorization secret to validate JWT signatures")
 }

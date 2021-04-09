@@ -14,6 +14,7 @@ require (
 	github.com/napptive/grpc-catalog-go v0.8.0
 	github.com/napptive/mockup-generator v1.0.0
 	github.com/napptive/nerrors v1.0.0
+	github.com/napptive/njwt v1.0.0
 	github.com/napptive/rdbms v1.0.0-rc1
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/onsi/ginkgo v1.15.0
