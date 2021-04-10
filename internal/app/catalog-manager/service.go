@@ -18,11 +18,16 @@ package catalog_manager
 
 import (
 	"fmt"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
 	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
 	"github.com/napptive/njwt/pkg/interceptors"
+	"golang.org/x/net/context"
+	"net/http"
+	"syscall"
 
 	"github.com/napptive/grpc-catalog-go"
 
@@ -34,7 +39,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"syscall"
 )
 
 // Service structure in charge of launching the application.
@@ -73,20 +77,24 @@ func (s *Service) getProviders() (*Providers, error) {
 
 // Run method starting the internal components and launching the service
 func (s *Service) Run() {
-	// TODO: lanzar el http service
 	if err := s.cfg.IsValid(); err != nil {
 		log.Fatal().Err(err).Msg("invalid configuration options")
 	}
 	s.cfg.Print()
 	s.registerShutdownListener()
 
-	listener := s.getNetListener(s.cfg.Port)
-
 	providers, err := s.getProviders()
 	if err != nil {
 		log.Fatal().Err(err).Msg("error creating providers")
 	}
 
+	// launch services
+	go s.LaunchHTTPService()
+	s.LaunchGRPCService(providers)
+
+}
+// LaunchGRPCService launches a server for gRPC requests.
+func (s *Service) LaunchGRPCService(providers *Providers) {
 	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider, s.cfg.CatalogUrl)
 	handler := catalog_manager.NewHandler(manager)
 
@@ -110,8 +118,44 @@ func (s *Service) Run() {
 		// Register reflection service on gRPC server.
 		reflection.Register(gRPCServer)
 	}
+
+	listener := s.getNetListener(s.cfg.Port)
 	// start the service
 	if err := gRPCServer.Serve(listener); err != nil {
+		log.Fatal().Errs("failed to serve: %v", []error{err})
+	}
+}
+
+// withCORSSupport creates a handler that supports CORS related preflights.
+func (s *Service) withCORSSupport(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if r.Method == "OPTIONS" {
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+			return
+		}
+		handler.ServeHTTP(w, r)
+	})
+}
+
+// LaunchHTTPService launches a server for HTTP requests.
+func (s *Service) LaunchHTTPService() {
+	mux := runtime.NewServeMux()
+	grpcAddress := fmt.Sprintf(":%d", s.cfg.Port)
+	grpcOptions := []grpc.DialOption{grpc.WithInsecure()}
+
+	if err := grpc_catalog_go.RegisterCatalogHandlerFromEndpoint(context.Background(), mux, grpcAddress, grpcOptions); err != nil {
+		log.Fatal().Err(err).Msg("failed to start catalog handler")
+	}
+
+	server := &http.Server{
+		Addr:    grpcAddress,
+		Handler: s.withCORSSupport(mux),
+	}
+	log.Info().Str("address", grpcAddress).Msg("HTTP Listening")
+	// start the service
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal().Errs("failed to serve: %v", []error{err})
 	}
 }
