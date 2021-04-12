@@ -24,7 +24,8 @@ import (
 type Config struct {
 	// CatalogManager with all the config parameters related to catalog-manager component
 	CatalogManager
-
+	// JWTConfig with the JWT specific configuration.
+	JWTConfig
 	Version string
 	Commit  string
 	Debug   bool
@@ -35,6 +36,9 @@ func (c *Config) IsValid() error {
 	if err := c.CatalogManager.IsValid(); err != nil {
 		return err
 	}
+	if err := c.JWTConfig.IsValid(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -43,4 +47,5 @@ func (c *Config) Print() {
 	// Use logger to print the configuration
 	log.Info().Str("version", c.Version).Str("commit", c.Commit).Msg("Application config")
 	c.CatalogManager.Print()
+	c.JWTConfig.Print()
 }

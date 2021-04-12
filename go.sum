@@ -76,6 +76,7 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/denisenkom/go-mssqldb v0.0.0-20200206145737-bbfc9a55622e/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
+github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96/go.mod h1:Qh8CwZgvJUkLughtfhJv5dyTYa91l1fOUCrgjqmcifM=
@@ -360,6 +361,8 @@ github.com/napptive/grpc-kube-manager-go v0.18.0 h1:hVtEI0cVWdpTNBRHPf/t6Y+FdE3Z
 github.com/napptive/grpc-kube-manager-go v0.18.0/go.mod h1:JmQ5C6peT6jLAFzMu3U2j1zqMDCCr8xxhc7MFpFfLJM=
 github.com/napptive/grpc-oam-go v0.14.0 h1:6lWPupWxuh4/om1xq1o6ChxHexT5dagSjUqURbQMyfc=
 github.com/napptive/grpc-oam-go v0.14.0/go.mod h1:RCFEDaKQcQT58vDaiCp1UBUrQU0dPbA8P3lFGmMyfnY=
+github.com/napptive/grpc-ping-go v0.1.0 h1:/hNDGXAOPbGA/jszauggfDG3PcVsfpgrxrS5lLGgfwI=
+github.com/napptive/grpc-ping-go v0.1.0/go.mod h1:hBIdzClG9sZCHcq+tYZGNLaZ0TtQZ6s/YIRbNyhKES4=
 github.com/napptive/grpc-playground-apps-go v0.4.0 h1:/p6B1OTUWWft5QhSCz6tcRHi9fq55DApeRCJWMQPGoo=
 github.com/napptive/grpc-playground-apps-go v0.4.0/go.mod h1:0U/uXuVz7u9nRNXFTBnvVv4JY/+cY4I4bWzEm/tbeeA=
 github.com/napptive/grpc-playground-common-go v0.1.0 h1:UN2ZHKT+sxfFcV4i03rfvHy1iTDMHs1MgigCjiLTEvc=
@@ -372,6 +375,8 @@ github.com/napptive/mockup-generator v1.0.0 h1:zNKGCFNz8iIJ8rqc8FPflIuciL8zg+pb4
 github.com/napptive/mockup-generator v1.0.0/go.mod h1:gHyrkMimXRWLBS70iJnOquJZ5Tr8aAjZjvXMm7KgI48=
 github.com/napptive/nerrors v1.0.0 h1:LADBxnAFPfsswumOVQC/17IUDJ2EXYsAYWEnXAmgv2o=
 github.com/napptive/nerrors v1.0.0/go.mod h1:ZZeFFcm34BFmU8yntdIEngwLbh2btshyPRg/J4fhY+0=
+github.com/napptive/njwt v1.0.0 h1:HwQQqqyqy01vT8tSyPUKVu0SXsACKFGVO+T11GEfILQ=
+github.com/napptive/njwt v1.0.0/go.mod h1:DBsFKGkWNVYDuH2RGCD3zSFfhxnesyCtF5sGR3DN9zg=
 github.com/napptive/rdbms v1.0.0-rc1 h1:HLUekUB2OXlBdSeV+rYVKrCmqI4foDBy9bXImG/6Hc0=
 github.com/napptive/rdbms v1.0.0-rc1/go.mod h1:WuPR4l5pvB9wm9fdFKoZA1AqchBiOG2aYiFNkBGTusg=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
