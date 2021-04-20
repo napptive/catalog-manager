@@ -7,14 +7,14 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210317102009-a9d74cec0186
 	github.com/envoyproxy/protoc-gen-validate v0.5.0 // indirect
 	github.com/golang/mock v1.4.4
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.3.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.3.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.6 // indirect
 	github.com/napptive/grpc-catalog-common-go v0.1.0
 	github.com/napptive/grpc-catalog-go v0.8.0
 	github.com/napptive/mockup-generator v1.0.0
 	github.com/napptive/nerrors v1.0.0
-	github.com/napptive/njwt v1.0.0
+	github.com/napptive/njwt v1.0.1-0.20210419162054-4691ac61a8b9
 	github.com/napptive/rdbms v1.0.0-rc1
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/onsi/ginkgo v1.15.0

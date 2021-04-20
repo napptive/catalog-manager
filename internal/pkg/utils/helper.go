@@ -34,6 +34,8 @@ const (
 	apiMetadataVersion = "core.oam.dev/v1alpha1"
 	// appMetadataKind with the kind of the metadata entity
 	appMetadataKind = "ApplicationMetadata"
+	// defaultVersion with the version ofa an application if it is no filled
+	defaultVersion = "latest"
 )
 
 // check file extension and returns if is a yaml file
@@ -88,4 +90,45 @@ func GenerateRandomString(length int) (string, error) {
 	}
 
 	return base32.StdEncoding.EncodeToString(b)[:length], nil
+}
+
+// DecomposeRepositoryName gets the url, repo, application and version from repository name
+// and returns the url, the applicationID and an error it something fails
+// [repoURL/]repoName/appName[:tag]
+func DecomposeRepositoryName(name string) (string, *entities.ApplicationID, error) {
+	var version string
+	var applicationName string
+	var repoName string
+	urlName := ""
+
+	names := strings.Split(name, "/")
+	if len(names) != 2 && len(names) != 3 {
+		return "", nil, nerrors.NewFailedPreconditionError(
+			"incorrect format for application name. [repoURL/]repoName/appName[:tag]")
+	}
+
+	// if len == 2 -> no url informed.
+	if len(names) == 3 {
+		urlName = names[0]
+	}
+	repoName = names[len(names)-2]
+
+	// get the version -> appName[:tag]
+	sp := strings.Split(names[len(names)-1], ":")
+	if len(sp) == 1 {
+		applicationName = sp[0]
+		version = defaultVersion
+	} else if len(sp) == 2 {
+		applicationName = sp[0]
+		version = sp[1]
+	} else {
+		return "", nil, nerrors.NewFailedPreconditionError(
+			"incorrect format for application name. [repoURL/]repoName/appName[:tag]")
+	}
+
+	return urlName, &entities.ApplicationID{
+		Repository:      repoName,
+		ApplicationName: applicationName,
+		Tag:             version,
+	}, nil
 }

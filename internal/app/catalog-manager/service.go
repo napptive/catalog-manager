@@ -19,7 +19,6 @@ package catalog_manager
 import (
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
 	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
@@ -96,7 +95,7 @@ func (s *Service) Run() {
 // LaunchGRPCService launches a server for gRPC requests.
 func (s *Service) LaunchGRPCService(providers *Providers) {
 	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider, s.cfg.CatalogUrl)
-	handler := catalog_manager.NewHandler(manager)
+	handler := catalog_manager.NewHandler(manager, s.cfg.AuthEnabled)
 
 	// create gRPC server
 	var gRPCServer *grpc.Server
@@ -107,7 +106,8 @@ func (s *Service) LaunchGRPCService(providers *Providers) {
 			Header: s.cfg.JWTConfig.Header,
 		}
 
-		gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(interceptors.JwtInterceptor(config)))
+		gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(interceptors.JwtInterceptor(config)),
+			grpc.StreamInterceptor(interceptors.JwtStreamInterceptor(config)))
 	}else {
 		gRPCServer = grpc.NewServer()
 	}

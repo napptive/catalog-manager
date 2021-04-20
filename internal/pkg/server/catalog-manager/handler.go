@@ -20,9 +20,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
+	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
+	"github.com/napptive/njwt/pkg/interceptors"
+	"github.com/rs/zerolog/log"
 	"io"
 )
 
@@ -31,12 +34,14 @@ const appRemovedMsg = "%s removed from catalog"
 
 type Handler struct {
 	manager Manager
+	// authEnabled is a boolean to check the user
+	authEnabled bool
 }
 
 // TODO: Check update/get concurrency
 
-func NewHandler(manager Manager) *Handler {
-	return &Handler{manager: manager}
+func NewHandler(manager Manager, authEnabled bool) *Handler {
+	return &Handler{manager: manager, authEnabled: authEnabled}
 }
 
 // Add a new application in the catalog
@@ -67,6 +72,10 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 		// the first time save the application name
 		if applicationName == "" {
 			applicationName = request.ApplicationName
+			// the first time, validate the
+			if vErr :=h.validateUser(server.Context(), request.ApplicationName, "push"); vErr != nil {
+				return vErr
+			}
 		}
 
 		// if the name is other than the saved one -> ERROR
@@ -103,8 +112,14 @@ func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, 
 
 //Remove an application from the catalog
 func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApplicationRequest) (*grpc_catalog_common_go.OpResponse, error) {
+
 	if err := request.Validate(); err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	// check the user (check if after validation yto be sure the ApplicationName is filled
+	if err := h.validateUser(ctx, request.ApplicationName, "remove"); err != nil {
+		return nil, err
 	}
 
 	if err := h.manager.Remove(request.ApplicationName); err != nil {
@@ -151,4 +166,28 @@ func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplica
 		ReadmeFile:      []byte(retrieved.Readme),
 		Metadata:        retrieved.MetadataObj.ToGRPC(),
 	}, nil
+}
+
+// validateUser check if the user in the context is the same as the repo name
+func (h *Handler) validateUser(ctx context.Context, appName string, action string) error {
+
+	// check the user (check if after validation yto be sure the ApplicationName is filled
+	if h.authEnabled {
+		claim, err := interceptors.GetClaimFromContext(ctx)
+		if err != nil {
+			return err
+		}
+		log.Debug().Interface("user", claim).Msg("remove request")
+
+		// get the repoName
+		_, appID, err := utils.DecomposeRepositoryName(appName)
+		if err != nil {
+			return err
+		}
+		// A user can only remove their apps
+		if appID.Repository != claim.Username {
+			return nerrors.NewPermissionDeniedError("A user can only %s their apps", action)
+		}
+	}
+	return nil
 }
