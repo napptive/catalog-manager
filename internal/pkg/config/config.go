@@ -26,6 +26,8 @@ type Config struct {
 	CatalogManager
 	// JWTConfig with the JWT specific configuration.
 	JWTConfig
+	// TeamConfig with the team configuration (repos and users)
+	TeamConfig
 	Version string
 	Commit  string
 	Debug   bool
@@ -39,6 +41,9 @@ func (c *Config) IsValid() error {
 	if err := c.JWTConfig.IsValid(); err != nil {
 		return err
 	}
+	if err := c.TeamConfig.IsValid(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -48,4 +53,5 @@ func (c *Config) Print() {
 	log.Info().Str("version", c.Version).Str("commit", c.Commit).Msg("Application config")
 	c.CatalogManager.Print()
 	c.JWTConfig.Print()
+	c.TeamConfig.Print()
 }

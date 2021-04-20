@@ -31,6 +31,9 @@ spec:
               secretKeyRef:
                 name: jwt-secret
                 key: secret
+        envFrom:
+          - configMapRef:
+              name: catalog-manager-team
         args:
           - "run"
           - "--elasticAddress=http://elastic.TARGET_K8S_NAMESPACE:9200"
@@ -38,6 +41,9 @@ spec:
           - "--authEnabled"
           - "--authHeader=$(AUTH_HEADER)"
           - "--authSecret=$(AUTH_SECRET)"
+          - "--teamPrivileges"
+          - "--teamUsers=$(TEAM_PRIVILEGED_USERS)"
+          - "--teamRepositories=$(TEAM_REPOSITORIES)"
         volumeMounts:
           - name: repository-path
             mountPath: "/napptive/repository"
