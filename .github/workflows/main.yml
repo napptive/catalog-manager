@@ -29,35 +29,6 @@ jobs:
       - name: Make all
         run: make all
 
-  coverage:
-    name: Coverage
-    runs-on: ubuntu-latest
-
-    needs: build
-    steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.15
-        id: go
-
-      - name: Configure git for private modules
-        run: git config --global url."https://${GH_NAPP_USER}:${GH_NAPP_TOKEN}@github.com".insteadOf "https://github.com"
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-
-      - name: Make coverage
-        run: make coverage
-
-      - name: Test & publish code coverage
-        uses: paambaati/codeclimate-action@v2.7.4
-        continue-on-error: true
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CodeClimateReporterID }}
-        with:
-          coverageLocations: ${{github.workspace}}/build/cover.out:gocov
-          prefix: github.com/${{github.repository}}/
   golangci:
     name: GoLangCI
     runs-on: ubuntu-latest
