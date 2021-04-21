@@ -187,19 +187,20 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 			return err
 		}
 
-		// if the user is privileged and the repository is a team repository -> OK
-		isPrivileged :=  h.isPrivilegedUser(claim.Username)
-		isTeamRepo := h.isTeamRepository(appID.Repository)
-		log.Debug().Str("repository", appID.Repository).Str("user", claim.Username).
-			Bool("isPrivileged", isPrivileged).Bool("isTeamRepo", isTeamRepo).Msg("checking privileges")
-		if h.isPrivilegedUser(claim.Username) && h.isTeamRepository(appID.Repository) {
-			return nil
-		}
-
 		// A user can only remove their apps
 		if appID.Repository != claim.Username {
-			return nerrors.NewPermissionDeniedError("A user can only %s their apps", action)
+
+			// if the user is privileged and the repository is a team repository -> OK
+			isPrivileged :=  h.isPrivilegedUser(claim.Username)
+			isTeamRepo := h.isTeamRepository(appID.Repository)
+			log.Debug().Str("repository", appID.Repository).Str("user", claim.Username).
+				Bool("isPrivileged", isPrivileged).Bool("isTeamRepo", isTeamRepo).Msg("checking privileges")
+			if ! h.isPrivilegedUser(claim.Username) || ! h.isTeamRepository(appID.Repository) {
+				return nerrors.NewPermissionDeniedError("A user can only %s their apps", action)
+			}
 		}
+
+
 	}
 	return nil
 }
