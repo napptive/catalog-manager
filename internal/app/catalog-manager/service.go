@@ -95,7 +95,7 @@ func (s *Service) Run() {
 // LaunchGRPCService launches a server for gRPC requests.
 func (s *Service) LaunchGRPCService(providers *Providers) {
 	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider, s.cfg.CatalogUrl)
-	handler := catalog_manager.NewHandler(manager, s.cfg.AuthEnabled)
+	handler := catalog_manager.NewHandler(manager, s.cfg.AuthEnabled, s.cfg.TeamConfig)
 
 	// create gRPC server
 	var gRPCServer *grpc.Server

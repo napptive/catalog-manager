@@ -48,4 +48,7 @@ func init() {
 	runCmd.Flags().BoolVar(&cfg.JWTConfig.AuthEnabled, "authEnabled", false, "Enable Authentication")
 	runCmd.Flags().StringVar(&cfg.JWTConfig.Header, "authHeader", "authorization", "Authorization header name")
 	runCmd.Flags().StringVar(&cfg.JWTConfig.Secret, "authSecret", "secret", "Authorization secret to validate JWT signatures")
+	runCmd.Flags().BoolVar(&cfg.Enabled, "teamPrivileges", false, "Enable Team Privileges")
+	runCmd.Flags().StringSliceVar(&cfg.PrivilegedUsers, "teamUsers", nil, "Privileged Users")
+	runCmd.Flags().StringSliceVar(&cfg.TeamRepositories, "teamRepositories", nil, "Team Repositories")
 }

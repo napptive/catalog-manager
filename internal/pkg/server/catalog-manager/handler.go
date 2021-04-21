@@ -19,6 +19,7 @@ package catalog_manager
 import (
 	"context"
 	"fmt"
+	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
@@ -33,6 +34,7 @@ const appAddedMsg = "%s added to catalog"
 const appRemovedMsg = "%s removed from catalog"
 
 type Handler struct {
+	teamConfig config.TeamConfig
 	manager Manager
 	// authEnabled is a boolean to check the user
 	authEnabled bool
@@ -40,8 +42,8 @@ type Handler struct {
 
 // TODO: Check update/get concurrency
 
-func NewHandler(manager Manager, authEnabled bool) *Handler {
-	return &Handler{manager: manager, authEnabled: authEnabled}
+func NewHandler(manager Manager, authEnabled bool, teamConfig config.TeamConfig) *Handler {
+	return &Handler{manager: manager, authEnabled: authEnabled, teamConfig: teamConfig}
 }
 
 // Add a new application in the catalog
@@ -171,7 +173,7 @@ func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplica
 // validateUser check if the user in the context is the same as the repo name
 func (h *Handler) validateUser(ctx context.Context, appName string, action string) error {
 
-	// check the user (check if after validation yto be sure the ApplicationName is filled
+	// check the user (check if after validation to be sure the ApplicationName is filled
 	if h.authEnabled {
 		claim, err := interceptors.GetClaimFromContext(ctx)
 		if err != nil {
@@ -184,10 +186,44 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 		if err != nil {
 			return err
 		}
+
 		// A user can only remove their apps
 		if appID.Repository != claim.Username {
-			return nerrors.NewPermissionDeniedError("A user can only %s their apps", action)
+
+			// if the user is privileged and the repository is a team repository -> OK
+			isPrivileged :=  h.isPrivilegedUser(claim.Username)
+			isTeamRepo := h.isTeamRepository(appID.Repository)
+			log.Debug().Str("repository", appID.Repository).Str("user", claim.Username).
+				Bool("isPrivileged", isPrivileged).Bool("isTeamRepo", isTeamRepo).Msg("checking privileges")
+			if ! h.isPrivilegedUser(claim.Username) || ! h.isTeamRepository(appID.Repository) {
+				return nerrors.NewPermissionDeniedError("A user can only %s their apps", action)
+			}
 		}
+
+
 	}
 	return nil
+}
+
+
+func (h *Handler) isPrivilegedUser(userName string) bool {
+
+	for _, user := range h.teamConfig.PrivilegedUsers {
+		if user == userName {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (h *Handler) isTeamRepository(repoName string) bool {
+
+	for _, repo := range h.teamConfig.TeamRepositories {
+		if repo == repoName {
+			return true
+		}
+	}
+
+	return false
 }
