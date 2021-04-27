@@ -17,8 +17,9 @@
 package utils
 
 import (
-	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"os"
+
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"syreclabs.com/go/faker"
 )
 
@@ -33,7 +34,7 @@ func RunIntegrationTests(id string) bool {
 
 func CreateCatalogMetadata() *entities.CatalogMetadata {
 	return &entities.CatalogMetadata{
-		APIVersion:  "core.oam.dev/v1alpha1",
+		APIVersion:  "core.napptive.com/v1alpha1",
 		Kind:        "ApplicationMetadata",
 		Name:        faker.App().String(),
 		Version:     faker.App().Version(),

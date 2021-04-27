@@ -18,6 +18,7 @@ package catalog_manager
 
 import (
 	"fmt"
+
 	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/mockup-generator/pkg/mockups"
@@ -26,8 +27,8 @@ import (
 	"github.com/onsi/gomega"
 )
 
-var metadataFile =`
-apiVersion: core.oam.dev/v1alpha1
+var metadataFile = `
+apiVersion: core.napptive.com/v1alpha1
 kind: ApplicationMetadata
 # Name of the application, not necessarily a valid k8s name.
 name: "My App Name 2"
@@ -41,7 +42,7 @@ tags:
 license: "Apache License Version 2.0"
 url: "https://..."
 doc: "https://..."
-apiVersion: core.oam.dev/v1alpha1
+apiVersion: core.napptive.com/v1alpha1
 kind: ApplicationMetadata
 # Name of the application, not necessarily a valid k8s name.
 name: "My App Name 2"
@@ -133,8 +134,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 				ApplicationName: appName,
 				Tag:             "latest",
 				MetadataName:    "My App",
-				Metadata: metadataFile,
-
+				Metadata:        metadataFile,
 			}, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
