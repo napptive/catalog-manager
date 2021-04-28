@@ -17,26 +17,30 @@ package utils
 
 import (
 	"encoding/base32"
+
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 
 	"crypto/rand"
 
-	"sigs.k8s.io/yaml"
 	"strings"
+
+	"sigs.k8s.io/yaml"
 
 	"encoding/json"
 )
 
 const (
-	// apiMetadataVersion with the version of the metadata entity
-	apiMetadataVersion = "core.oam.dev/v1alpha1"
-	// appMetadataKind with the kind of the metadata entity
-	appMetadataKind = "ApplicationMetadata"
 	// defaultVersion with the version ofa an application if it is no filled
 	defaultVersion = "latest"
 )
+
+// metadataGKV with a map associating group/version with the object kind. This map contains all the version of a metadata
+// file that are supported by the catalog. Notice that OAM has not yet accepted the ApplicationMetadata proposal.
+var metadataGKV = map[string]string{
+	"core.napptive.com/v1alpha1": "ApplicationMetadata",
+	"core.oam.dev/v1alpha1":      "ApplicationMetadata"}
 
 // check file extension and returns if is a yaml file
 func IsYamlFile(filePath string) bool {
@@ -45,7 +49,6 @@ func IsYamlFile(filePath string) bool {
 
 // ApplicationMetadataToJSON converts an ApplicationMetadata struct into a JSON
 func ApplicationMetadataToJSON(metadata entities.ApplicationMetadata) (string, error) {
-
 	bRes, err := json.Marshal(metadata)
 	if err != nil {
 		return "", err
@@ -55,13 +58,11 @@ func ApplicationMetadataToJSON(metadata entities.ApplicationMetadata) (string, e
 
 // getFile looks for a file by name in the array retrieved and returns the data or nil if the file does not exist
 func GetFile(relativeFileName string, files []*entities.FileInfo) []byte {
-
 	for _, file := range files {
 		if strings.HasSuffix(strings.ToLower(file.Path), strings.ToLower(relativeFileName)) {
 			return file.Data
 		}
 	}
-
 	return []byte{}
 }
 
@@ -73,10 +74,12 @@ func IsMetadata(data []byte) (bool, *entities.CatalogMetadata, error) {
 		log.Err(err).Msg("error getting metadata")
 		return false, nil, nerrors.FromError(err)
 	}
-	if a.APIVersion == apiMetadataVersion && a.Kind == appMetadataKind {
-		return true, &a, nil
+	// Iterate through the list of valid metadata file definitions.
+	for gv, k := range metadataGKV {
+		if a.APIVersion == gv && a.Kind == k {
+			return true, &a, nil
+		}
 	}
-
 	return false, nil, nil
 }
 
