@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package storage
+
+package utils
 
 import (
 	"testing"
@@ -22,7 +23,7 @@ import (
 	"github.com/onsi/gomega"
 )
 
-func TestStoragePackage(t *testing.T) {
+func TestUtilsPackage(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "Storage package suite")
+	ginkgo.RunSpecs(t, "Utils package suite")
 }

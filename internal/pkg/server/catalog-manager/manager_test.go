@@ -34,11 +34,11 @@ kind: ApplicationMetadata
 name: "My App Name 2"
 version: 1.0
 description: Short description for searchs. Long one plus how to goes into the README.md
-# Tags facilitate searches on the catalog
-tags:
-  - "tag1"
-  - "tag2"
-  - "tag3"
+# Keywords facilitate searches on the catalog
+keywords:
+  - "key1"
+  - "key2"
+  - "key3"
 license: "Apache License Version 2.0"
 url: "https://..."
 doc: "https://..."
@@ -48,11 +48,11 @@ kind: ApplicationMetadata
 name: "My App Name 2"
 version: 1.0
 description: Short description for searchs. Long one plus how to goes into the README.md
-# Tags facilitate searches on the catalog
-tags:
-  - "tag1"
-  - "tag2"
-  - "tag3"
+# Keywords facilitate searches on the catalog
+keywords:
+  - "key1"
+  - "key2"
+  - "key3"
 license: "Apache License Version 2.0"
 url: "https://..."
 doc: "https://..."
@@ -83,22 +83,22 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 
 	ginkgo.Context("Downloading applications", func() {
 		ginkgo.It("Should be able to download an application", func() {
-			repoName := "repoName"
+			namespace := "namespace"
 			appName := "appName"
 
 			filesReturned := []*entities.FileInfo{
-				&entities.FileInfo{
+				{
 					Path: "./app.yaml",
 					Data: []byte("app"),
-				}, &entities.FileInfo{
+				}, {
 					Path: "./metadata.yaml",
 					Data: []byte("metadata"),
 				}}
 
-			storageProvider.EXPECT().GetApplication(repoName, appName, "latest").Return(filesReturned, nil)
+			storageProvider.EXPECT().GetApplication(namespace, appName, "latest").Return(filesReturned, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			files, err := manager.Download(fmt.Sprintf("%s/%s", repoName, appName))
+			files, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName))
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(files).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(files).ShouldNot(gomega.BeNil())
@@ -111,26 +111,26 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 		ginkgo.It("should not be able to download an application if there is an error in the storage", func() {
-			repoName := "repoName"
+			namespace := "namespace"
 			appName := "appName"
 
-			storageProvider.EXPECT().GetApplication(repoName, appName, "latest").Return(nil, nerrors.NewInternalError("error reading repository"))
+			storageProvider.EXPECT().GetApplication(namespace, appName, "latest").Return(nil, nerrors.NewInternalError("error reading repository"))
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Download(fmt.Sprintf("%s/%s", repoName, appName))
+			_, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName))
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 	})
 
 	ginkgo.Context("Getting application", func() {
 		ginkgo.It("should be able to get an application", func() {
-			repoName := "repoName"
+			namespace := "namespace"
 			appName := "appName"
 
-			matcher := mockups.NewStructMatcher(map[string]interface{}{"Repository": repoName, "ApplicationName": appName})
-			metadataProvider.EXPECT().Get(matcher).Return(&entities.ApplicationMetadata{
+			matcher := mockups.NewStructMatcher(map[string]interface{}{"Namespace": namespace, "ApplicationName": appName})
+			metadataProvider.EXPECT().Get(matcher).Return(&entities.ApplicationInfo{
 				CatalogID:       "",
-				Repository:      repoName,
+				Namespace:       namespace,
 				ApplicationName: appName,
 				Tag:             "latest",
 				MetadataName:    "My App",
@@ -138,21 +138,21 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			}, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			metadata, err := manager.Get(fmt.Sprintf("%s/%s", repoName, appName))
+			metadata, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName))
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(metadata).ShouldNot(gomega.BeNil())
 			gomega.Expect(metadata.MetadataObj.Name).ShouldNot(gomega.BeEmpty())
 
 		})
 		ginkgo.It("should not be able to return an application if it does not exist", func() {
-			repoName := "repoName"
+			namespace := "namespace"
 			appName := "appName"
 
-			matcher := mockups.NewStructMatcher(map[string]interface{}{"Repository": repoName, "ApplicationName": appName})
+			matcher := mockups.NewStructMatcher(map[string]interface{}{"Namespace": namespace, "ApplicationName": appName})
 			metadataProvider.EXPECT().Get(matcher).Return(nil, nerrors.NewNotFoundError("not found"))
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Get(fmt.Sprintf("%s/%s", repoName, appName))
+			_, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName))
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 
 		})
@@ -166,17 +166,17 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 	ginkgo.Context("Listing applications", func() {
 		ginkgo.It("should be able to list applications", func() {
 
-			returned := []*entities.ApplicationMetadata{
-				&entities.ApplicationMetadata{
+			returned := []*entities.ApplicationInfo{
+				{
 					CatalogID:       "catalog1",
-					Repository:      "repo1",
+					Namespace:       "ns1",
 					ApplicationName: "app1",
 					Tag:             "tag1",
 					MetadataName:    "My app-v1",
 				},
-				&entities.ApplicationMetadata{
+				{
 					CatalogID:       "catalog1",
-					Repository:      "repo1",
+					Namespace:       "ns1",
 					ApplicationName: "app1",
 					Tag:             "tag2",
 					MetadataName:    "My app-v2",
@@ -186,19 +186,22 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			metadataProvider.EXPECT().List().Return(returned, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			received, err := manager.List()
+			received, err := manager.List("")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(len(received)).ShouldNot(gomega.BeZero())
 		})
+		ginkgo.PIt("should be able to list applications from a selected namespace", func() {
+			//TODO
+		})
 		ginkgo.It("should be able to return an empty list of applications", func() {
 
-			returned := make([]*entities.ApplicationMetadata, 0)
+			returned := make([]*entities.ApplicationInfo, 0)
 
 			metadataProvider.EXPECT().List().Return(returned, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			received, err := manager.List()
+			received, err := manager.List("")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).Should(gomega.BeEmpty())
 		})

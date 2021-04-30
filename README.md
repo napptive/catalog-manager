@@ -33,6 +33,40 @@ brew install gnu-sed
 ```
 ---
 
+## Development
+
+To run unit tests use:
+
+```
+make test
+```
+
+To run integration tests, first launch a docker container with elasticsearch and postgresql.
+
+```
+docker run -d --name elasticsearch -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" elasticsearch:7.11.2
+docker run -d --name local-postgres -e POSTGRES_PASSWORD=Pass2020 -p 5432:5432 postgres:13-alpine
+```
+
+Next, you need to preload the database table definitions:
+
+```
+docker exec -it local-postgres psql -h localhost -U postgres -d postgres -p 5432
+
+CREATE SCHEMA IF NOT EXISTS catalog;
+CREATE TABLE IF NOT EXISTS catalog.users (
+  username VARCHAR(50) PRIMARY KEY NOT NULL,
+  salt VARCHAR(16) NOT NULL,
+  salted_password VARCHAR(256)
+);
+```
+
+then execute:
+
+```
+RUN_INTEGRATION_TEST=all make test
+```
+
 ## Integration with Github Actions
 
 This repository is integrated with GitHub Actions.

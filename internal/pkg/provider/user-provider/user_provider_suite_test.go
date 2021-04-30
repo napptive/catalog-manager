@@ -16,12 +16,13 @@
 package user_provider
 
 import (
+	"testing"
+
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
-	"testing"
 )
 
-func TestProviderPackage(t *testing.T) {
+func TestUserPackage(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecs(t, "User Provider package suite")
 }

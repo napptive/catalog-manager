@@ -17,7 +17,7 @@
 package commands
 
 import (
-	"github.com/napptive/catalog-manager/internal/app/catalog-manager"
+	catalog_manager "github.com/napptive/catalog-manager/internal/app/catalog-manager"
 	"github.com/spf13/cobra"
 )
 
@@ -50,5 +50,5 @@ func init() {
 	runCmd.Flags().StringVar(&cfg.JWTConfig.Secret, "authSecret", "secret", "Authorization secret to validate JWT signatures")
 	runCmd.Flags().BoolVar(&cfg.Enabled, "teamPrivileges", false, "Enable Team Privileges")
 	runCmd.Flags().StringSliceVar(&cfg.PrivilegedUsers, "teamUsers", nil, "Privileged Users")
-	runCmd.Flags().StringSliceVar(&cfg.TeamRepositories, "teamRepositories", nil, "Team Repositories")
+	runCmd.Flags().StringSliceVar(&cfg.TeamNamespaces, "teamRepositories", nil, "Team Repositories")
 }

@@ -17,17 +17,18 @@ package entities
 
 import (
 	"fmt"
-	"github.com/napptive/grpc-catalog-go"
+
+	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 )
 
 // -- ApplicationMetadata
 
-// ApplicationMetadata with the metadata of application, this will be the application info showed
-type ApplicationMetadata struct {
+// ApplicationInfo with the metadata of application, this will be the application info showed
+type ApplicationInfo struct {
 	// CatalogID with an internal identifier
 	CatalogID string
-	// Repository with the repository name
-	Repository string
+	// Namespace where the application is located.
+	Namespace string
 	// ApplicationName with the name of the application
 	ApplicationName string
 	// Tag with the tag/version of the application
@@ -38,26 +39,22 @@ type ApplicationMetadata struct {
 	Metadata string
 	//MedataName with the name defined in metadata file. This field is used to store it in elastic field and return it when listing
 	MetadataName string
-	// MetadataObj with the metadata object
-	//MetadataObj CatalogMetadata
 }
 
-// ToApplicationSummary converts the ApplicationMetadata to grpc_catalog_go.ApplicationSummary
-func (a *ApplicationMetadata) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary {
-
+// ToApplicationSummary converts the ApplicationSummary to grpc_catalog_go.ApplicationSummary
+func (a *ApplicationInfo) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary {
 	return &grpc_catalog_go.ApplicationSummary{
-		RepositoryName:  a.Repository,
+		Namespace:       a.Namespace,
 		ApplicationName: a.ApplicationName,
 		Tag:             a.Tag,
-		//MetadataName:    a.MetadataObj.Name,
-		MetadataName: a.MetadataName,
+		MetadataName:    a.MetadataName,
 	}
 }
 
-// ToApplicationID converts ApplicationMetadata to ApplicationID
-func (a *ApplicationMetadata) ToApplicationID() *ApplicationID {
+// ToApplicationID converts ApplicationSummary to ApplicationID
+func (a *ApplicationInfo) ToApplicationID() *ApplicationID {
 	return &ApplicationID{
-		Repository:      a.Repository,
+		Namespace:       a.Namespace,
 		ApplicationName: a.ApplicationName,
 		Tag:             a.Tag,
 	}
@@ -67,11 +64,11 @@ func (a *ApplicationMetadata) ToApplicationID() *ApplicationID {
 
 // -- ApplicationID
 
-// ApplicationID with the application identifier (URL-Repo-AppName-tag)
+// ApplicationID with the application identifier (catalogURL-Namespace-AppName-tag)
 // these four fields must be unique
 type ApplicationID struct {
-	// Repository with the repository name
-	Repository string
+	// Namespace associated with the application.
+	Namespace string
 	// ApplicationName with the name of the application
 	ApplicationName string
 	// Tag with the tag/version of the application
@@ -79,7 +76,7 @@ type ApplicationID struct {
 }
 
 func (a *ApplicationID) String() string {
-	return fmt.Sprintf("%s/%s:%s", a.Repository, a.ApplicationName, a.Tag)
+	return fmt.Sprintf("%s/%s:%s", a.Namespace, a.ApplicationName, a.Tag)
 }
 
 // --
@@ -124,8 +121,8 @@ func (k *KubernetesEntities) ToGRPC() *grpc_catalog_go.KubernetesEntities {
 	}
 }
 
-// CatalogRequirement with the application requirements
-type CatalogRequirement struct {
+// ApplicationRequirement with the application requirements
+type ApplicationRequirement struct {
 	// Traits with the application traits
 	Traits []string `yaml:"traits"`
 	// Scopes with the application scopes
@@ -135,51 +132,51 @@ type CatalogRequirement struct {
 }
 
 // ToGRPC converts CatalogRequirement to grpc_catalog_go.CatalogRequirement
-func (cr *CatalogRequirement) ToGRPC() *grpc_catalog_go.CatalogRequirement {
+func (ar *ApplicationRequirement) ToGRPC() *grpc_catalog_go.ApplicationRequirement {
 	k8s := make([]*grpc_catalog_go.KubernetesEntities, 0)
-	for _, entity := range cr.K8s {
+	for _, entity := range ar.K8s {
 		k8s = append(k8s, entity.ToGRPC())
 	}
 
-	return &grpc_catalog_go.CatalogRequirement{
-		Traits: cr.Traits,
-		Scopes: cr.Scopes,
+	return &grpc_catalog_go.ApplicationRequirement{
+		Traits: ar.Traits,
+		Scopes: ar.Scopes,
 		K8S:    k8s,
 	}
 }
 
-// CatalogMetadata is a struct to load the kind and api_version of a file to check if it is metadata file
-type CatalogMetadata struct {
-	APIVersion  string             `yaml:"apiVersion"`
-	Kind        string             `yaml:"kind"`
-	Name        string             `yaml:"name"`
-	Version     string             `yaml:"version"`
-	Description string             `yaml:"description"`
-	Tags        []string           `yaml:"tags"`
-	License     string             `yaml:"license"`
-	Url         string             `yaml:"url"`
-	Doc         string             `yaml:"doc"`
-	Requires    CatalogRequirement `yaml:"requires"`
-	Logo        []ApplicationLogo  `yaml:"logo"`
+// ApplicationMetadata is a struct to load the kind and api_version of a file to check if it is metadata file
+type ApplicationMetadata struct {
+	APIVersion  string                 `yaml:"apiVersion"`
+	Kind        string                 `yaml:"kind"`
+	Name        string                 `yaml:"name"`
+	Version     string                 `yaml:"version"`
+	Description string                 `yaml:"description"`
+	Keywords    []string               `yaml:"keywords"`
+	License     string                 `yaml:"license"`
+	Url         string                 `yaml:"url"`
+	Doc         string                 `yaml:"doc"`
+	Requires    ApplicationRequirement `yaml:"requires"`
+	Logo        []ApplicationLogo      `yaml:"logo"`
 }
 
-// ToGRPC converts CatalogMetadata to grpc_catalog_go.CatalogMetadata
-func (c *CatalogMetadata) ToGRPC() *grpc_catalog_go.CatalogMetadata {
+// ToGRPC converts ApplicationMetadata to grpc_catalog_go.ApplicationMetadata
+func (am *ApplicationMetadata) ToGRPC() *grpc_catalog_go.ApplicationMetadata {
 	logos := make([]*grpc_catalog_go.ApplicationLogo, 0)
-	for _, logo := range c.Logo {
+	for _, logo := range am.Logo {
 		logos = append(logos, logo.ToGRPC())
 	}
-	return &grpc_catalog_go.CatalogMetadata{
-		ApiVersion:  c.APIVersion,
-		Kind:        c.Kind,
-		Name:        c.Name,
-		Version:     c.Version,
-		Description: c.Description,
-		Tags:        c.Tags,
-		License:     c.License,
-		Url:         c.Url,
-		Doc:         c.Doc,
-		Requires:    c.Requires.ToGRPC(),
+	return &grpc_catalog_go.ApplicationMetadata{
+		ApiVersion:  am.APIVersion,
+		Kind:        am.Kind,
+		Name:        am.Name,
+		Version:     am.Version,
+		Description: am.Description,
+		Keywords:    am.Keywords,
+		License:     am.License,
+		Url:         am.Url,
+		Doc:         am.Doc,
+		Requires:    am.Requires.ToGRPC(),
 		Logo:        logos,
 	}
 }
@@ -189,8 +186,8 @@ func (c *CatalogMetadata) ToGRPC() *grpc_catalog_go.CatalogMetadata {
 type ExtendedApplicationMetadata struct {
 	// CatalogID with an internal identifier
 	CatalogID string
-	// Repository with the repository name
-	Repository string
+	// Namespace associated with the application.
+	Namespace string
 	// ApplicationName with the name of the application
 	ApplicationName string
 	// Tag with the tag/version of the application
@@ -200,7 +197,7 @@ type ExtendedApplicationMetadata struct {
 	// Metadata with the metadata.yaml file
 	Metadata string
 	// MetadataObj with the metadata object
-	MetadataObj CatalogMetadata
+	MetadataObj ApplicationMetadata
 }
 
 // --

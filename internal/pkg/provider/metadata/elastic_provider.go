@@ -33,8 +33,8 @@ import (
 )
 
 const (
-	// RepositoryField with the name of the field where we store the name of the repository
-	RepositoryField = "Repository"
+	// NamespaceField with the name of the field where we store the name of the repository
+	NamespaceField = "Namespace"
 	// ApplicationField with the name of the field where we store the name of the application
 	ApplicationField = "ApplicationName"
 	// TagField with the name of the field where we store the name of tag/version
@@ -48,7 +48,7 @@ var mapping = `{
     "mappings": {
         "properties": {
           "CatalogID":  		{ "type": "keyword" },
-          "Repository":  		{ "type": "keyword" },
+          "Namespace":  		{ "type": "keyword" },
           "ApplicationName":	{ "type": "keyword" },
           "Tag":         		{ "type": "keyword" },
           "Readme": 			{ "type": "text" },
@@ -181,14 +181,14 @@ func (e *ElasticProvider) DeleteIndex() error {
 }
 
 // CreateID generates the documentID to store the application metadata
-func (e *ElasticProvider) CreateID(metadata entities.ApplicationMetadata) string {
-	id := fmt.Sprintf("%s/%s:%s", metadata.Repository, metadata.ApplicationName, metadata.Tag)
+func (e *ElasticProvider) CreateID(metadata entities.ApplicationInfo) string {
+	id := fmt.Sprintf("%s/%s:%s", metadata.Namespace, metadata.ApplicationName, metadata.Tag)
 	return id
 }
 
 // CreateIDFromAppID creates the documentID from ApplicationID
 func (e *ElasticProvider) CreateIDFromAppID(metadata entities.ApplicationID) string {
-	id := fmt.Sprintf("%s/%s:%s", metadata.Repository, metadata.ApplicationName, metadata.Tag)
+	id := fmt.Sprintf("%s/%s:%s", metadata.Namespace, metadata.ApplicationName, metadata.Tag)
 	return id
 }
 
@@ -205,7 +205,7 @@ func (e *ElasticProvider) buildTerm(field string, value string) map[string]inter
 // this method is used to ask about ALL the files (url, repo, appName and tag)
 func (e *ElasticProvider) buildQuery(appID entities.ApplicationID) map[string]interface{} {
 
-	repo := e.buildTerm(RepositoryField, appID.Repository)
+	repo := e.buildTerm(NamespaceField, appID.Namespace)
 	appName := e.buildTerm(ApplicationField, appID.ApplicationName)
 	tag := e.buildTerm(TagField, appID.Tag)
 
@@ -221,7 +221,7 @@ func (e *ElasticProvider) buildQuery(appID entities.ApplicationID) map[string]in
 }
 
 // Add stores new application metadata or updates it if it exists
-func (e *ElasticProvider) Add(metadata *entities.ApplicationMetadata) (*entities.ApplicationMetadata, error) {
+func (e *ElasticProvider) Add(metadata *entities.ApplicationInfo) (*entities.ApplicationInfo, error) {
 
 	// Check if application already exists -> remove it!
 	appID := metadata.ToApplicationID()
@@ -242,7 +242,7 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationMetadata) (*entities
 	//	metadata.MetadataName = metadata.MetadataObj.Name
 
 	// convert the metadata to JSON
-	metadataJSON, err := utils.ApplicationMetadataToJSON(*metadata)
+	metadataJSON, err := utils.ApplicationInfoToJSON(*metadata)
 	if err != nil {
 		log.Error().Err(err).Msg("error converting metadata to JSON")
 		return nil, err
@@ -276,7 +276,7 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationMetadata) (*entities
 
 // SearchByApplicationID returns the application metadata requested
 // Right now it is not used neither tested
-func (e *ElasticProvider) SearchByApplicationID(appID entities.ApplicationID) (*entities.ApplicationMetadata, error) {
+func (e *ElasticProvider) SearchByApplicationID(appID entities.ApplicationID) (*entities.ApplicationInfo, error) {
 
 	var buf bytes.Buffer
 
@@ -321,7 +321,7 @@ func (e *ElasticProvider) SearchByApplicationID(appID entities.ApplicationID) (*
 		return nil, nerrors.NewNotFoundError("%s metadata is not available", appID.String())
 	}
 
-	var application entities.ApplicationMetadata
+	var application entities.ApplicationInfo
 	if err := json.Unmarshal(r.Hits.Hits[0].Source, &application); err != nil {
 		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
 	}
@@ -385,7 +385,7 @@ func (e *ElasticProvider) Exists(appID *entities.ApplicationID) (bool, error) {
 }
 
 // Get returns the application metadata requested
-func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.ApplicationMetadata, error) {
+func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.ApplicationInfo, error) {
 	catalogID := e.CreateIDFromAppID(appID)
 	var buf bytes.Buffer
 
@@ -443,7 +443,7 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 		return nil, nerrors.NewInternalError("Error getting application metadata, duplicated entries")
 	}
 
-	var application entities.ApplicationMetadata
+	var application entities.ApplicationInfo
 	if err := json.Unmarshal(r.Hits.Hits[0].Source, &application); err != nil {
 		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
 	}
@@ -505,7 +505,7 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 }
 
 // List returns all the applications stored
-func (e *ElasticProvider) List() ([]*entities.ApplicationMetadata, error) {
+func (e *ElasticProvider) List() ([]*entities.ApplicationInfo, error) {
 	// Perform the search request.
 	res, err := e.client.Search(
 		e.client.Search.WithContext(context.Background()),
@@ -537,9 +537,9 @@ func (e *ElasticProvider) List() ([]*entities.ApplicationMetadata, error) {
 	// Print the response status, number of results, and request duration.
 	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("Get operation")
 
-	applications := make([]*entities.ApplicationMetadata, 0)
+	applications := make([]*entities.ApplicationInfo, 0)
 	for _, app := range r.Hits.Hits {
-		var application entities.ApplicationMetadata
+		var application entities.ApplicationInfo
 		if err := json.Unmarshal(app.Source, &application); err != nil {
 			return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
 		}

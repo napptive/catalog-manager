@@ -19,6 +19,8 @@ package catalog_manager
 import (
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
@@ -27,7 +29,6 @@ import (
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/napptive/njwt/pkg/interceptors"
 	"github.com/rs/zerolog/log"
-	"io"
 )
 
 const appAddedMsg = "%s added to catalog"
@@ -35,7 +36,7 @@ const appRemovedMsg = "%s removed from catalog"
 
 type Handler struct {
 	teamConfig config.TeamConfig
-	manager Manager
+	manager    Manager
 	// authEnabled is a boolean to check the user
 	authEnabled bool
 }
@@ -50,20 +51,20 @@ func NewHandler(manager Manager, authEnabled bool, teamConfig config.TeamConfig)
 func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 
 	// TODO: create a map to load the files and avoid send a file twice
-	applicationName := ""
+	applicationID := ""
 	var applicationFiles []*entities.FileInfo
 
 	for {
 		// From https://grpc.io/docs/languages/go/basics/#server-side-streaming-rpc-1
 		request, err := server.Recv()
 		if err == io.EOF {
-			if err := h.manager.Add(applicationName, applicationFiles); err != nil {
+			if err := h.manager.Add(applicationID, applicationFiles); err != nil {
 				return nerrors.FromError(err).ToGRPC()
 			} else {
 				return server.SendAndClose(&grpc_catalog_common_go.OpResponse{
 					Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
 					StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
-					UserInfo:   fmt.Sprintf(appAddedMsg, applicationName),
+					UserInfo:   fmt.Sprintf(appAddedMsg, applicationID),
 				})
 			}
 		}
@@ -71,19 +72,19 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 			return nerrors.FromError(err).ToGRPC()
 		}
 
-		// the first time save the application name
-		if applicationName == "" {
-			applicationName = request.ApplicationName
-			// the first time, validate the
-			if vErr :=h.validateUser(server.Context(), request.ApplicationName, "push"); vErr != nil {
+		// the first time save the application identifier
+		if applicationID == "" {
+			applicationID = request.ApplicationId
+			// Also, validate the user.
+			if vErr := h.validateUser(server.Context(), request.ApplicationId, "push"); vErr != nil {
 				return vErr
 			}
 		}
 
-		// if the name is other than the saved one -> ERROR
-		// it is not allowed sending different applications in the same stream
-		if request.ApplicationName != applicationName {
-			sErr := nerrors.NewFailedPreconditionError("not allowed sending different applications in the same stream")
+		// if the identifier is other than the saved one -> ERROR
+		// For now, we do not allow the user to send different applications in the same stream
+		if request.ApplicationId != applicationID {
+			sErr := nerrors.NewFailedPreconditionError("cannot send different applications in the same stream")
 			return nerrors.FromError(sErr).ToGRPC()
 		}
 		// Append the files
@@ -98,7 +99,7 @@ func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, 
 		return nerrors.FromError(err).ToGRPC()
 	}
 
-	files, err := h.manager.Download(request.ApplicationName)
+	files, err := h.manager.Download(request.ApplicationId)
 	if err != nil {
 		return nerrors.FromError(err).ToGRPC()
 	}
@@ -119,25 +120,25 @@ func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApp
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
 
-	// check the user (check if after validation yto be sure the ApplicationName is filled
-	if err := h.validateUser(ctx, request.ApplicationName, "remove"); err != nil {
+	// check the user (check if after validation yto be sure the ApplicationId is filled
+	if err := h.validateUser(ctx, request.ApplicationId, "remove"); err != nil {
 		return nil, err
 	}
 
-	if err := h.manager.Remove(request.ApplicationName); err != nil {
+	if err := h.manager.Remove(request.ApplicationId); err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
 
 	return &grpc_catalog_common_go.OpResponse{
 		Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
 		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
-		UserInfo:   fmt.Sprintf(appRemovedMsg, request.ApplicationName),
+		UserInfo:   fmt.Sprintf(appRemovedMsg, request.ApplicationId),
 	}, nil
 }
 
 // List returns a list with all the applications
-func (h *Handler) List(ctx context.Context, request *grpc_catalog_common_go.EmptyRequest) (*grpc_catalog_go.ApplicationList, error) {
-	returned, err := h.manager.List()
+func (h *Handler) List(ctx context.Context, request *grpc_catalog_go.ListApplicationsRequest) (*grpc_catalog_go.ApplicationList, error) {
+	returned, err := h.manager.List(request.Namespace)
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
@@ -156,12 +157,12 @@ func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplica
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
 
-	retrieved, err := h.manager.Get(request.ApplicationName)
+	retrieved, err := h.manager.Get(request.ApplicationId)
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
 	return &grpc_catalog_go.InfoApplicationResponse{
-		RepositoryName:  retrieved.Repository,
+		Namespace:       retrieved.Namespace,
 		ApplicationName: retrieved.ApplicationName,
 		Tag:             retrieved.Tag,
 		MetadataFile:    []byte(retrieved.Metadata),
@@ -182,29 +183,27 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 		log.Debug().Interface("user", claim).Msg("remove request")
 
 		// get the repoName
-		_, appID, err := utils.DecomposeRepositoryName(appName)
+		_, appID, err := utils.DecomposeApplicationID(appName)
 		if err != nil {
 			return err
 		}
 
 		// A user can only remove their apps
-		if appID.Repository != claim.Username {
+		if appID.Namespace != claim.Username {
 
 			// if the user is privileged and the repository is a team repository -> OK
-			isPrivileged :=  h.isPrivilegedUser(claim.Username)
-			isTeamRepo := h.isTeamRepository(appID.Repository)
-			log.Debug().Str("repository", appID.Repository).Str("user", claim.Username).
+			isPrivileged := h.isPrivilegedUser(claim.Username)
+			isTeamRepo := h.isTeamNamespace(appID.Namespace)
+			log.Debug().Str("repository", appID.Namespace).Str("user", claim.Username).
 				Bool("isPrivileged", isPrivileged).Bool("isTeamRepo", isTeamRepo).Msg("checking privileges")
-			if ! h.isPrivilegedUser(claim.Username) || ! h.isTeamRepository(appID.Repository) {
+			if !h.isPrivilegedUser(claim.Username) || !h.isTeamNamespace(appID.Namespace) {
 				return nerrors.NewPermissionDeniedError("A user can only %s their apps", action)
 			}
 		}
 
-
 	}
 	return nil
 }
-
 
 func (h *Handler) isPrivilegedUser(userName string) bool {
 
@@ -217,9 +216,9 @@ func (h *Handler) isPrivilegedUser(userName string) bool {
 	return false
 }
 
-func (h *Handler) isTeamRepository(repoName string) bool {
+func (h *Handler) isTeamNamespace(repoName string) bool {
 
-	for _, repo := range h.teamConfig.TeamRepositories {
+	for _, repo := range h.teamConfig.TeamNamespaces {
 		if repo == repoName {
 			return true
 		}

@@ -16,16 +16,17 @@
 package storage
 
 import (
+	"os"
+
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
-	"os"
 	"syreclabs.com/go/faker"
 )
 
-var _ = ginkgo.Describe("Elastic Provider test", func() {
+var _ = ginkgo.Describe("Storage test", func() {
 
 	if !utils.RunIntegrationTests("storage") {
 		log.Warn().Msg("Storage manager tests are skipped")
@@ -34,7 +35,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 
 	var basePath = os.Getenv("REPO_BASE_PATH")
 	if basePath == "" {
-		ginkgo.Fail("missing environment variables [REPO_BASE_PATH]")
+		basePath = "/tmp/cmtest"
 	}
 
 	ginkgo.It("should be able to create a repository", func() {
@@ -98,7 +99,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		gomega.Expect(err).Should(gomega.Succeed())
 	})
 
-	ginkgo.It("Should be able to find a repository", func () {
+	ginkgo.It("Should be able to find a repository", func() {
 		manager := NewStorageManager(basePath)
 		repo := faker.Name().FirstName()
 		appName := faker.App().Name()
