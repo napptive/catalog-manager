@@ -211,5 +211,5 @@ func (m *manager) Get(requestedAppID string) (*entities.ExtendedApplicationMetad
 
 // List returns a list of applications (without metadata and readme content)
 func (m *manager) List(namespace string) ([]*entities.ApplicationInfo, error) {
-	return m.provider.List()
+	return m.provider.List(namespace)
 }

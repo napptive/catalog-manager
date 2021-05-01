@@ -30,5 +30,5 @@ type MetadataProvider interface {
 	Remove(appID *entities.ApplicationID) error
 	// TODO: add pagination
 	// List returns the applications stored
-	List() ([]*entities.ApplicationInfo, error)
+	List(namespace string) ([]*entities.ApplicationInfo, error)
 }

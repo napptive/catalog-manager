@@ -157,17 +157,36 @@ func RunTests(provider MetadataProvider) {
 			}
 			time.Sleep(time.Second)
 
-			listRetrieved, err := provider.List()
+			listRetrieved, err := provider.List("")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(listRetrieved).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(len(listRetrieved)).Should(gomega.Equal(5))
 
 		})
 		ginkgo.It("Should be able to list an empty list of applications", func() {
-
-			listRetrieved, err := provider.List()
+			listRetrieved, err := provider.List("")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(listRetrieved).Should(gomega.BeEmpty())
+		})
+		ginkgo.It("Should be able to list applications in a namespace", func() {
+			numApps := 10
+			targetNamespace := "target"
+			for i := 0; i < numApps; i++ {
+				app := utils.CreateTestApplicationInfo()
+				if i%2 == 0 {
+					app.Namespace = targetNamespace
+				}
+				returned, err := provider.Add(app)
+				gomega.Expect(err).Should(gomega.Succeed())
+				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
+			}
+			time.Sleep(time.Second)
+			listRetrieved, err := provider.List(targetNamespace)
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(len(listRetrieved)).Should(gomega.Equal(numApps / 2))
+			for _, retrievedApp := range listRetrieved {
+				gomega.Expect(retrievedApp.Namespace).Should(gomega.Equal(targetNamespace))
+			}
 		})
 	})
 }

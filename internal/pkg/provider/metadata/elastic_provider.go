@@ -505,13 +505,33 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 }
 
 // List returns all the applications stored
-func (e *ElasticProvider) List() ([]*entities.ApplicationInfo, error) {
-	// Perform the search request.
-	res, err := e.client.Search(
+func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, error) {
+
+	searchFunctions := []func(*esapi.SearchRequest){
 		e.client.Search.WithContext(context.Background()),
 		e.client.Search.WithIndex(e.indexName),
 		e.client.Search.WithTrackTotalHits(true),
-	)
+	}
+
+	if namespace != "" {
+		query := map[string]interface{}{
+			"query": map[string]interface{}{
+				"match": map[string]interface{}{
+					NamespaceField: namespace,
+				},
+			},
+		}
+
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(query); err != nil {
+			log.Err(err).Msg("Error encoding namespaced query")
+			return nil, nerrors.NewInternalErrorFrom(err, "error creating query to list by namespace")
+		}
+		searchFunctions = append(searchFunctions, e.client.Search.WithBody(&buf))
+
+	}
+	// Perform the search request.
+	res, err := e.client.Search(searchFunctions...)
 	if err != nil {
 		log.Err(err).Msg("Error getting response")
 	}
@@ -535,7 +555,7 @@ func (e *ElasticProvider) List() ([]*entities.ApplicationInfo, error) {
 	}
 
 	// Print the response status, number of results, and request duration.
-	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("Get operation")
+	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("List operation")
 
 	applications := make([]*entities.ApplicationInfo, 0)
 	for _, app := range r.Hits.Hits {

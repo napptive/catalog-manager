@@ -183,7 +183,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 				},
 			}
 
-			metadataProvider.EXPECT().List().Return(returned, nil)
+			metadataProvider.EXPECT().List(gomock.Any()).Return(returned, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
 			received, err := manager.List("")
@@ -191,14 +191,36 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			gomega.Expect(received).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(len(received)).ShouldNot(gomega.BeZero())
 		})
-		ginkgo.PIt("should be able to list applications from a selected namespace", func() {
-			//TODO
+		ginkgo.It("should be able to list applications from a selected namespace", func() {
+			returned := []*entities.ApplicationInfo{
+				{
+					CatalogID:       "catalog1",
+					Namespace:       "ns1",
+					ApplicationName: "app1",
+					Tag:             "tag1",
+					MetadataName:    "My app-v1",
+				},
+				{
+					CatalogID:       "catalog1",
+					Namespace:       "ns1",
+					ApplicationName: "app1",
+					Tag:             "tag2",
+					MetadataName:    "My app-v2",
+				},
+			}
+			metadataProvider.EXPECT().List(gomock.Any()).Return(returned, nil)
+			manager := NewManager(storageProvider, metadataProvider, "")
+			received, err := manager.List("ns1")
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(received).ShouldNot(gomega.BeEmpty())
+			gomega.Expect(len(received)).Should(gomega.Equal(len(returned)))
+
 		})
 		ginkgo.It("should be able to return an empty list of applications", func() {
 
 			returned := make([]*entities.ApplicationInfo, 0)
 
-			metadataProvider.EXPECT().List().Return(returned, nil)
+			metadataProvider.EXPECT().List(gomock.Any()).Return(returned, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
 			received, err := manager.List("")

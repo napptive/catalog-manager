@@ -79,18 +79,18 @@ func (mr *MockMetadataProviderMockRecorder) Get(arg0 interface{}) *gomock.Call {
 }
 
 // List mocks base method
-func (m *MockMetadataProvider) List() ([]*entities.ApplicationInfo, error) {
+func (m *MockMetadataProvider) List(arg0 string) ([]*entities.ApplicationInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List")
+	ret := m.ctrl.Call(m, "List", arg0)
 	ret0, _ := ret[0].([]*entities.ApplicationInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // List indicates an expected call of List
-func (mr *MockMetadataProviderMockRecorder) List() *gomock.Call {
+func (mr *MockMetadataProviderMockRecorder) List(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockMetadataProvider)(nil).List))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockMetadataProvider)(nil).List), arg0)
 }
 
 // Remove mocks base method
