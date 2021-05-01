@@ -28,8 +28,6 @@ import (
 )
 
 const (
-	// defaultVersion contains the default version, when a user does not fill the version, defaultVersion is used
-	defaultVersion = "latest"
 	// readmeFile with the name of the readme file
 	readmeFile = "readme.md"
 )
