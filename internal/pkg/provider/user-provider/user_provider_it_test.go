@@ -31,16 +31,17 @@ CREATE TABLE IF NOT EXISTS catalog.users (
   salted_password VARCHAR(256)
 );
 
- */
+*/
 package user_provider
 
 import (
+	"time"
+
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/napptive/rdbms/pkg/rdbms"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
-	"time"
 
 	"context"
 )
@@ -52,13 +53,13 @@ var _ = ginkgo.Describe("Provider test", func() {
 		return
 	}
 
-	var connString = "host=localhost user=postgres password=Pass2020! port=5432"
+	var connString = "host=localhost user=postgres password=Pass2020 port=5432"
 
 	var provider UserProvider
 	conn, err := rdbms.NewRDBMS().PoolConnect(context.Background(), connString)
 	gomega.Expect(err).Should(gomega.Succeed())
 
-	provider = NewUserProvider(conn, time.Second * 25)
+	provider = NewUserProvider(conn, time.Second*25)
 	gomega.Expect(provider).ShouldNot(gomega.BeNil())
 
 	// empty the table

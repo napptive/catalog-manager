@@ -32,18 +32,18 @@ func RunIntegrationTests(id string) bool {
 	return runIntegration == id
 }
 
-func CreateCatalogMetadata() *entities.CatalogMetadata {
-	return &entities.CatalogMetadata{
+func CreateTestApplicationMetadata() *entities.ApplicationMetadata {
+	return &entities.ApplicationMetadata{
 		APIVersion:  "core.napptive.com/v1alpha1",
 		Kind:        "ApplicationMetadata",
 		Name:        faker.App().String(),
 		Version:     faker.App().Version(),
 		Description: "faker.App().String()",
-		Tags:        []string{"tag1, tag2"},
+		Keywords:    []string{"tag1, tag2"},
 		License:     "Apache License Version 2.0",
 		Url:         faker.Internet().Url(),
 		Doc:         faker.Internet().Url(),
-		Requires: entities.CatalogRequirement{
+		Requires: entities.ApplicationRequirement{
 			Traits: []string{"trait2, trait2"},
 			Scopes: []string{"scope2, scope2"},
 			K8s: []entities.KubernetesEntities{{
@@ -62,14 +62,12 @@ func CreateCatalogMetadata() *entities.CatalogMetadata {
 	}
 }
 
-func CreateApplicationMetadata() *entities.ApplicationMetadata {
-
-	return &entities.ApplicationMetadata{
-		Repository:      faker.Name().FirstName(),
+func CreateTestApplicationInfo() *entities.ApplicationInfo {
+	return &entities.ApplicationInfo{
+		Namespace:       faker.Name().FirstName(),
 		ApplicationName: faker.App().Name(),
 		Tag:             faker.App().Version(),
 		Readme:          faker.Lorem().Paragraph(10),
 		Metadata:        faker.Lorem().Paragraph(10),
-		//MetadataObj:     *CreateCatalogMetadata(),
 	}
 }

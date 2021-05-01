@@ -47,8 +47,8 @@ func IsYamlFile(filePath string) bool {
 	return strings.Contains(filePath, ".yaml") || strings.Contains(filePath, ".yml")
 }
 
-// ApplicationMetadataToJSON converts an ApplicationMetadata struct into a JSON
-func ApplicationMetadataToJSON(metadata entities.ApplicationMetadata) (string, error) {
+// ApplicationInfoToJSON converts an ApplicationInfo struct into a JSON
+func ApplicationInfoToJSON(metadata entities.ApplicationInfo) (string, error) {
 	bRes, err := json.Marshal(metadata)
 	if err != nil {
 		return "", err
@@ -67,8 +67,8 @@ func GetFile(relativeFileName string, files []*entities.FileInfo) []byte {
 }
 
 // IsMetadata checks if the file is metadata file and returns it
-func IsMetadata(data []byte) (bool, *entities.CatalogMetadata, error) {
-	var a entities.CatalogMetadata
+func IsMetadata(data []byte) (bool, *entities.ApplicationMetadata, error) {
+	var a entities.ApplicationMetadata
 	err := yaml.Unmarshal(data, &a)
 	if err != nil {
 		log.Err(err).Msg("error getting metadata")
@@ -95,29 +95,29 @@ func GenerateRandomString(length int) (string, error) {
 	return base32.StdEncoding.EncodeToString(b)[:length], nil
 }
 
-// DecomposeRepositoryName gets the url, repo, application and version from repository name
-// and returns the url, the applicationID and an error it something fails
-// [repoURL/]repoName/appName[:tag]
-func DecomposeRepositoryName(name string) (string, *entities.ApplicationID, error) {
+// DecomposeApplicationID extracts the catalog URL, namespace, and application name
+// from an application identifier in the form of:
+// [catalogURL/]namespace/appName[:tag]
+func DecomposeApplicationID(applicationID string) (string, *entities.ApplicationID, error) {
 	var version string
 	var applicationName string
-	var repoName string
-	urlName := ""
+	var namespace string
+	catalogURL := ""
 
-	names := strings.Split(name, "/")
-	if len(names) != 2 && len(names) != 3 {
+	elements := strings.Split(applicationID, "/")
+	if len(elements) != 2 && len(elements) != 3 {
 		return "", nil, nerrors.NewFailedPreconditionError(
 			"incorrect format for application name. [repoURL/]repoName/appName[:tag]")
 	}
 
 	// if len == 2 -> no url informed.
-	if len(names) == 3 {
-		urlName = names[0]
+	if len(elements) == 3 {
+		catalogURL = elements[0]
 	}
-	repoName = names[len(names)-2]
+	namespace = elements[len(elements)-2]
 
 	// get the version -> appName[:tag]
-	sp := strings.Split(names[len(names)-1], ":")
+	sp := strings.Split(elements[len(elements)-1], ":")
 	if len(sp) == 1 {
 		applicationName = sp[0]
 		version = defaultVersion
@@ -129,8 +129,8 @@ func DecomposeRepositoryName(name string) (string, *entities.ApplicationID, erro
 			"incorrect format for application name. [repoURL/]repoName/appName[:tag]")
 	}
 
-	return urlName, &entities.ApplicationID{
-		Repository:      repoName,
+	return catalogURL, &entities.ApplicationID{
+		Namespace:       namespace,
 		ApplicationName: applicationName,
 		Tag:             version,
 	}, nil

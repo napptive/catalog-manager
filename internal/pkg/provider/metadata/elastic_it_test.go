@@ -1,16 +1,16 @@
 package metadata
 
 import (
+	"strings"
+	"time"
+
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
-	"strings"
 	"syreclabs.com/go/faker"
-	"time"
 )
-
 
 var _ = ginkgo.Describe("Elastic Provider test", func() {
 
@@ -37,7 +37,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 	RunTests(provider)
 
 	ginkgo.It("Getting an application metadata by Search Method", func() {
-		app := utils.CreateApplicationMetadata()
+		app := utils.CreateTestApplicationInfo()
 
 		returned, err := provider.Add(app)
 		gomega.Expect(err).Should(gomega.Succeed())
@@ -47,7 +47,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		time.Sleep(time.Second)
 
 		retrieved, err := provider.SearchByApplicationID(entities.ApplicationID{
-			Repository:      returned.Repository,
+			Namespace:       returned.Namespace,
 			ApplicationName: returned.ApplicationName,
 			Tag:             returned.Tag,
 		})

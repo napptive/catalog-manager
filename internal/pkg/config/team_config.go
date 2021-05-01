@@ -1,36 +1,38 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
-	"strings"
 )
 
+// TeamConfig with the configuration related to the priviledged team access.
 type TeamConfig struct {
-	Enabled          bool
-	PrivilegedUsers  []string
-	TeamRepositories []string
+	Enabled         bool
+	PrivilegedUsers []string
+	TeamNamespaces  []string
 }
 
-func NewTeamConfig (enabled bool, users string, repositories string) TeamConfig {
+func NewTeamConfig(enabled bool, users string, repositories string) TeamConfig {
 	var privilegedUsers []string
-	var teamRepositories []string
+	var teamNamespaces []string
 	if users != "" {
 		privilegedUsers = strings.Split(users, " ")
 	}
 	if repositories != "" {
-		teamRepositories = strings.Split(repositories, " ")
+		teamNamespaces = strings.Split(repositories, " ")
 	}
 	return TeamConfig{
-		Enabled:          enabled,
-		PrivilegedUsers:  privilegedUsers,
-		TeamRepositories: teamRepositories,
+		Enabled:         enabled,
+		PrivilegedUsers: privilegedUsers,
+		TeamNamespaces:  teamNamespaces,
 	}
 }
 
-func (t *TeamConfig) IsValid() error  {
+func (t *TeamConfig) IsValid() error {
 	if t.Enabled {
-		if len(t.PrivilegedUsers) == 0 || len(t.TeamRepositories) == 0 {
+		if len(t.PrivilegedUsers) == 0 || len(t.TeamNamespaces) == 0 {
 			return nerrors.NewFailedPreconditionError("team enabled needs privileged users and team repositories")
 		}
 	}
@@ -40,6 +42,6 @@ func (t *TeamConfig) IsValid() error  {
 func (t *TeamConfig) Print() {
 	if t.Enabled {
 		log.Info().Str("PrivilegedUsers", strings.Join(t.PrivilegedUsers, " ")).Msg("Privileged Users")
-		log.Info().Str("TeamRepositories", strings.Join(t.TeamRepositories, " ")).Msg("Repositories of the Team")
+		log.Info().Str("namespaces", strings.Join(t.TeamNamespaces, " ")).Msg("Team")
 	}
 }

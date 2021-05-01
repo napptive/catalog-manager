@@ -16,19 +16,20 @@
 package metadata
 
 import (
+	"time"
+
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"syreclabs.com/go/faker"
-	"time"
 )
 
 func RunTests(provider MetadataProvider) {
 
 	ginkgo.Context("Adding application metadata", func() {
 		ginkgo.It("Should be able to add an application metadata", func() {
-			app := utils.CreateApplicationMetadata()
+			app := utils.CreateTestApplicationInfo()
 
 			returned, err := provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -37,7 +38,7 @@ func RunTests(provider MetadataProvider) {
 		})
 
 		ginkgo.It("Should be able to add an application metadata twice (update)", func() {
-			app := utils.CreateApplicationMetadata()
+			app := utils.CreateTestApplicationInfo()
 
 			_, err := provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -51,7 +52,7 @@ func RunTests(provider MetadataProvider) {
 	ginkgo.Context("Getting application metadata", func() {
 
 		ginkgo.It("Should be able to get an application metadata", func() {
-			app := utils.CreateApplicationMetadata()
+			app := utils.CreateTestApplicationInfo()
 
 			returned, err := provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -60,7 +61,7 @@ func RunTests(provider MetadataProvider) {
 			time.Sleep(time.Second)
 
 			retrieved, err := provider.Get(entities.ApplicationID{
-				Repository:      returned.Repository,
+				Namespace:       returned.Namespace,
 				ApplicationName: returned.ApplicationName,
 				Tag:             returned.Tag,
 			})
@@ -71,7 +72,7 @@ func RunTests(provider MetadataProvider) {
 
 		ginkgo.It("Should not be able to get an application metadata if it does not exist", func() {
 			_, err := provider.Get(entities.ApplicationID{
-				Repository:      "repoTest",
+				Namespace:       "repoTest",
 				ApplicationName: "applName",
 				Tag:             "",
 			})
@@ -82,7 +83,7 @@ func RunTests(provider MetadataProvider) {
 
 	ginkgo.Context("Removing application metadata", func() {
 		ginkgo.It("Should be able to delete an application metadata", func() {
-			app := utils.CreateApplicationMetadata()
+			app := utils.CreateTestApplicationInfo()
 
 			returned, err := provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -91,7 +92,7 @@ func RunTests(provider MetadataProvider) {
 			time.Sleep(time.Second)
 
 			err = provider.Remove(&entities.ApplicationID{
-				Repository:      returned.Repository,
+				Namespace:       returned.Namespace,
 				ApplicationName: returned.ApplicationName,
 				Tag:             returned.Tag,
 			})
@@ -99,10 +100,10 @@ func RunTests(provider MetadataProvider) {
 
 		})
 		ginkgo.It("Should not be able to delete an application metadata if it does not exist", func() {
-			app := utils.CreateApplicationMetadata()
+			app := utils.CreateTestApplicationInfo()
 
 			err := provider.Remove(&entities.ApplicationID{
-				Repository:      app.Repository,
+				Namespace:       app.Namespace,
 				ApplicationName: app.ApplicationName,
 				Tag:             app.Tag,
 			})
@@ -113,7 +114,7 @@ func RunTests(provider MetadataProvider) {
 
 	ginkgo.Context("Getting an application metadata", func() {
 		ginkgo.It("should be able to get an application metadata", func() {
-			app := utils.CreateApplicationMetadata()
+			app := utils.CreateTestApplicationInfo()
 
 			returned, err := provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -123,7 +124,7 @@ func RunTests(provider MetadataProvider) {
 			time.Sleep(time.Second)
 
 			retrieved, err := provider.Get(entities.ApplicationID{
-				Repository:      app.Repository,
+				Namespace:       app.Namespace,
 				ApplicationName: app.ApplicationName,
 				Tag:             app.Tag,
 			})
@@ -132,10 +133,10 @@ func RunTests(provider MetadataProvider) {
 			gomega.Expect(returned.CatalogID).Should(gomega.Equal(retrieved.CatalogID))
 		})
 		ginkgo.It("should not be able to return a non existing application metadata", func() {
-			app := utils.CreateApplicationMetadata()
+			app := utils.CreateTestApplicationInfo()
 
 			_, err := provider.Get(entities.ApplicationID{
-				Repository:      app.Repository,
+				Namespace:       app.Namespace,
 				ApplicationName: app.ApplicationName,
 				Tag:             app.Tag,
 			})
@@ -144,11 +145,11 @@ func RunTests(provider MetadataProvider) {
 
 	})
 
-	ginkgo.Context("Listing applications", func () {
-		ginkgo.It("Should be able to list applications", func () {
-			app := utils.CreateApplicationMetadata()
+	ginkgo.Context("Listing applications", func() {
+		ginkgo.It("Should be able to list applications", func() {
+			app := utils.CreateTestApplicationInfo()
 
-			for i:=0; i<5; i++ {
+			for i := 0; i < 5; i++ {
 				app.Tag = faker.App().Version()
 				returned, err := provider.Add(app)
 				gomega.Expect(err).Should(gomega.Succeed())
@@ -156,18 +157,36 @@ func RunTests(provider MetadataProvider) {
 			}
 			time.Sleep(time.Second)
 
-			listRetrieved, err := provider.List()
+			listRetrieved, err := provider.List("")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(listRetrieved).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(len(listRetrieved)).Should(gomega.Equal(5))
 
-
 		})
-		ginkgo.It("Should be able to list an empty list of applications", func () {
-
-			listRetrieved, err := provider.List()
+		ginkgo.It("Should be able to list an empty list of applications", func() {
+			listRetrieved, err := provider.List("")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(listRetrieved).Should(gomega.BeEmpty())
+		})
+		ginkgo.It("Should be able to list applications in a namespace", func() {
+			numApps := 10
+			targetNamespace := "target"
+			for i := 0; i < numApps; i++ {
+				app := utils.CreateTestApplicationInfo()
+				if i%2 == 0 {
+					app.Namespace = targetNamespace
+				}
+				returned, err := provider.Add(app)
+				gomega.Expect(err).Should(gomega.Succeed())
+				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
+			}
+			time.Sleep(time.Second)
+			listRetrieved, err := provider.List(targetNamespace)
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(len(listRetrieved)).Should(gomega.Equal(numApps / 2))
+			for _, retrievedApp := range listRetrieved {
+				gomega.Expect(retrievedApp.Namespace).Should(gomega.Equal(targetNamespace))
+			}
 		})
 	})
 }
