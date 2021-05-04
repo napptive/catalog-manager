@@ -161,7 +161,7 @@ k8s:
 	fi
 .PHONY: release
 
-release: clean build-darwin build-linux
+release: clean build-darwin build-linux k8s
 	@mkdir -p $(BUILD_FOLDER)
 	@cp README.md $(BUILD_FOLDER)
 	@if [ -d "deployments" ]; then \
