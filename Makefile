@@ -67,6 +67,13 @@ generate:
 	@echo "Generating golang extra files"
 	@$(GO_GENERATE) -v ./...
 
+.PHONY: coverage
+# Create a coverage report for all golang files in the curdir
+coverage:
+	@echo "Creating golang test coverage report: $(BUILD_FOLDER)/coverage.out"
+	@mkdir -p $(BUILD_FOLDER)
+	@$(GO_TEST) -v ./... -coverprofile=$(BUILD_FOLDER)/cover.out
+
 .PHONY: build
 # Build target for local environment default
 build: $(addsuffix .local,$(BUILD_TARGETS))
