@@ -107,7 +107,7 @@ func DecomposeApplicationID(applicationID string) (string, *entities.Application
 	elements := strings.Split(applicationID, "/")
 	if len(elements) != 2 && len(elements) != 3 {
 		return "", nil, nerrors.NewFailedPreconditionError(
-			"incorrect format for application name. [repoURL/]repoName/appName[:tag]")
+			"incorrect format for application name. [catalogURL/]namespace/appName[:tag]")
 	}
 
 	// if len == 2 -> no url informed.
@@ -126,7 +126,7 @@ func DecomposeApplicationID(applicationID string) (string, *entities.Application
 		version = sp[1]
 	} else {
 		return "", nil, nerrors.NewFailedPreconditionError(
-			"incorrect format for application name. [repoURL/]repoName/appName[:tag]")
+			"incorrect format for application name. [catalogURL/]namespace/appName[:tag]")
 	}
 
 	return catalogURL, &entities.ApplicationID{

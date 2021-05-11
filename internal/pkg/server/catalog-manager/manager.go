@@ -93,11 +93,14 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo) error {
 		return err
 	}
 
-	// check that the url of the application matches the url of the catalog
-	// we avoid including applications in catalogs that do not correspond
-	if url != "" && url != m.catalogURL {
-		log.Err(err).Str("name", requestedAppID).Msg("Error adding application. The application url does not match the one in the catalog")
-		return nerrors.NewInternalError("The application url does not match the one in the catalog")
+	// if catalogURL is not empty, check it!
+	if m.catalogURL != "" {
+		// check that the url of the application matches the url of the catalog
+		// we avoid including applications in catalogs that do not correspond
+		if url != "" && url != m.catalogURL {
+			log.Err(err).Str("name", requestedAppID).Msg("Error adding application. The application url does not match the one in the catalog")
+			return nerrors.NewInternalError("The application url does not match the one in the catalog")
+		}
 	}
 
 	readme := utils.GetFile(readmeFile, files)

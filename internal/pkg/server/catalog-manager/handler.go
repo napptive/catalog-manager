@@ -180,7 +180,7 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 		if err != nil {
 			return err
 		}
-		log.Debug().Interface("user", claim).Msg("remove request")
+		log.Debug().Interface("user", claim).Msg("validating user")
 
 		// get the repoName
 		_, appID, err := utils.DecomposeApplicationID(appName)
