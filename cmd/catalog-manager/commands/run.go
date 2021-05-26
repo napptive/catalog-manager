@@ -19,6 +19,7 @@ package commands
 import (
 	catalog_manager "github.com/napptive/catalog-manager/internal/app/catalog-manager"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 var runCmdLongHelp = "Launch the catalog-manager service"
@@ -48,7 +49,15 @@ func init() {
 	runCmd.Flags().BoolVar(&cfg.JWTConfig.AuthEnabled, "authEnabled", false, "Enable Authentication")
 	runCmd.Flags().StringVar(&cfg.JWTConfig.Header, "authHeader", "authorization", "Authorization header name")
 	runCmd.Flags().StringVar(&cfg.JWTConfig.Secret, "authSecret", "secret", "Authorization secret to validate JWT signatures")
-	runCmd.Flags().BoolVar(&cfg.Enabled, "teamPrivileges", false, "Enable Team Privileges")
+	runCmd.Flags().BoolVar(&cfg.TeamConfig.Enabled, "teamPrivileges", false, "Enable Team Privileges")
 	runCmd.Flags().StringSliceVar(&cfg.PrivilegedUsers, "teamUsers", nil, "Privileged Users")
 	runCmd.Flags().StringSliceVar(&cfg.TeamNamespaces, "teamRepositories", nil, "Team Repositories")
+
+	runCmd.Flags().BoolVar(&cfg.BQConfig.Enabled, "analyticsEnabled", false, "Analytics enabled")
+	runCmd.Flags().StringVar(&cfg.BQConfig.Config.ProjectID, "analyticsProjectID", "playground", "GKE project for analytics")
+	runCmd.Flags().StringVar(&cfg.BQConfig.Config.CredentialsPath, "analyticsCredentialsPath", "/analytics/credentials.json", "credentials path for analytics")
+	runCmd.Flags().StringVar(&cfg.BQConfig.Config.Schema, "analyticsSchema", "analytics", "analytics schema")
+	runCmd.Flags().StringVar(&cfg.BQConfig.Config.Table, "analyticsTable", "operation", "analytics table")
+	runCmd.Flags().DurationVar(&cfg.BQConfig.Config.SendingTime, "analyticsLoop", 5 * time.Second, "time to send the data to analytics provider")
+
 }

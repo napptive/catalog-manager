@@ -44,11 +44,18 @@ spec:
           - "--teamPrivileges"
           - "--teamUsers=$(TEAM_PRIVILEGED_USERS)"
           - "--teamRepositories=$(TEAM_REPOSITORIES)"
+          - "--analyticsEnabled=true"
         volumeMounts:
           - name: repository-path
             mountPath: "/napptive/repository"
+          - name: analytics
+            mountPath: "/analytics"
+            readOnly: true
       volumes:
         #mount an pvc
       - name: repository-path
         persistentVolumeClaim:
           claimName: catalog-manager-pv-claim
+      - name: analytics
+        secret:
+          secretName: analytics-secret
