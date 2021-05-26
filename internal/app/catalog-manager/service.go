@@ -83,8 +83,8 @@ func (s *Service) getProviders() (*Providers, error) {
 			return nil, err
 		}
 		return &Providers{
-			elasticProvider: pr,
-			repoStorage: storage.NewStorageManager(s.cfg.RepositoryPath),
+			elasticProvider:   pr,
+			repoStorage:       storage.NewStorageManager(s.cfg.RepositoryPath),
 			analyticsProvider: provider}, nil
 	}
 	// ! s.cfg.BQConfig.Enabled
@@ -131,14 +131,10 @@ func (s *Service) LaunchGRPCService(providers *Providers) {
 		unaryInterceptorsChain = append(unaryInterceptorsChain, interceptors.JwtInterceptor(config))
 		unaryStreamChain = interceptors.WithServerJWTStreamInterceptor(config)
 
-		//gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(interceptors.JwtInterceptor(config)),
-		//	grpc.StreamInterceptor(interceptors.JwtStreamInterceptor(config)))
-	} else {
-		//gRPCServer = grpc.NewServer()
 	}
 	if s.cfg.BQConfig.Enabled {
 		log.Info().Msg("analytics enabled, create the interceptor")
-		unaryInterceptorsChain = append(unaryInterceptorsChain, bqinterceptor.OpInterceptor(providers.analyticsProvider) )
+		unaryInterceptorsChain = append(unaryInterceptorsChain, bqinterceptor.OpInterceptor(providers.analyticsProvider))
 	}
 
 	gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)), unaryStreamChain)
