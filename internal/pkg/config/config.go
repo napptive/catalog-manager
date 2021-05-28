@@ -28,8 +28,13 @@ type Config struct {
 	JWTConfig
 	// TeamConfig with the team configuration (repos and users)
 	TeamConfig
+	// BQConfig contains the configuration to connect to BigQuery
+	BQConfig
+	// Version of the application.
 	Version string
+	// Commit related to this built.
 	Commit  string
+	// Debug flag.
 	Debug   bool
 }
 
@@ -44,6 +49,9 @@ func (c *Config) IsValid() error {
 	if err := c.TeamConfig.IsValid(); err != nil {
 		return err
 	}
+	if err := c.BQConfig.IsValid(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -54,4 +62,5 @@ func (c *Config) Print() {
 	c.CatalogManager.Print()
 	c.JWTConfig.Print()
 	c.TeamConfig.Print()
+	c.BQConfig.Print()
 }

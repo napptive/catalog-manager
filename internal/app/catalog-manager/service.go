@@ -18,26 +18,30 @@ package catalog_manager
 
 import (
 	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+
+	"github.com/rs/zerolog/log"
+
+	bqinterceptor "github.com/napptive/analytics/pkg/interceptors"
+	analytics "github.com/napptive/analytics/pkg/provider"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
 	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
-	"github.com/napptive/njwt/pkg/interceptors"
-	"golang.org/x/net/context"
-	"net/http"
-	"syscall"
-
 	"github.com/napptive/grpc-catalog-go"
-
 	njwtConfig "github.com/napptive/njwt/pkg/config"
+	"github.com/napptive/njwt/pkg/interceptors"
 
-	"github.com/rs/zerolog/log"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"net"
-	"os"
-	"os/signal"
 )
 
 // Service structure in charge of launching the application.
@@ -58,6 +62,8 @@ type Providers struct {
 	elasticProvider metadata.MetadataProvider
 	// repoStorage to store the applications
 	repoStorage storage.StorageManager
+	// analyticsProvider to store operation metrics
+	analyticsProvider analytics.Provider
 }
 
 // getProviders creates and initializes all the providers
@@ -70,8 +76,21 @@ func (s *Service) getProviders() (*Providers, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if s.cfg.BQConfig.Enabled {
+		provider, err := analytics.NewBigQueryProvider(s.cfg.BQConfig.Config)
+		if err != nil {
+			return nil, err
+		}
+		return &Providers{
+			elasticProvider:   pr,
+			repoStorage:       storage.NewStorageManager(s.cfg.RepositoryPath),
+			analyticsProvider: provider}, nil
+	}
+	// ! s.cfg.BQConfig.Enabled
 	return &Providers{elasticProvider: pr,
 		repoStorage: storage.NewStorageManager(s.cfg.RepositoryPath)}, nil
+
 }
 
 // Run method starting the internal components and launching the service
@@ -80,22 +99,26 @@ func (s *Service) Run() {
 		log.Fatal().Err(err).Msg("invalid configuration options")
 	}
 	s.cfg.Print()
-	s.registerShutdownListener()
-
 	providers, err := s.getProviders()
 	if err != nil {
 		log.Fatal().Err(err).Msg("error creating providers")
 	}
+
+	s.registerShutdownListener(providers)
 
 	// launch services
 	go s.LaunchHTTPService()
 	s.LaunchGRPCService(providers)
 
 }
+
 // LaunchGRPCService launches a server for gRPC requests.
 func (s *Service) LaunchGRPCService(providers *Providers) {
 	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider, s.cfg.CatalogUrl)
 	handler := catalog_manager.NewHandler(manager, s.cfg.AuthEnabled, s.cfg.TeamConfig)
+
+	var unaryInterceptorsChain []grpc.UnaryServerInterceptor
+	var unaryStreamChain grpc.ServerOption
 
 	// create gRPC server
 	var gRPCServer *grpc.Server
@@ -105,12 +128,16 @@ func (s *Service) LaunchGRPCService(providers *Providers) {
 			Secret: s.cfg.JWTConfig.Secret,
 			Header: s.cfg.JWTConfig.Header,
 		}
+		unaryInterceptorsChain = append(unaryInterceptorsChain, interceptors.JwtInterceptor(config))
+		unaryStreamChain = interceptors.WithServerJWTStreamInterceptor(config)
 
-		gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(interceptors.JwtInterceptor(config)),
-			grpc.StreamInterceptor(interceptors.JwtStreamInterceptor(config)))
-	}else {
-		gRPCServer = grpc.NewServer()
 	}
+	if s.cfg.BQConfig.Enabled {
+		log.Info().Msg("analytics enabled, create the interceptor")
+		unaryInterceptorsChain = append(unaryInterceptorsChain, bqinterceptor.OpInterceptor(providers.analyticsProvider))
+	}
+
+	gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)), unaryStreamChain)
 
 	grpc_catalog_go.RegisterCatalogServer(gRPCServer, handler)
 
@@ -160,19 +187,22 @@ func (s *Service) LaunchHTTPService() {
 	}
 }
 
-func (s *Service) registerShutdownListener() {
+func (s *Service) registerShutdownListener(providers *Providers) {
 	osChannel := make(chan os.Signal)
 	signal.Notify(osChannel, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-osChannel
-		s.Shutdown()
+		s.Shutdown(providers)
 		os.Exit(1)
 	}()
 }
 
 // Shutdown code
-func (s *Service) Shutdown() {
+func (s *Service) Shutdown(providers *Providers) {
 	log.Warn().Msg("shutting down service")
+	if s.cfg.BQConfig.Enabled {
+		providers.analyticsProvider.Flush()
+	}
 }
 
 func (s *Service) getNetListener(port uint) net.Listener {
