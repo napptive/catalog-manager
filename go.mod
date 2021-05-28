@@ -11,7 +11,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.4.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-sqlite3 v1.14.7 // indirect
-	github.com/napptive/analytics v0.0.0-20210526095254-9455f97b9c68
+	github.com/napptive/analytics v1.0.0
 	github.com/napptive/grpc-catalog-common-go v0.2.0
 	github.com/napptive/grpc-catalog-go v0.9.0
 	github.com/napptive/mockup-generator v1.0.0
