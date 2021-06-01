@@ -26,6 +26,11 @@ spec:
               configMapKeyRef:
                 name: jwt-config
                 key: header
+          - name: PROJECT_ID
+            valueFrom:
+              secretKeyRef:
+                name: analytics-secret
+                key: project_id
           - name: AUTH_SECRET
             valueFrom:
               secretKeyRef:
@@ -45,6 +50,7 @@ spec:
           - "--teamUsers=$(TEAM_PRIVILEGED_USERS)"
           - "--teamRepositories=$(TEAM_REPOSITORIES)"
           - "--analyticsEnabled=true"
+          - "--analyticsProjectID=$(PROJECT_ID)"
         volumeMounts:
           - name: repository-path
             mountPath: "/napptive/repository"

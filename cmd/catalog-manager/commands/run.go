@@ -54,7 +54,7 @@ func init() {
 	runCmd.Flags().StringSliceVar(&cfg.TeamNamespaces, "teamRepositories", nil, "Team Repositories")
 
 	runCmd.Flags().BoolVar(&cfg.BQConfig.Enabled, "analyticsEnabled", false, "Analytics enabled")
-	runCmd.Flags().StringVar(&cfg.BQConfig.Config.ProjectID, "analyticsProjectID", "playground", "GKE project for analytics")
+	runCmd.Flags().StringVar(&cfg.BQConfig.Config.ProjectID, "analyticsProjectID", "", "GKE project for analytics")
 	runCmd.Flags().StringVar(&cfg.BQConfig.Config.CredentialsPath, "analyticsCredentialsPath", "/analytics/credentials.json", "credentials path for analytics")
 	runCmd.Flags().StringVar(&cfg.BQConfig.Config.Schema, "analyticsSchema", "analytics", "analytics schema")
 	runCmd.Flags().StringVar(&cfg.BQConfig.Config.Table, "analyticsTable", "operation", "analytics table")
