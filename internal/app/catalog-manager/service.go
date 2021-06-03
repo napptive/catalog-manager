@@ -118,7 +118,8 @@ func (s *Service) LaunchGRPCService(providers *Providers) {
 	handler := catalog_manager.NewHandler(manager, s.cfg.AuthEnabled, s.cfg.TeamConfig)
 
 	var unaryInterceptorsChain []grpc.UnaryServerInterceptor
-	var unaryStreamChain grpc.ServerOption
+	//var unaryStreamChain grpc.ServerOption
+	var unaryStreamChain []grpc.StreamServerInterceptor
 
 	// create gRPC server
 	var gRPCServer *grpc.Server
@@ -129,15 +130,18 @@ func (s *Service) LaunchGRPCService(providers *Providers) {
 			Header: s.cfg.JWTConfig.Header,
 		}
 		unaryInterceptorsChain = append(unaryInterceptorsChain, interceptors.JwtInterceptor(config))
-		unaryStreamChain = interceptors.WithServerJWTStreamInterceptor(config)
+		//unaryStreamChain =  interceptors.WithServerJWTStreamInterceptor(config)
+		unaryStreamChain = append(unaryStreamChain, interceptors.JwtStreamInterceptor(config))
 
 	}
 	if s.cfg.BQConfig.Enabled {
 		log.Info().Msg("analytics enabled, create the interceptor")
 		unaryInterceptorsChain = append(unaryInterceptorsChain, bqinterceptor.OpInterceptor(providers.analyticsProvider))
+		unaryStreamChain = append(unaryStreamChain, bqinterceptor.OpStreamInterceptor(providers.analyticsProvider))
 	}
 
-	gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)), unaryStreamChain)
+	gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)),
+		grpc_middleware.WithStreamServerChain(unaryStreamChain...))
 
 	grpc_catalog_go.RegisterCatalogServer(gRPCServer, handler)
 
