@@ -21,6 +21,15 @@ import (
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 )
 
+type AppSummary struct {
+	// Namespace with the namespace of the application
+	Namespace       string
+	// ApplicationName with the name of the application
+	ApplicationName string
+	// TagMetadataName with the MetadataName indexed by Tag
+	TagMetadataName map[string]string
+}
+
 // -- ApplicationMetadata
 
 // ApplicationInfo with the metadata of application, this will be the application info showed

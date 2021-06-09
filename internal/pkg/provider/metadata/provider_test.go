@@ -189,4 +189,35 @@ func RunTests(provider MetadataProvider) {
 			}
 		})
 	})
+	ginkgo.Context("Listing application summary", func() {
+		ginkgo.It("Should be able to list applications", func() {
+			namespace := "namespace"
+			appName := "app"
+
+			for i := 0; i < 15; i++ {
+				app := utils.CreateTestApplicationInfo()
+				if i%3 == 0 {
+					app.Namespace = namespace
+				}
+				if i%2 == 0 {
+					app.ApplicationName = appName
+				}
+				app.Tag = faker.App().Version()
+				returned, err := provider.Add(app)
+				gomega.Expect(err).Should(gomega.Succeed())
+				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
+			}
+			time.Sleep(time.Second)
+
+			listRetrieved, err := provider.ListSummary("")
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(listRetrieved).ShouldNot(gomega.BeEmpty())
+
+		})
+		ginkgo.It("Should be able to list an empty list of applications", func() {
+			listRetrieved, err := provider.ListSummary("")
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(listRetrieved).Should(gomega.BeEmpty())
+		})
+	})
 }

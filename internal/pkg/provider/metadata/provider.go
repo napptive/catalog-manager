@@ -31,4 +31,6 @@ type MetadataProvider interface {
 	// TODO: add pagination
 	// List returns the applications stored
 	List(namespace string) ([]*entities.ApplicationInfo, error)
+	// ListSummary returns a list of application summaries
+	ListSummary(namespace string) ([]*entities.AppSummary, error)
 }

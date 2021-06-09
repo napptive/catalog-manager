@@ -591,3 +591,49 @@ func (e *ElasticProvider) list (namespace string,  lastReceived int) (*responseW
 	return &r, nil
 }
 
+func (e *ElasticProvider) 	ListSummary(namespace string) ([]*entities.AppSummary, error) {
+	lastReceived := 0
+	query := true
+	summary := make([]*entities.AppSummary, 0)
+	total := 0
+	for query {
+		r, err := e.list(namespace, lastReceived)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Debug().Int("hits received", len(r.Hits.Hits)).Msg("received")
+		for _, app := range r.Hits.Hits {
+			var application entities.ApplicationInfo
+			if err := json.Unmarshal(app.Source, &application); err != nil {
+				return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+			}
+
+			// check if the last entry has the same namespace and applicationName as the newer one
+			if len(summary) > 0 {
+				last := summary[len(summary)-1]
+				if last.Namespace == application.Namespace && last.ApplicationName == application.ApplicationName {
+					summary[len(summary)-1].TagMetadataName[application.Tag] = application.MetadataName
+				} else {
+					summary = append(summary, &entities.AppSummary{
+						Namespace:       application.Namespace,
+						ApplicationName: application.ApplicationName,
+						TagMetadataName: map[string]string{application.Tag: application.MetadataName},
+					})
+				}
+			} else {
+				summary = append(summary, &entities.AppSummary{
+					Namespace:       application.Namespace,
+					ApplicationName: application.ApplicationName,
+					TagMetadataName: map[string]string{application.Tag: application.MetadataName},
+				})
+			}
+			total ++
+
+		}
+		lastReceived += len(r.Hits.Hits)
+		query = r.Hits.Total.Value != total && len(r.Hits.Hits) != 0
+	}
+
+	return summary, nil
+}
