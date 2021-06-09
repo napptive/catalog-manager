@@ -507,10 +507,42 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 // List returns all the applications stored
 func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, error) {
 
+	lastReceived := 0
+	query := true
+	applications := make([]*entities.ApplicationInfo, 0)
+
+	for query {
+		r, err := e.list(namespace, lastReceived)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Debug().Int("hits received", len(r.Hits.Hits)).Msg("received")
+		for _, app := range r.Hits.Hits {
+			var application entities.ApplicationInfo
+			if err := json.Unmarshal(app.Source, &application); err != nil {
+				return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+			}
+			applications = append(applications, &application)
+		}
+		lastReceived += len(r.Hits.Hits)
+		query = r.Hits.Total.Value != len(applications) && len(r.Hits.Hits) != 0
+	}
+
+	return applications, nil
+
+}
+
+// list lists the applications from one retrieved
+func (e *ElasticProvider) list (namespace string,  lastReceived int) (*responseWrapper, error) {
+
+	sortedBy := []string{"Namespace", "ApplicationName", "Tag" }
 	searchFunctions := []func(*esapi.SearchRequest){
 		e.client.Search.WithContext(context.Background()),
 		e.client.Search.WithIndex(e.indexName),
 		e.client.Search.WithTrackTotalHits(true),
+		e.client.Search.WithFrom(lastReceived),
+		e.client.Search.WithSort(sortedBy...),
 	}
 
 	if namespace != "" {
@@ -553,18 +585,9 @@ func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, e
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		return nil, nerrors.FromError(err)
 	}
-
 	// Print the response status, number of results, and request duration.
 	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("List operation")
 
-	applications := make([]*entities.ApplicationInfo, 0)
-	for _, app := range r.Hits.Hits {
-		var application entities.ApplicationInfo
-		if err := json.Unmarshal(app.Source, &application); err != nil {
-			return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
-		}
-		applications = append(applications, &application)
-	}
-	return applications, nil
-
+	return &r, nil
 }
+
