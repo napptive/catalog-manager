@@ -191,8 +191,8 @@ func RunTests(provider MetadataProvider) {
 	})
 	ginkgo.Context("Listing application summary", func() {
 		ginkgo.It("Should be able to list applications", func() {
-			namespace := "namespace"
-			appName := "app"
+			namespace := "Namespace"
+			appName := "App"
 
 			for i := 0; i < 15; i++ {
 				app := utils.CreateTestApplicationInfo()
