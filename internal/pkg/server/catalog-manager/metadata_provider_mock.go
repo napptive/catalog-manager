@@ -79,6 +79,21 @@ func (mr *MockMetadataProviderMockRecorder) Get(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockMetadataProvider)(nil).Get), arg0)
 }
 
+// GetSummary mocks base method.
+func (m *MockMetadataProvider) GetSummary() (*entities.Summary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSummary")
+	ret0, _ := ret[0].(*entities.Summary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSummary indicates an expected call of GetSummary.
+func (mr *MockMetadataProviderMockRecorder) GetSummary() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSummary", reflect.TypeOf((*MockMetadataProvider)(nil).GetSummary))
+}
+
 // List mocks base method.
 func (m *MockMetadataProvider) List(arg0 string) ([]*entities.ApplicationInfo, error) {
 	m.ctrl.T.Helper()
