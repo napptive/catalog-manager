@@ -100,6 +100,8 @@ type ElasticProvider struct {
 	indexName string
 	// appCache with a cache that contains all the catalog applications
 	appCache []*entities.AppSummary
+	// summaryCache with a cache that contains the catalog summary
+	summaryCache *entities.Summary
 	// Mutex to protect cache access
 	sync.Mutex
 	// invalidateCacheChan with a chan te send/receive message to fill Cache after remove or add an application
@@ -132,6 +134,7 @@ func (e *ElasticProvider) Init() error {
 	if err != nil {
 		return err
 	}
+
 	e.FillCache()
 
 	go e.periodicCacheRefresh()
@@ -715,37 +718,50 @@ func (e *ElasticProvider) listFrom(namespace string, lastReceived int) (*respons
 	return &r, nil
 }
 
-func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSummary, error) {
+func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSummary, *entities.Summary, error) {
 	lastReceived := 0
 	query := true
-	summary := make([]*entities.AppSummary, 0)
+	summaryList := make([]*entities.AppSummary, 0)
+	var summary entities.Summary
 	total := 0
 	for query {
 		r, err := e.listFrom(namespace, lastReceived)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		for _, app := range r.Hits.Hits {
 			var application entities.ExtendedAppSummary
 			if err := json.Unmarshal(app.Source, &application); err != nil {
-				return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+				return nil, nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
 			}
+			// new version
+			summary.NumTags ++
 
 			// check if the last entry has the same namespace and applicationName as the newer one
-			if len(summary) > 0 {
-				last := summary[len(summary)-1]
+			if len(summaryList) > 0 {
+				last := summaryList[len(summaryList)-1]
+				if last.Namespace != application.Namespace {
+					// new namespace
+					summary.NumNamespaces ++
+				}
 				if last.Namespace == application.Namespace && last.ApplicationName == application.ApplicationName {
-					summary[len(summary)-1].TagMetadataName[application.Tag] = application.MetadataName
+					summaryList[len(summaryList)-1].TagMetadataName[application.Tag] = application.MetadataName
 				} else {
-					summary = append(summary, &entities.AppSummary{
+					// new application
+					summary.NumApplications ++
+					summaryList = append(summaryList, &entities.AppSummary{
 						Namespace:       application.Namespace,
 						ApplicationName: application.ApplicationName,
 						TagMetadataName: map[string]string{application.Tag: application.MetadataName},
 					})
 				}
 			} else {
-				summary = append(summary, &entities.AppSummary{
+				// new namespace
+				summary.NumNamespaces ++
+				// new application (new tag updated above)
+				summary.NumApplications ++
+				summaryList = append(summaryList, &entities.AppSummary{
 					Namespace:       application.Namespace,
 					ApplicationName: application.ApplicationName,
 					TagMetadataName: map[string]string{application.Tag: application.MetadataName},
@@ -757,7 +773,7 @@ func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSumma
 		query = r.Hits.Total.Value != total && len(r.Hits.Hits) != 0
 	}
 
-	return summary, nil
+	return summaryList, &summary, nil
 }
 
 // ListSummary returns all the catalog applications.
@@ -770,14 +786,15 @@ func (e *ElasticProvider) ListSummary(namespace string) ([]*entities.AppSummary,
 		defer e.Unlock()
 		return e.appCache, nil
 	}
+	summaryList, _, err := e.getSummaryList(namespace)
 
-	return e.getSummaryList(namespace)
+	return summaryList, err
 }
 
 // FillCache refresh the cache with the applications
 func (e *ElasticProvider) FillCache() {
 	// ListSummary and fillCache
-	summaryList, err := e.getSummaryList("")
+	summaryList, summary, err := e.getSummaryList("")
 	if err != nil {
 		log.Error().Str("error", err.Error()).Msg("error filling the cache")
 	} else {
@@ -785,5 +802,16 @@ func (e *ElasticProvider) FillCache() {
 		defer e.Unlock()
 
 		e.appCache = summaryList
+		e.summaryCache = summary
 	}
+}
+
+// GetSummary returns the catalog summary
+func (e *ElasticProvider) GetSummary() (*entities.Summary, error) {
+	e.Lock()
+	defer e.Unlock()
+	if e.summaryCache == nil {
+		return nil, nerrors.NewInternalError("error getting catalog summary")
+	}
+	return e.summaryCache, nil
 }

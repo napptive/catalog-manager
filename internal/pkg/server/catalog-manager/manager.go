@@ -43,6 +43,8 @@ type Manager interface {
 	Get(requestedAppID string) (*entities.ExtendedApplicationMetadata, error)
 	// List returns a list of applications (without metadata and readme content)
 	List(namespace string) ([]*entities.AppSummary, error)
+	// Summary returns catalog summary
+	Summary()(*entities.Summary, error)
 }
 
 type manager struct {
@@ -213,4 +215,9 @@ func (m *manager) Get(requestedAppID string) (*entities.ExtendedApplicationMetad
 // List returns a list of applications (without metadata and readme content)
 func (m *manager) List(namespace string) ([]*entities.AppSummary, error) {
 	return m.provider.ListSummary(namespace)
+}
+
+// Summary returns catalog summary
+func (m *manager) Summary()(*entities.Summary, error) {
+	return m.provider.GetSummary()
 }
