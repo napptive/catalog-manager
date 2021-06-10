@@ -56,51 +56,5 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		gomega.Expect(*retrieved).Should(gomega.Equal(*app))
 	})
 
-	ginkgo.FIt("checking concurrency", func() {
-		/*for i := 0; i < 15; i++ {
-			app := utils.CreateTestApplicationInfo()
-			app.Tag = faker.App().Version()
-			returned, err := provider.Add(app)
-			gomega.Expect(err).Should(gomega.Succeed())
-			gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
-		}
-		 */
-		addApp(provider, 0)
-		time.Sleep(time.Second * 2)
-
-		addApp(provider, 0)
-		time.Sleep(time.Second * 1)
-		addApp(provider, 0)
-		addApp(provider, 0)
-
-
-
-		provider.Finish()
-
-		for i:=1; i<=20; i++ {
-			if i%5 == 0 {
-				//go addApp(provider, i)
-			}else{
-				//time.Sleep(time.Millisecond * 500)
-				//go checkList(provider, i)
-			}
-		}
-
-	})
-
 
 })
-
-func addApp(provider *ElasticProvider, thread int) {
-	app := utils.CreateTestApplicationInfo()
-	app.Tag = faker.App().Version()
-	returned, err := provider.Add(app)
-	gomega.Expect(err).Should(gomega.Succeed())
-	gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
-}
-
-func checkList(provider *ElasticProvider, thread int){
-	_, err := provider.ListSummary("")
-	gomega.Expect(err).Should(gomega.Succeed())
-	// gomega.Expect(listRetrieved).ShouldNot(gomega.BeEmpty())
-}
