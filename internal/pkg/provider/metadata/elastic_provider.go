@@ -134,37 +134,41 @@ func (e *ElasticProvider) Init() error {
 	}
 	e.FillCache()
 
+	go e.periodicCacheRefresh()
+
+	return nil
+}
+
+// periodicCacheRefresh refresh the application cache
+func (e *ElasticProvider) periodicCacheRefresh() {
 	ticker := time.NewTicker(CacheRefreshTime)
 
 	// Method executed in one thread to fill the cache every "CacheRefreshTime" time
 	// or when a message is received through the "invalidateCacheChan" channel
-	go func() {
-		lastTime := time.Now().Add(-1 * CacheRefreshTime)
-		for {
-			select {
-			case val := <-e.invalidateCacheChan:
-				if val {
-					// When less than x seconds have passed since the last update, we do not update
-					if lastTime.Add(CacheRefreshTime / 3).Before(time.Now()) {
-						e.FillCache()
-						lastTime = time.Now()
-					}
-
-				} else {
-					ticker.Stop()
-					close(e.invalidateCacheChan)
-					return
-				}
-			case <-ticker.C:
+	lastTime := time.Now().Add(-1 * CacheRefreshTime)
+	for {
+		select {
+		case val := <-e.invalidateCacheChan:
+			if val {
 				// When less than x seconds have passed since the last update, we do not update
 				if lastTime.Add(CacheRefreshTime / 3).Before(time.Now()) {
 					e.FillCache()
 					lastTime = time.Now()
 				}
+
+			} else {
+				ticker.Stop()
+				close(e.invalidateCacheChan)
+				return
+			}
+		case <-ticker.C:
+			// When less than x seconds have passed since the last update, we do not update
+			if lastTime.Add(CacheRefreshTime / 3).Before(time.Now()) {
+				e.FillCache()
+				lastTime = time.Now()
 			}
 		}
-	}()
-	return nil
+	}
 }
 
 // Finish method to exist in an orderly way
