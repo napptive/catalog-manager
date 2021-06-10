@@ -69,5 +69,6 @@ func CreateTestApplicationInfo() *entities.ApplicationInfo {
 		Tag:             faker.App().Version(),
 		Readme:          faker.Lorem().Paragraph(10),
 		Metadata:        faker.Lorem().Paragraph(10),
+		MetadataName:    faker.Name().FirstName(),
 	}
 }

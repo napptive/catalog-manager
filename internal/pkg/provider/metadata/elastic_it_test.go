@@ -56,4 +56,5 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 		gomega.Expect(*retrieved).Should(gomega.Equal(*app))
 	})
 
+
 })

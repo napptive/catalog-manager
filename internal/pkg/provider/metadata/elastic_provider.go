@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
@@ -41,6 +43,8 @@ const (
 	TagField = "Tag"
 	// CatalogIDField with the name of the field where we store the internal ID
 	CatalogIDField = "CatalogID"
+	// CacheRefreshTime ick duration to update cache
+	CacheRefreshTime = time.Second * 30
 )
 
 // mapping with the elastic-schema
@@ -94,11 +98,17 @@ type deleteResponseWrapper struct {
 type ElasticProvider struct {
 	client    *elasticsearch.Client
 	indexName string
+	// appCache with a cache that contains all the catalog applications
+	appCache []*entities.AppSummary
+	// Mutex to protect cache access
+	sync.Mutex
+	// invalidateCacheChan with a chan te send/receive message to fill Cache after remove or add an application
+	invalidateCacheChan chan bool
 }
 
 // NewElasticProvider returns new Elastic provider
 func NewElasticProvider(index string, address string) (*ElasticProvider, error) {
-	// TODO: Change DefaultClient to NewClient(cfg Config)
+
 	conf := elasticsearch.Config{
 		Addresses: []string{address},
 	}
@@ -108,15 +118,63 @@ func NewElasticProvider(index string, address string) (*ElasticProvider, error) 
 		return nil, err
 	}
 	return &ElasticProvider{
-		client:    es,
-		indexName: index,
+		client:              es,
+		indexName:           index,
+		appCache:            make([]*entities.AppSummary, 0),
+		invalidateCacheChan: make(chan bool),
 	}, nil
 }
 
 // Init creates the index and the necessary index
 func (e *ElasticProvider) Init() error {
 	log.Info().Msg("Initializing elastic provider")
-	return e.CreateIndex(mapping)
+	err := e.CreateIndex(mapping)
+	if err != nil {
+		return err
+	}
+	e.FillCache()
+
+	go e.periodicCacheRefresh()
+
+	return nil
+}
+
+// periodicCacheRefresh refresh the application cache
+func (e *ElasticProvider) periodicCacheRefresh() {
+	ticker := time.NewTicker(CacheRefreshTime)
+
+	// Method executed in one thread to fill the cache every "CacheRefreshTime" time
+	// or when a message is received through the "invalidateCacheChan" channel
+	lastTime := time.Now().Add(-1 * CacheRefreshTime)
+	for {
+		select {
+		case val := <-e.invalidateCacheChan:
+			if val {
+				// When less than x seconds have passed since the last update, we do not update
+				if lastTime.Add(CacheRefreshTime / 3).Before(time.Now()) {
+					e.FillCache()
+					lastTime = time.Now()
+				}
+
+			} else {
+				ticker.Stop()
+				close(e.invalidateCacheChan)
+				return
+			}
+		case <-ticker.C:
+			// When less than x seconds have passed since the last update, we do not update
+			if lastTime.Add(CacheRefreshTime / 3).Before(time.Now()) {
+				e.FillCache()
+				lastTime = time.Now()
+			}
+		}
+	}
+}
+
+// Finish method to exist in an orderly way
+func (e *ElasticProvider) Finish() {
+	// send a message to finish th timer and the close the channel
+	e.invalidateCacheChan <- false
 }
 
 // IndexExists check if an index exists
@@ -271,6 +329,9 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationInfo) (*entities.App
 
 	}
 
+	// update the cache
+	e.invalidateCacheChan <- true
+
 	return metadata, nil
 }
 
@@ -379,7 +440,6 @@ func (e *ElasticProvider) Exists(appID *entities.ApplicationID) (bool, error) {
 		return false, nerrors.FromError(err)
 	}
 
-	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("Exist operation")
 	return r.Hits.Total.Value != 0, nil
 
 }
@@ -412,6 +472,7 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 	)
 	if err != nil {
 		log.Err(err).Msg("Error getting response")
+		return nil, nerrors.NewInternalErrorFrom(err, "Error getting application")
 	}
 	defer res.Body.Close()
 
@@ -452,6 +513,7 @@ func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.Applicati
 
 }
 
+// Remove deletes an application from the catalog
 func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 
 	catalogID := e.CreateIDFromAppID(*appID)
@@ -501,16 +563,50 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 	// Print the response status, number of results, and request duration.
 	log.Debug().Str("Status", res.Status()).Int("total", d.Total).Int("took(ms)", d.Took).Msg("Delete operation")
 
+	e.invalidateCacheChan <- true
+
 	return nil
 }
 
 // List returns all the applications stored
 func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, error) {
 
+	lastReceived := 0
+	query := true
+	applications := make([]*entities.ApplicationInfo, 0)
+
+	for query {
+		r, err := e.list(namespace, lastReceived)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Debug().Int("hits received", len(r.Hits.Hits)).Msg("received")
+		for _, app := range r.Hits.Hits {
+			var application entities.ApplicationInfo
+			if err := json.Unmarshal(app.Source, &application); err != nil {
+				return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+			}
+			applications = append(applications, &application)
+		}
+		lastReceived += len(r.Hits.Hits)
+		query = r.Hits.Total.Value != len(applications) && len(r.Hits.Hits) != 0
+	}
+
+	return applications, nil
+
+}
+
+// list lists the applications from one retrieved
+func (e *ElasticProvider) list(namespace string, lastReceived int) (*responseWrapper, error) {
+
+	sortedBy := []string{"Namespace", "ApplicationName", "Tag"}
 	searchFunctions := []func(*esapi.SearchRequest){
 		e.client.Search.WithContext(context.Background()),
 		e.client.Search.WithIndex(e.indexName),
 		e.client.Search.WithTrackTotalHits(true),
+		e.client.Search.WithFrom(lastReceived),
+		e.client.Search.WithSort(sortedBy...),
 	}
 
 	if namespace != "" {
@@ -553,18 +649,141 @@ func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, e
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		return nil, nerrors.FromError(err)
 	}
-
 	// Print the response status, number of results, and request duration.
 	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("List operation")
 
-	applications := make([]*entities.ApplicationInfo, 0)
-	for _, app := range r.Hits.Hits {
-		var application entities.ApplicationInfo
-		if err := json.Unmarshal(app.Source, &application); err != nil {
-			return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
-		}
-		applications = append(applications, &application)
-	}
-	return applications, nil
+	return &r, nil
+}
 
+// listFrom returns applications from last received
+func (e *ElasticProvider) listFrom(namespace string, lastReceived int) (*responseWrapper, error) {
+
+	sortedBy := []string{"Namespace", "ApplicationName", "Tag"}
+	getFields := []string{"Namespace", "ApplicationName", "Tag", "MetadataName"}
+	searchFunctions := []func(*esapi.SearchRequest){
+		e.client.Search.WithContext(context.Background()),
+		e.client.Search.WithIndex(e.indexName),
+		e.client.Search.WithTrackTotalHits(true),
+		e.client.Search.WithFrom(lastReceived),
+		e.client.Search.WithSort(sortedBy...),
+		e.client.Search.WithSourceIncludes(getFields...),
+	}
+
+	if namespace != "" {
+		query := map[string]interface{}{
+			"query": map[string]interface{}{
+				"match": map[string]interface{}{
+					NamespaceField: namespace,
+				},
+			},
+		}
+
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(query); err != nil {
+			log.Err(err).Msg("Error encoding namespaced query")
+			return nil, nerrors.NewInternalErrorFrom(err, "error creating query to list by namespace")
+		}
+		searchFunctions = append(searchFunctions, e.client.Search.WithBody(&buf))
+
+	}
+	// Perform the search request.
+	res, err := e.client.Search(searchFunctions...)
+	if err != nil {
+		log.Err(err).Msg("Error getting response")
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		var e map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+			log.Err(err).Msg("Error parsing the response body")
+			return nil, nerrors.NewInternalError("Error getting application. Error parsing the response body")
+		} else {
+			// Print the response status and error information.
+			log.Err(err).Str("status", res.Status()).Msg("error")
+			return nil, nerrors.NewInternalError(res.Status())
+		}
+	}
+
+	var r responseWrapper
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, nerrors.FromError(err)
+	}
+	// Print the response status, number of results, and request duration.
+	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("List operation")
+
+	return &r, nil
+}
+
+func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSummary, error) {
+	lastReceived := 0
+	query := true
+	summary := make([]*entities.AppSummary, 0)
+	total := 0
+	for query {
+		r, err := e.listFrom(namespace, lastReceived)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, app := range r.Hits.Hits {
+			var application entities.ExtendedAppSummary
+			if err := json.Unmarshal(app.Source, &application); err != nil {
+				return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+			}
+
+			// check if the last entry has the same namespace and applicationName as the newer one
+			if len(summary) > 0 {
+				last := summary[len(summary)-1]
+				if last.Namespace == application.Namespace && last.ApplicationName == application.ApplicationName {
+					summary[len(summary)-1].TagMetadataName[application.Tag] = application.MetadataName
+				} else {
+					summary = append(summary, &entities.AppSummary{
+						Namespace:       application.Namespace,
+						ApplicationName: application.ApplicationName,
+						TagMetadataName: map[string]string{application.Tag: application.MetadataName},
+					})
+				}
+			} else {
+				summary = append(summary, &entities.AppSummary{
+					Namespace:       application.Namespace,
+					ApplicationName: application.ApplicationName,
+					TagMetadataName: map[string]string{application.Tag: application.MetadataName},
+				})
+			}
+			total++
+		}
+		lastReceived += len(r.Hits.Hits)
+		query = r.Hits.Total.Value != total && len(r.Hits.Hits) != 0
+	}
+
+	return summary, nil
+}
+
+// ListSummary returns all the catalog applications.
+// if it doesn't ask for namespace -> returns cache
+// if namespace is filled -> elastic query
+func (e *ElasticProvider) ListSummary(namespace string) ([]*entities.AppSummary, error) {
+
+	if namespace == "" {
+		e.Lock()
+		defer e.Unlock()
+		return e.appCache, nil
+	}
+
+	return e.getSummaryList(namespace)
+}
+
+// FillCache refresh the cache with the applications
+func (e *ElasticProvider) FillCache() {
+	// ListSummary and fillCache
+	summaryList, err := e.getSummaryList("")
+	if err != nil {
+		log.Error().Str("error", err.Error()).Msg("error filling the cache")
+	} else {
+		e.Lock()
+		defer e.Unlock()
+
+		e.appCache = summaryList
+	}
 }

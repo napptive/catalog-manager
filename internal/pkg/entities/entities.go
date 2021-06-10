@@ -21,6 +21,34 @@ import (
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 )
 
+type AppSummary struct {
+	// Namespace with the namespace of the application
+	Namespace       string
+	// ApplicationName with the name of the application
+	ApplicationName string
+	// TagMetadataName with the MetadataName indexed by Tag
+	TagMetadataName map[string]string
+}
+
+// ToApplicationSummary converts the ApplicationSummary to grpc_catalog_go.ApplicationSummary
+func (a *AppSummary) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary {
+	return &grpc_catalog_go.ApplicationSummary{
+		Namespace:       a.Namespace,
+		ApplicationName: a.ApplicationName,
+		TagMetadataName: a.TagMetadataName,
+	}
+}
+
+type ExtendedAppSummary struct {
+	// Namespace with the namespace of the application
+	Namespace       string
+	// ApplicationName with the name of the application
+	ApplicationName string
+	// TagMetadataName with the MetadataName indexed by Tag
+	Tag string
+	MetadataName string
+}
+
 // -- ApplicationMetadata
 
 // ApplicationInfo with the metadata of application, this will be the application info showed
@@ -39,16 +67,6 @@ type ApplicationInfo struct {
 	Metadata string
 	//MedataName with the name defined in metadata file. This field is used to store it in elastic field and return it when listing
 	MetadataName string
-}
-
-// ToApplicationSummary converts the ApplicationSummary to grpc_catalog_go.ApplicationSummary
-func (a *ApplicationInfo) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary {
-	return &grpc_catalog_go.ApplicationSummary{
-		Namespace:       a.Namespace,
-		ApplicationName: a.ApplicationName,
-		Tag:             a.Tag,
-		MetadataName:    a.MetadataName,
-	}
 }
 
 // ToApplicationID converts ApplicationSummary to ApplicationID

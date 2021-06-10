@@ -13,7 +13,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.7 // indirect
 	github.com/napptive/analytics v1.0.1
 	github.com/napptive/grpc-catalog-common-go v0.2.0
-	github.com/napptive/grpc-catalog-go v0.9.0
+	github.com/napptive/grpc-catalog-go v0.10.0
 	github.com/napptive/mockup-generator v1.0.0
 	github.com/napptive/nerrors v1.0.0
 	github.com/napptive/njwt v1.0.1-0.20210419162054-4691ac61a8b9
