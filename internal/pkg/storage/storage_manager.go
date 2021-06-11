@@ -226,7 +226,7 @@ func (s *storageManager) loadAppFileTgz(name string, path string)([]*entities.Fi
 	tw := tar.NewWriter(zr)
 
 	// walk through every file in the folder
-	_ = filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
+	if wErr := filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
 		// generate tar header
 		header, nErr := tar.FileInfoHeader(fi, file)
 		if nErr != nil {
@@ -251,7 +251,10 @@ func (s *storageManager) loadAppFileTgz(name string, path string)([]*entities.Fi
 			}
 		}
 		return nil
-	})
+	}); wErr != nil {
+		return nil, nerrors.NewInternalErrorFrom(wErr, "Error getting application")
+
+	}
 
 	// produce tar
 	if nErr := tw.Close(); nErr != nil {
