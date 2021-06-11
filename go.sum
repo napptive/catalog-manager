@@ -386,8 +386,8 @@ github.com/napptive/grpc-authx-go v0.3.0 h1:Rve3AchbyiNLe0IEjMLmEoJrK5gMxTAFZXO+
 github.com/napptive/grpc-authx-go v0.3.0/go.mod h1:BHBradRIe4tKea4ze9ju9F1NWTX+c9NGBEh3xV9bpK0=
 github.com/napptive/grpc-catalog-common-go v0.2.0 h1:BdIYVOEmzIZbzbVvjKnd9/8T8nQfNqZeEzzVCXjWhvI=
 github.com/napptive/grpc-catalog-common-go v0.2.0/go.mod h1:bnedZvTuFnhO2q1u66EUseAy3k0/N5MW/BFvb8S23bA=
-github.com/napptive/grpc-catalog-go v0.11.0 h1:uIhkFAbWlPXw8tSOxF8OnVbYvvE76o4O2yiFISkaFeU=
-github.com/napptive/grpc-catalog-go v0.11.0/go.mod h1:BoOdDpZZlW8rWNlSe2/mjG9JC6+UCLlZkUNovwMFxY0=
+github.com/napptive/grpc-catalog-go v0.12.0 h1:AY+ZNTcWvputXuUDsvWNzqOuFRDoEfcWdL6DkjSKIlU=
+github.com/napptive/grpc-catalog-go v0.12.0/go.mod h1:BoOdDpZZlW8rWNlSe2/mjG9JC6+UCLlZkUNovwMFxY0=
 github.com/napptive/grpc-catalog-manager-go v0.2.0 h1:XRGTVlhIOrRzgowb3VIk7GDJjBTfZNh9lAEkOtq18BI=
 github.com/napptive/grpc-catalog-manager-go v0.2.0/go.mod h1:FyjGwRcaUKcNFqwl68r+68nk1brqjmy2xoCtiO/aHG8=
 github.com/napptive/grpc-common-go v0.2.0 h1:ewtSAF75kEl8eYwKNOIXwNWLX8bTB7N2W1qrCPCJYV4=

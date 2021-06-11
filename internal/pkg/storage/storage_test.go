@@ -16,6 +16,7 @@
 package storage
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
@@ -110,7 +111,7 @@ var _ = ginkgo.Describe("Storage test", func() {
 		err := manager.StoreApplication(repo, appName, "latest", files)
 		gomega.Expect(err).Should(gomega.Succeed())
 
-		returned, err := manager.GetApplication(repo, appName, "latest")
+		returned, err := manager.GetApplication(repo, appName, "latest", false)
 		gomega.Expect(err).Should(gomega.Succeed())
 		gomega.Expect(returned).ShouldNot(gomega.BeNil())
 		gomega.Expect(returned).ShouldNot(gomega.BeEmpty())
@@ -174,6 +175,33 @@ var _ = ginkgo.Describe("Storage test", func() {
 
 		err := manager.RemoveApplication(repo, appName, version)
 		gomega.Expect(err).ShouldNot(gomega.Succeed())
+
+	})
+
+	ginkgo.It("Should be able to download an application in tgz", func() {
+		manager := NewStorageManager(basePath)
+		repo := faker.Name().FirstName()
+		appName := faker.App().Name()
+		version := "latest"
+		files := []*entities.FileInfo{
+			{Path: "app_config.yaml", Data: []byte("appconf")},
+			{Path: "component1.yaml", Data: []byte("component1")},
+			{Path: "component2.yaml", Data: []byte("component2")}}
+		err := manager.StoreApplication(repo, appName, version, files)
+		gomega.Expect(err).Should(gomega.Succeed())
+
+		entity, err := manager.(*storageManager).loadAppFileTgz(appName, fmt.Sprintf("%s/%s/%s/%s", basePath, repo, appName, version))
+		gomega.Expect(err).Should(gomega.Succeed())
+		gomega.Expect(entity).ShouldNot(gomega.BeNil())
+
+		// save file
+		file, err := os.Create(fmt.Sprintf("%s/%s.tgz", basePath, appName))
+		gomega.Expect(err).Should(gomega.Succeed())
+
+		defer file.Close()
+
+		_, err = file.Write(entity[0].Data)
+		gomega.Expect(err).Should(gomega.Succeed())
 
 	})
 })

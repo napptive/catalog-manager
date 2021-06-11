@@ -36,7 +36,7 @@ type Manager interface {
 	// Add Adds a new application in the repository.
 	Add(requestedAppID string, files []*entities.FileInfo) error
 	// Download returns the files of an application
-	Download(requestedAppID string) ([]*entities.FileInfo, error)
+	Download(requestedAppID string, compressed bool) ([]*entities.FileInfo, error)
 	// Remove removes an application from the repository
 	Remove(requestedAppID string) error
 	// Get returns a given application metadata
@@ -145,12 +145,12 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo) error {
 }
 
 // Download returns the files of an application
-func (m *manager) Download(requestedAppID string) ([]*entities.FileInfo, error) {
+func (m *manager) Download(requestedAppID string, compressed bool) ([]*entities.FileInfo, error) {
 	_, appID, err := utils.DecomposeApplicationID(requestedAppID)
 	if err != nil {
 		return nil, nerrors.NewFailedPreconditionErrorFrom(err, "unable to download the application")
 	}
-	return m.stManager.GetApplication(appID.Namespace, appID.ApplicationName, appID.Tag)
+	return m.stManager.GetApplication(appID.Namespace, appID.ApplicationName, appID.Tag, compressed)
 }
 
 // Remove removes an application from the repository
