@@ -189,6 +189,7 @@ func RunTests(provider MetadataProvider) {
 			}
 		})
 	})
+
 	ginkgo.Context("Listing application summary", func() {
 		ginkgo.It("Should be able to list applications", func() {
 			namespace := "Namespace"
@@ -218,6 +219,58 @@ func RunTests(provider MetadataProvider) {
 			listRetrieved, err := provider.ListSummary("")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(listRetrieved).Should(gomega.BeEmpty())
+		})
+	})
+
+	ginkgo.Context("Getting summary", func () {
+		ginkgo.It("should be able to get summary", func() {
+			numApp := 5
+			for i := 0; i < numApp; i++ {
+				app := utils.CreateTestApplicationInfo()
+				returned, err := provider.Add(app)
+				gomega.Expect(err).Should(gomega.Succeed())
+				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
+			}
+			time.Sleep(time.Second)
+
+			// Fill cache
+			provider.(*ElasticProvider).FillCache()
+
+			summary, err := provider.GetSummary()
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(summary).ShouldNot(gomega.BeNil())
+			gomega.Expect(summary.NumNamespaces).Should(gomega.Equal(numApp))
+			gomega.Expect(summary.NumApplications).Should(gomega.Equal(numApp))
+			gomega.Expect(summary.NumTags).Should(gomega.Equal(numApp))
+
+		})
+		ginkgo.It("should be able to get summary", func() {
+			numApp := 5
+			namespace1 := "namespace1"
+			namespace2 := "namespace2"
+			for i := 1; i <= numApp; i++ {
+				app := utils.CreateTestApplicationInfo()
+				if i%2 == 0 {
+					app.Namespace = namespace1
+				} else {
+					app.Namespace = namespace2
+				}
+				returned, err := provider.Add(app)
+				gomega.Expect(err).Should(gomega.Succeed())
+				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
+			}
+			time.Sleep(time.Second)
+
+			// Fill cache
+			provider.(*ElasticProvider).FillCache()
+
+			summary, err := provider.GetSummary()
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(summary).ShouldNot(gomega.BeNil())
+			gomega.Expect(summary.NumNamespaces).Should(gomega.Equal(2))
+			gomega.Expect(summary.NumApplications).Should(gomega.Equal(numApp))
+			gomega.Expect(summary.NumTags).Should(gomega.Equal(numApp))
+
 		})
 	})
 }

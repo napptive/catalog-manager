@@ -171,6 +171,16 @@ func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplica
 	}, nil
 }
 
+func (h *Handler) Summary(ctx context.Context, request *grpc_catalog_common_go.EmptyRequest) (*grpc_catalog_go.SummaryResponse, error) {
+
+	summary, err := h.manager.Summary()
+	if err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+	return summary.ToSummaryResponse(), nil
+}
+
+
 // validateUser check if the user in the context is the same as the repo name
 func (h *Handler) validateUser(ctx context.Context, appName string, action string) error {
 

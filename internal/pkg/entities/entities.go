@@ -23,7 +23,7 @@ import (
 
 type AppSummary struct {
 	// Namespace with the namespace of the application
-	Namespace       string
+	Namespace string
 	// ApplicationName with the name of the application
 	ApplicationName string
 	// TagMetadataName with the MetadataName indexed by Tag
@@ -39,13 +39,32 @@ func (a *AppSummary) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary 
 	}
 }
 
+// Summary with catalog summary
+type Summary struct {
+	NumNamespaces   int
+	NumApplications int
+	NumTags         int
+}
+
+// ToSummaryResponse converts Summary to GRPC
+func (s *Summary) ToSummaryResponse() *grpc_catalog_go.SummaryResponse {
+	if s == nil {
+		return nil
+	}
+	return &grpc_catalog_go.SummaryResponse{
+		NumNamespaces:   int32(s.NumNamespaces),
+		NumApplications: int32(s.NumApplications),
+		NumTags:         int32(s.NumTags),
+	}
+}
+
 type ExtendedAppSummary struct {
 	// Namespace with the namespace of the application
-	Namespace       string
+	Namespace string
 	// ApplicationName with the name of the application
 	ApplicationName string
 	// TagMetadataName with the MetadataName indexed by Tag
-	Tag string
+	Tag          string
 	MetadataName string
 }
 
