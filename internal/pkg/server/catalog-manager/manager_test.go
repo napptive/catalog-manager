@@ -95,10 +95,10 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 					Data: []byte("metadata"),
 				}}
 
-			storageProvider.EXPECT().GetApplication(namespace, appName, "latest").Return(filesReturned, nil)
+			storageProvider.EXPECT().GetApplication(namespace, appName, "latest", false).Return(filesReturned, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			files, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName))
+			files, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(files).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(files).ShouldNot(gomega.BeNil())
@@ -107,17 +107,17 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			appName := "appName"
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Download(appName)
+			_, err := manager.Download(appName, false)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 		ginkgo.It("should not be able to download an application if there is an error in the storage", func() {
 			namespace := "namespace"
 			appName := "appName"
 
-			storageProvider.EXPECT().GetApplication(namespace, appName, "latest").Return(nil, nerrors.NewInternalError("error reading repository"))
+			storageProvider.EXPECT().GetApplication(namespace, appName, "latest", false).Return(nil, nerrors.NewInternalError("error reading repository"))
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName))
+			_, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 	})

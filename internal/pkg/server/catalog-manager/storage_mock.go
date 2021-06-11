@@ -64,18 +64,18 @@ func (mr *MockStorageManagerMockRecorder) CreateRepository(arg0 interface{}) *go
 }
 
 // GetApplication mocks base method.
-func (m *MockStorageManager) GetApplication(arg0, arg1, arg2 string) ([]*entities.FileInfo, error) {
+func (m *MockStorageManager) GetApplication(arg0, arg1, arg2 string, arg3 bool) ([]*entities.FileInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetApplication", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetApplication", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].([]*entities.FileInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetApplication indicates an expected call of GetApplication.
-func (mr *MockStorageManagerMockRecorder) GetApplication(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockStorageManagerMockRecorder) GetApplication(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApplication", reflect.TypeOf((*MockStorageManager)(nil).GetApplication), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApplication", reflect.TypeOf((*MockStorageManager)(nil).GetApplication), arg0, arg1, arg2, arg3)
 }
 
 // RemoveApplication mocks base method.

@@ -17,6 +17,9 @@
 package storage
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
@@ -24,6 +27,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -31,7 +35,7 @@ type StorageManager interface {
 	// StoreApplication save all files in their corresponding path
 	StoreApplication(repo string, name string, version string, files []*entities.FileInfo) error
 	// GetApplication returns the application files
-	GetApplication(repo string, name string, version string) ([]*entities.FileInfo, error)
+	GetApplication(repo string, name string, version string, compressed bool) ([]*entities.FileInfo, error)
 	// RemoveApplication removes an application, returns an error if it does not exist
 	RemoveApplication(repo string, name string, version string) error
 	// ApplicationExists checks if an application exists
@@ -205,11 +209,63 @@ func (s *storageManager) RemoveApplication(repo string, name string, version str
 }
 
 // GetApplication returns the application files
-func (s *storageManager) GetApplication(repo string, name string, version string) ([]*entities.FileInfo, error) {
+func (s *storageManager) GetApplication(repo string, name string, version string, compressed bool) ([]*entities.FileInfo, error) {
 
 	// Find the application directory
-	path := fmt.Sprintf("%s/%s/%s/%s", s.basePath, repo, name, version)
+	path := fmt.Sprintf("%s%s/%s/%s", s.basePath, repo, name, version)
+	if compressed {
+		return s.loadAppFileTgz(name, path)
+	}
 	return s.loadAppFile(path, fmt.Sprintf("./%s", name))
+}
+
+func (s *storageManager) loadAppFileTgz(name string, path string)([]*entities.FileInfo, error) {
+	var buf bytes.Buffer
+
+	zr := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(zr)
+
+	// walk through every file in the folder
+	filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
+		// generate tar header
+		header, err := tar.FileInfoHeader(fi, file)
+		if err != nil {
+			return err
+		}
+
+		// remove repo path
+		header.Name = filepath.ToSlash(fmt.Sprintf("./%s%s", name, strings.Replace(file, path, "", -1)))
+
+		// write header
+		if err := tw.WriteHeader(header); err != nil {
+			return err
+		}
+		// if not a dir, write file content
+		if !fi.IsDir() {
+			data, err := os.Open(file)
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(tw, data); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	// produce tar
+	if err := tw.Close(); err != nil {
+		return nil, nerrors.NewInternalErrorFrom(err, "Error closing tar")
+	}
+	// produce gzip
+	if err := zr.Close(); err != nil {
+		return nil, nerrors.NewInternalErrorFrom(err, "Error closing tgz")
+	}
+
+	return []*entities.FileInfo{&entities.FileInfo{
+		Path: fmt.Sprintf("./%s.tgz", name),
+		Data: buf.Bytes(),
+	}}, nil
 }
 
 // loadAppFile gets the content of application files

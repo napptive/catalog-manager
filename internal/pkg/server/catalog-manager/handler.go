@@ -99,7 +99,7 @@ func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, 
 		return nerrors.FromError(err).ToGRPC()
 	}
 
-	files, err := h.manager.Download(request.ApplicationId)
+	files, err := h.manager.Download(request.ApplicationId, request.Compressed)
 	if err != nil {
 		return nerrors.FromError(err).ToGRPC()
 	}
