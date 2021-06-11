@@ -228,26 +228,26 @@ func (s *storageManager) loadAppFileTgz(name string, path string)([]*entities.Fi
 	// walk through every file in the folder
 	_ = filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
 		// generate tar header
-		header, err := tar.FileInfoHeader(fi, file)
-		if err != nil {
-			return err
+		header, nErr := tar.FileInfoHeader(fi, file)
+		if nErr != nil {
+			return nErr
 		}
 
 		// remove repo path
 		header.Name = filepath.ToSlash(fmt.Sprintf("./%s%s", name, strings.Replace(file, path, "", -1)))
 
 		// write header
-		if err := tw.WriteHeader(header); err != nil {
-			return err
+		if nErr := tw.WriteHeader(header); nErr != nil {
+			return nErr
 		}
 		// if not a dir, write file content
 		if !fi.IsDir() {
-			data, err := os.Open(file)
-			if err != nil {
+			data, nErr := os.Open(file)
+			if nErr != nil {
 				return err
 			}
-			if _, err := io.Copy(tw, data); err != nil {
-				return err
+			if _, nErr := io.Copy(tw, data); nErr != nil {
+				return nErr
 			}
 		}
 		return nil
