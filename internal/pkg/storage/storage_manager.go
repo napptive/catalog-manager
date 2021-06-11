@@ -256,12 +256,12 @@ func (s *storageManager) loadAppFileTgz(name string, path string)([]*entities.Fi
 	}
 
 	// produce tar
-	if err := tw.Close(); err != nil {
-		return nil, nerrors.NewInternalErrorFrom(err, "Error closing tar")
+	if nErr := tw.Close(); nErr != nil {
+		return nil, nerrors.NewInternalErrorFrom(nErr, "Error closing tar")
 	}
 	// produce gzip
-	if err := zr.Close(); err != nil {
-		return nil, nerrors.NewInternalErrorFrom(err, "Error closing tgz")
+	if nErr := zr.Close(); nErr != nil {
+		return nil, nerrors.NewInternalErrorFrom(nErr, "Error closing tgz")
 	}
 
 	return []*entities.FileInfo{&entities.FileInfo{
