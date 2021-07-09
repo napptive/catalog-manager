@@ -11,5 +11,10 @@ spec:
   type: ClusterIP
   ports:
     - protocol: TCP
+      name: grpc
       port: 7060
       targetPort: 7060
+    - protocol: TCP
+      name: http
+      port: 7061
+      targetPort: 7061

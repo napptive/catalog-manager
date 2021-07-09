@@ -22,8 +22,10 @@ import (
 
 // CatalogManager with the catalog-manager configuration
 type CatalogManager struct {
-	// Port with the port on which the service will be listening
-	Port uint
+	// GRPCPort with the port on which the service will be listening
+	GRPCPort int
+	// HTTPPort with the port on which the service will be listening for HTTP connections.
+	HTTPPort int
 	// ElasticAddress with the address to connect to Elastic
 	ElasticAddress string
 	// Index with the name of the elastic index
@@ -34,9 +36,13 @@ type CatalogManager struct {
 	CatalogUrl string
 }
 
+// IsValid checks if the configuration options are valid.
 func (c *CatalogManager) IsValid() error {
-	if c.Port <= 0 {
-		return nerrors.NewFailedPreconditionError("invalid port number")
+	if c.GRPCPort <= 0 {
+		return nerrors.NewFailedPreconditionError("invalid gRPC port number")
+	}
+	if c.HTTPPort <= 0 {
+		return nerrors.NewFailedPreconditionError("invalid HTTP port number")
 	}
 	if c.ElasticAddress == "" {
 		return nerrors.NewFailedPreconditionError("ElasticAddress must be filled")
@@ -51,8 +57,9 @@ func (c *CatalogManager) IsValid() error {
 	return nil
 }
 
+// Print the configuration using the application logger.
 func (c *CatalogManager) Print() {
-	log.Info().Uint("Port", c.Port).Msg("grpc Port")
+	log.Info().Int("gRPC", c.GRPCPort).Int("HTTP", c.HTTPPort).Msg("ports")
 	log.Info().Str("ElasticAddress", c.ElasticAddress).Str("Index", c.Index).Msg("Elastic Search Address")
 	log.Info().Str("CatalogUrl", c.CatalogUrl).Msg("Catalog URL")
 	log.Info().Str("RepositoryPath", c.RepositoryPath).Msg("Repository base path")
