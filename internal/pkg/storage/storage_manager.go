@@ -21,14 +21,15 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	"github.com/napptive/nerrors/pkg/nerrors"
-	"github.com/rs/zerolog/log"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
+	"github.com/napptive/nerrors/pkg/nerrors"
+	"github.com/rs/zerolog/log"
 )
 
 type StorageManager interface {
@@ -202,7 +203,7 @@ func (s *storageManager) RemoveApplication(repo string, name string, version str
 		return nerrors.NewInternalErrorFrom(err, "unable to delete application")
 	}
 	// clean directories
-	if err := s.cleanApplicationDirectory(repo, name); err != nil{
+	if err := s.cleanApplicationDirectory(repo, name); err != nil {
 		log.Err(err).Str("appName", appName).Msg("error cleaning application directory")
 	}
 	return nil
@@ -212,14 +213,15 @@ func (s *storageManager) RemoveApplication(repo string, name string, version str
 func (s *storageManager) GetApplication(repo string, name string, version string, compressed bool) ([]*entities.FileInfo, error) {
 
 	// Find the application directory
-	path := fmt.Sprintf("%s%s/%s/%s", s.basePath, repo, name, version)
+	path := fmt.Sprintf("%s/%s/%s/%s", s.basePath, repo, name, version)
+	log.Debug().Str("path", path).Msg("getting application")
 	if compressed {
 		return s.loadAppFileTgz(name, path)
 	}
 	return s.loadAppFile(path, fmt.Sprintf("./%s", name))
 }
 
-func (s *storageManager) loadAppFileTgz(name string, path string)([]*entities.FileInfo, error) {
+func (s *storageManager) loadAppFileTgz(name string, path string) ([]*entities.FileInfo, error) {
 	var buf bytes.Buffer
 
 	zr := gzip.NewWriter(&buf)
@@ -305,7 +307,7 @@ func (s *storageManager) loadAppFile(path string, filePath string) ([]*entities.
 }
 
 // checkEmptyDirs check if a directory is empty
-func (s *storageManager) checkEmptyDirs(path string) (bool, error){
+func (s *storageManager) checkEmptyDirs(path string) (bool, error) {
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -322,7 +324,7 @@ func (s *storageManager) checkEmptyDirs(path string) (bool, error){
 
 // cleanApplicationDirectory checks if application directory is empty and removes it and
 // check if repository directory is empty and removes it
-func (s *storageManager) cleanApplicationDirectory(repo string, name string) error{
+func (s *storageManager) cleanApplicationDirectory(repo string, name string) error {
 
 	// - check if the application removed was the unique version for this application
 	// basePath/repository/app

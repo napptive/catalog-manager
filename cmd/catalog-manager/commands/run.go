@@ -17,9 +17,10 @@
 package commands
 
 import (
+	"time"
+
 	catalog_manager "github.com/napptive/catalog-manager/internal/app/catalog-manager"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 var runCmdLongHelp = "Launch the catalog-manager service"
@@ -41,7 +42,8 @@ var runCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().UintVar(&cfg.Port, "port", 7060, "gRPC Port to launch the Catalog-manager")
+	runCmd.Flags().IntVar(&cfg.CatalogManager.GRPCPort, "grpcPort", 7060, "gRPC Port to launch the Catalog-manager")
+	runCmd.Flags().IntVar(&cfg.CatalogManager.HTTPPort, "httpPort", 7061, "HTTP Port to launch the Catalog-manager")
 	runCmd.Flags().StringVar(&cfg.ElasticAddress, "elasticAddress", "http://localhost:9200", "address to connect to Elastic Search")
 	runCmd.Flags().StringVar(&cfg.Index, "index", "napptive", "Elastic Index to store the repositories")
 	runCmd.Flags().StringVar(&cfg.RepositoryPath, "repositoryPath", "/napptive/repository/", "base path to store the repositories")
@@ -58,6 +60,6 @@ func init() {
 	runCmd.Flags().StringVar(&cfg.BQConfig.Config.CredentialsPath, "analyticsCredentialsPath", "/analytics/credentials.json", "credentials path for analytics")
 	runCmd.Flags().StringVar(&cfg.BQConfig.Config.Schema, "analyticsSchema", "analytics", "analytics schema")
 	runCmd.Flags().StringVar(&cfg.BQConfig.Config.Table, "analyticsTable", "operation", "analytics table")
-	runCmd.Flags().DurationVar(&cfg.BQConfig.Config.SendingTime, "analyticsLoop", 5 * time.Second, "time to send the data to analytics provider")
+	runCmd.Flags().DurationVar(&cfg.BQConfig.Config.SendingTime, "analyticsLoop", 5*time.Second, "time to send the data to analytics provider")
 
 }
