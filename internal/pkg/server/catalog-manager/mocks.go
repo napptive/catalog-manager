@@ -17,7 +17,8 @@ package catalog_manager
 
 //go:generate  mockgen -destination metadata_provider_mock.go -package=catalog_manager github.com/napptive/catalog-manager/internal/pkg/provider/metadata MetadataProvider
 //go:generate  mockgen -destination storage_mock.go -package=catalog_manager github.com/napptive/catalog-manager/internal/pkg/storage StorageManager
-////go:generate  mockgen -destination manager_mock.go -self_package  github.com/napptive/catalog-manager/internal/server/catalog-manager -package=catalog_manager . Manager
+//go:generate  mockgen -destination catalog_add_server_mock.go -package=catalog_manager github.com/napptive/grpc-catalog-go Catalog_AddServer
+//go:generate  mockgen -destination manager_mock.go -self_package  github.com/napptive/catalog-manager/internal/server/catalog-manager -package=catalog_manager . Manager
 
 //Mock is a place holder to unify all mock generators.
 func Mock() {}
