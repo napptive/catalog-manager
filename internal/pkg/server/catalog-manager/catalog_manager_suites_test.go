@@ -17,12 +17,13 @@
 package catalog_manager
 
 import (
+	"testing"
+
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
-	"testing"
 )
 
-func TestProviderPackage(t *testing.T) {
+func TestServerCatalogManagerPackage(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "Storage package suite")
+	ginkgo.RunSpecs(t, "Server/Catalog Manager package suite")
 }

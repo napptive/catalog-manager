@@ -14,9 +14,9 @@ require (
 	github.com/napptive/analytics v1.0.1
 	github.com/napptive/grpc-catalog-common-go v0.2.0
 	github.com/napptive/grpc-catalog-go v0.13.0
-	github.com/napptive/mockup-generator v1.0.0
+	github.com/napptive/mockup-generator v1.0.1-0.20210630142914-ae5eac8f9f80
 	github.com/napptive/nerrors v1.0.0
-	github.com/napptive/njwt v1.0.1-0.20210419162054-4691ac61a8b9
+	github.com/napptive/njwt v1.0.1-0.20210709073938-ea6f9de62a71
 	github.com/napptive/rdbms v1.0.0-rc9
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
