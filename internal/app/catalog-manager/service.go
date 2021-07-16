@@ -33,6 +33,7 @@ import (
 	analytics "github.com/napptive/analytics/pkg/provider"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
+	"github.com/napptive/catalog-manager/internal/pkg/server/admin"
 	catalog_manager "github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
@@ -108,7 +109,32 @@ func (s *Service) Run() {
 
 	// launch services
 	go s.LaunchHTTPService()
+	if s.cfg.AdminAPI {
+		go s.LaunchGRPCAdminService(providers)
+	}
 	s.LaunchGRPCService(providers)
+}
+
+// Launch the gRPC admin service.
+func (s *Service) LaunchGRPCAdminService(providers *Providers) {
+	manager := admin.NewManager(providers.repoStorage, providers.elasticProvider)
+	handler := admin.NewHandler(manager)
+
+	// No analytics exported for the administration service.
+	gRPCServer := grpc.NewServer()
+
+	grpc_catalog_go.RegisterNamespaceAdministrationServer(gRPCServer, handler)
+
+	if s.cfg.Debug {
+		// Register reflection service on gRPC server.
+		reflection.Register(gRPCServer)
+	}
+
+	listener := s.getNetListener(s.cfg.AdminGRPCPort)
+	// start the service
+	if err := gRPCServer.Serve(listener); err != nil {
+		log.Fatal().Errs("failed to serve: %v", []error{err})
+	}
 }
 
 // LaunchGRPCService launches a server for gRPC requests.

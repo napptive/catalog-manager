@@ -43,6 +43,7 @@ spec:
           - "run"
           - "--elasticAddress=http://elastic.TARGET_K8S_NAMESPACE:9200"
           - "--repositoryPath=/napptive/repository/"
+          - "--adminAPIEnabled"
           - "--authEnabled"
           - "--authHeader=$(AUTH_HEADER)"
           - "--authSecret=$(AUTH_SECRET)"

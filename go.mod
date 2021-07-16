@@ -13,7 +13,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/napptive/analytics v1.0.1
 	github.com/napptive/grpc-catalog-common-go v0.2.0
-	github.com/napptive/grpc-catalog-go v0.13.0
+	github.com/napptive/grpc-catalog-go v0.14.0
 	github.com/napptive/mockup-generator v1.0.1-0.20210630142914-ae5eac8f9f80
 	github.com/napptive/nerrors v1.0.0
 	github.com/napptive/njwt v1.0.1-0.20210709073938-ea6f9de62a71
@@ -22,7 +22,7 @@ require (
 	github.com/onsi/gomega v1.14.0
 	github.com/rs/zerolog v1.23.0
 	github.com/spf13/cobra v1.2.1
-	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	google.golang.org/grpc v1.39.0
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect

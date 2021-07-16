@@ -8,13 +8,19 @@ metadata:
 spec:
   selector:
      app: catalog-manager
-  type: ClusterIP
+  type: NodePort
   ports:
     - protocol: TCP
       name: grpc
       port: 7060
       targetPort: 7060
+      nodePort: 37060
     - protocol: TCP
       name: http
       port: 7061
       targetPort: 7061
+    - protocol: TCP
+      name: admin
+      port: 7062
+      targetPort: 7062
+      nodePort: 37062
