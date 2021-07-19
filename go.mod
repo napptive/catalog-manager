@@ -13,7 +13,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/napptive/analytics v1.0.1
 	github.com/napptive/grpc-catalog-common-go v0.2.0
-	github.com/napptive/grpc-catalog-go v0.14.0
+	github.com/napptive/grpc-catalog-go v0.16.0
 	github.com/napptive/mockup-generator v1.0.1-0.20210630142914-ae5eac8f9f80
 	github.com/napptive/nerrors v1.0.0
 	github.com/napptive/njwt v1.0.1-0.20210709073938-ea6f9de62a71

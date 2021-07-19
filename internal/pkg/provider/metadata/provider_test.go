@@ -208,7 +208,28 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(err).Should(gomega.Succeed())
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
-			time.Sleep(time.Second)
+			time.Sleep(time.Second*2)
+
+			listRetrieved, err := provider.ListSummary("")
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(listRetrieved).ShouldNot(gomega.BeEmpty())
+
+		})
+		ginkgo.It("Should be able to list applications without logo in metadata", func() {
+
+			var app *entities.ApplicationInfo
+			for i := 0; i < 15; i++ {
+				if i%3 == 0 {
+					app = utils.CreateTestApplicationInfo()
+				} else {
+					app = utils.CreateTestApplicationInfoWithoutLogo()
+				}
+				app.Tag = faker.App().Version()
+				returned, err := provider.Add(app)
+				gomega.Expect(err).Should(gomega.Succeed())
+				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
+			}
+			time.Sleep(time.Second*2)
 
 			listRetrieved, err := provider.ListSummary("")
 			gomega.Expect(err).Should(gomega.Succeed())

@@ -147,6 +147,8 @@ func (h *Handler) List(ctx context.Context, request *grpc_catalog_go.ListApplica
 	for _, app := range returned {
 		summaryList = append(summaryList, app.ToApplicationSummary())
 	}
+
+	log.Debug().Interface("list", summaryList).Msg("lst")
 	return &grpc_catalog_go.ApplicationList{Applications: summaryList}, nil
 
 }

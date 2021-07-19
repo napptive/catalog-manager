@@ -662,7 +662,7 @@ func (e *ElasticProvider) list(namespace string, lastReceived int) (*responseWra
 func (e *ElasticProvider) listFrom(namespace string, lastReceived int) (*responseWrapper, error) {
 
 	sortedBy := []string{"Namespace", "ApplicationName", "Tag"}
-	getFields := []string{"Namespace", "ApplicationName", "Tag", "MetadataName"}
+	getFields := []string{"Namespace", "ApplicationName", "Tag", "MetadataName", "Metadata"}
 	searchFunctions := []func(*esapi.SearchRequest){
 		e.client.Search.WithContext(context.Background()),
 		e.client.Search.WithIndex(e.indexName),
@@ -735,37 +735,63 @@ func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSumma
 			if err := json.Unmarshal(app.Source, &application); err != nil {
 				return nil, nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
 			}
+
 			// new version
-			summary.NumTags ++
+			summary.NumTags++
+
+			var metadataLogo []entities.ApplicationLogo
+			_, metadata, err := utils.IsMetadata([]byte(application.Metadata))
+			if err != nil {
+				// If returns the error, the catalog could be inaccessible. It could be better not return an error and allows to continue listing
+				//return nil, nil, err
+				log.Warn().Str("error", err.Error()).Msg("error getting metadata")
+			} else {
+					metadataLogo = metadata.Logo
+			}
 
 			// check if the last entry has the same namespace and applicationName as the newer one
 			if len(summaryList) > 0 {
 				last := summaryList[len(summaryList)-1]
 				if last.Namespace != application.Namespace {
 					// new namespace
-					summary.NumNamespaces ++
+					summary.NumNamespaces++
 				}
 				if last.Namespace == application.Namespace && last.ApplicationName == application.ApplicationName {
 					summaryList[len(summaryList)-1].TagMetadataName[application.Tag] = application.MetadataName
+					if metadataLogo != nil {
+						summaryList[len(summaryList)-1].MetadataLogo[application.Tag] = metadataLogo
+					}
 				} else {
 					// new application
-					summary.NumApplications ++
-					summaryList = append(summaryList, &entities.AppSummary{
+					summary.NumApplications++
+					newSumm := &entities.AppSummary{
 						Namespace:       application.Namespace,
 						ApplicationName: application.ApplicationName,
 						TagMetadataName: map[string]string{application.Tag: application.MetadataName},
-					})
+						MetadataLogo: map[string][]entities.ApplicationLogo{},
+
+					}
+					if metadataLogo != nil {
+						newSumm.MetadataLogo[application.Tag] = metadataLogo
+					}
+					summaryList = append(summaryList, newSumm)
 				}
 			} else {
 				// new namespace
-				summary.NumNamespaces ++
+				summary.NumNamespaces++
 				// new application (new tag updated above)
-				summary.NumApplications ++
-				summaryList = append(summaryList, &entities.AppSummary{
+				summary.NumApplications++
+				newSumm := &entities.AppSummary{
 					Namespace:       application.Namespace,
 					ApplicationName: application.ApplicationName,
 					TagMetadataName: map[string]string{application.Tag: application.MetadataName},
-				})
+					MetadataLogo: map[string][]entities.ApplicationLogo{},
+				}
+				if metadataLogo != nil {
+					newSumm.MetadataLogo[application.Tag] = metadataLogo
+				}
+				summaryList = append(summaryList, newSumm)
+
 			}
 			total++
 		}

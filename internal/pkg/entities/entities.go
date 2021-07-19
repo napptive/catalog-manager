@@ -28,14 +28,29 @@ type AppSummary struct {
 	ApplicationName string
 	// TagMetadataName with the MetadataName indexed by Tag
 	TagMetadataName map[string]string
+	// MetadataLogo with the ApplicationLogo indexed by Tag
+	MetadataLogo map[string][]ApplicationLogo
 }
 
 // ToApplicationSummary converts the ApplicationSummary to grpc_catalog_go.ApplicationSummary
 func (a *AppSummary) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary {
+
+	// map[string][]ApplicationLogo TO map[string]* Logo []*ApplicationLogo
+
+	logoSummary := make (map[string]*grpc_catalog_go.ApplicationLogoList)
+	for key, value := range a.MetadataLogo {
+		logoList := make ([]*grpc_catalog_go.ApplicationLogo, 0)
+		for _, logo := range value {
+			logoList = append(logoList, logo.ToGRPC())
+		}
+		logoSummary[key] = &grpc_catalog_go.ApplicationLogoList{Logo: logoList}
+	}
+
 	return &grpc_catalog_go.ApplicationSummary{
 		Namespace:       a.Namespace,
 		ApplicationName: a.ApplicationName,
 		TagMetadataName: a.TagMetadataName,
+		SummaryApplicationLogo: logoSummary,
 	}
 }
 
@@ -66,12 +81,13 @@ type ExtendedAppSummary struct {
 	// TagMetadataName with the MetadataName indexed by Tag
 	Tag          string
 	MetadataName string
+	Metadata     string
 }
 
 // -- ApplicationMetadata
 
 // ApplicationInfo with the metadata of application, this will be the application info showed
-type ApplicationInfo struct {
+type 	ApplicationInfo struct {
 	// CatalogID with an internal identifier
 	CatalogID string
 	// Namespace where the application is located.
