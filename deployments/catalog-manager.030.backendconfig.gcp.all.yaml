@@ -1,0 +1,12 @@
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: catalog-manager-config
+  namespace: TARGET_K8S_NAMESPACE
+spec:
+  healthCheck:
+    checkIntervalSec: 10
+    timeoutSec: 3
+    type: HTTP
+    requestPath: /healthz
+    port: 7061

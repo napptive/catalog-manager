@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package catalog_manager
+package admin
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ import (
 	"github.com/onsi/gomega"
 )
 
-func TestServerCatalogManagerPackage(t *testing.T) {
+func TestServerAdminPackage(t *testing.T) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "Server/Catalog Manager package suite")
+	ginkgo.RunSpecs(t, "Server/Admin package suite")
 }

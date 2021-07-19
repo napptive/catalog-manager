@@ -16,7 +16,6 @@ spec:
       labels:
         app: elastic
     spec:
-      priorityClassName: napptive-high-priority
       containers:
         - name: elastic
           image: elasticsearch:7.11.2

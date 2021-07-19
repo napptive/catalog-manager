@@ -76,7 +76,7 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 		if applicationID == "" {
 			applicationID = request.ApplicationId
 			// Also, validate the user.
-			if vErr := h.validateUser(server.Context(), request.ApplicationId, "push"); vErr != nil {
+			if vErr := h.validateUser(server.Context(), request.ApplicationId, "push", false); vErr != nil {
 				return vErr
 			}
 		}
@@ -121,7 +121,7 @@ func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApp
 	}
 
 	// check the user (check if after validation yto be sure the ApplicationId is filled
-	if err := h.validateUser(ctx, request.ApplicationId, "remove"); err != nil {
+	if err := h.validateUser(ctx, request.ApplicationId, "remove", true); err != nil {
 		return nil, err
 	}
 
@@ -182,9 +182,8 @@ func (h *Handler) Summary(ctx context.Context, request *grpc_catalog_common_go.E
 	return summary.ToSummaryResponse(), nil
 }
 
-
 // validateUser check if the user in the context is the same as the repo name
-func (h *Handler) validateUser(ctx context.Context, appName string, action string) error {
+func (h *Handler) validateUser(ctx context.Context, appName string, action string, requireAdminPriviledge bool) error {
 
 	// check the user (check if after validation to be sure the ApplicationName is filled
 	if h.authEnabled {
@@ -202,6 +201,11 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 
 		// A user can only remove their apps
 		if appID.Namespace != claim.Username {
+
+			// Check target account
+			if appID.Namespace == claim.AccountName && requireAdminPriviledge == claim.AccountAdmin {
+				return nil
+			}
 
 			// if the user is privileged and the repository is a team repository -> OK
 			isPrivileged := h.isPrivilegedUser(claim.Username)

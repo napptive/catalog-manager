@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package catalog_manager
+package admin
 
-import (
-	"testing"
+//go:generate  mockgen -destination metadata_provider_mock.go -package=admin github.com/napptive/catalog-manager/internal/pkg/provider/metadata MetadataProvider
+//go:generate  mockgen -destination storage_mock.go -package=admin github.com/napptive/catalog-manager/internal/pkg/storage StorageManager
 
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
-)
-
-func TestServerCatalogManagerPackage(t *testing.T) {
-	gomega.RegisterFailHandler(ginkgo.Fail)
-	ginkgo.RunSpecs(t, "Server/Catalog Manager package suite")
-}
+//Mock is a place holder to unify all mock generators.
+func Mock() {}

@@ -17,9 +17,14 @@
 package utils
 
 import (
+	"context"
 	"os"
+	"strconv"
 
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
+	"github.com/napptive/mockup-generator/pkg/mockups"
+	njwthelper "github.com/napptive/njwt/pkg/helper"
+	"google.golang.org/grpc/metadata"
 	"syreclabs.com/go/faker"
 )
 
@@ -93,4 +98,19 @@ func CreateTestApplicationInfo() *entities.ApplicationInfo {
 		Metadata:        metadataExample,
 		MetadataName:    faker.Name().FirstName(),
 	}
+}
+
+// CreateTestJWTAuthIncomingContext creates a test context with metadata as found
+// after passing the interceptor.
+func CreateTestJWTAuthIncomingContext(username string, accountName string, accountAdmin bool) context.Context {
+	md := metadata.New(map[string]string{
+		njwthelper.UserIDKey:        mockups.GetUserId(),
+		njwthelper.UsernameKey:      username,
+		njwthelper.AccountIDKey:     mockups.GetAccountId(),
+		njwthelper.AccountNameKey:   accountName,
+		njwthelper.EnvironmentIDKey: mockups.GetEnvironmentId(),
+		njwthelper.AccountAdminKey:  strconv.FormatBool(accountAdmin),
+	})
+	parentCtx := context.Background()
+	return metadata.NewIncomingContext(parentCtx, md)
 }

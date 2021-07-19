@@ -33,9 +33,10 @@ import (
 	analytics "github.com/napptive/analytics/pkg/provider"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
-	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
+	"github.com/napptive/catalog-manager/internal/pkg/server/admin"
+	catalog_manager "github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
-	"github.com/napptive/grpc-catalog-go"
+	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	njwtConfig "github.com/napptive/njwt/pkg/config"
 	"github.com/napptive/njwt/pkg/interceptors"
 
@@ -108,8 +109,32 @@ func (s *Service) Run() {
 
 	// launch services
 	go s.LaunchHTTPService()
+	if s.cfg.AdminAPI {
+		go s.LaunchGRPCAdminService(providers)
+	}
 	s.LaunchGRPCService(providers)
+}
 
+// Launch the gRPC admin service.
+func (s *Service) LaunchGRPCAdminService(providers *Providers) {
+	manager := admin.NewManager(providers.repoStorage, providers.elasticProvider)
+	handler := admin.NewHandler(manager)
+
+	// No analytics exported for the administration service.
+	gRPCServer := grpc.NewServer()
+
+	grpc_catalog_go.RegisterNamespaceAdministrationServer(gRPCServer, handler)
+
+	if s.cfg.Debug {
+		// Register reflection service on gRPC server.
+		reflection.Register(gRPCServer)
+	}
+
+	listener := s.getNetListener(s.cfg.AdminGRPCPort)
+	// start the service
+	if err := gRPCServer.Serve(listener); err != nil {
+		log.Fatal().Errs("failed to serve: %v", []error{err})
+	}
 }
 
 // LaunchGRPCService launches a server for gRPC requests.
@@ -150,11 +175,16 @@ func (s *Service) LaunchGRPCService(providers *Providers) {
 		reflection.Register(gRPCServer)
 	}
 
-	listener := s.getNetListener(s.cfg.Port)
+	listener := s.getNetListener(s.cfg.GRPCPort)
 	// start the service
 	if err := gRPCServer.Serve(listener); err != nil {
 		log.Fatal().Errs("failed to serve: %v", []error{err})
 	}
+}
+
+// HealthzHandler to return 200 if called.
+func (s *Service) HealthzHandler(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+	w.WriteHeader(http.StatusOK)
 }
 
 // withCORSSupport creates a handler that supports CORS related preflights.
@@ -173,18 +203,21 @@ func (s *Service) withCORSSupport(handler http.Handler) http.Handler {
 // LaunchHTTPService launches a server for HTTP requests.
 func (s *Service) LaunchHTTPService() {
 	mux := runtime.NewServeMux()
-	grpcAddress := fmt.Sprintf(":%d", s.cfg.Port)
+	grpcAddress := fmt.Sprintf(":%d", s.cfg.GRPCPort)
 	grpcOptions := []grpc.DialOption{grpc.WithInsecure()}
 
 	if err := grpc_catalog_go.RegisterCatalogHandlerFromEndpoint(context.Background(), mux, grpcAddress, grpcOptions); err != nil {
 		log.Fatal().Err(err).Msg("failed to start catalog handler")
 	}
+	if err := mux.HandlePath("GET", "/healthz", s.HealthzHandler); err != nil {
+		log.Fatal().Err(err).Msg("unable to register healthz handler")
+	}
 
 	server := &http.Server{
-		Addr:    grpcAddress,
+		Addr:    fmt.Sprintf(":%d", s.cfg.HTTPPort),
 		Handler: s.withCORSSupport(mux),
 	}
-	log.Info().Str("address", grpcAddress).Msg("HTTP Listening")
+
 	// start the service
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal().Errs("failed to serve: %v", []error{err})
@@ -209,7 +242,7 @@ func (s *Service) Shutdown(providers *Providers) {
 	}
 }
 
-func (s *Service) getNetListener(port uint) net.Listener {
+func (s *Service) getNetListener(port int) net.Listener {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatal().Msgf("failed to listen: %v", err)

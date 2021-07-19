@@ -71,13 +71,13 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 	var storageProvider *MockStorageManager
 	var metadataProvider *MockMetadataProvider
 
-	ginkgo.BeforeSuite(func() {
+	ginkgo.BeforeEach(func() {
 		ctrl = gomock.NewController(ginkgo.GinkgoT())
 		storageProvider = NewMockStorageManager(ctrl)
 		metadataProvider = NewMockMetadataProvider(ctrl)
 	})
 
-	ginkgo.AfterSuite(func() {
+	ginkgo.AfterEach(func() {
 		ctrl.Finish()
 	})
 
