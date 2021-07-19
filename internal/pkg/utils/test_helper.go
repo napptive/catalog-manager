@@ -58,9 +58,31 @@ func CreateTestApplicationMetadata() *entities.ApplicationMetadata {
 				Type: "image/png",
 				Size: "120x120",
 			},
+			{
+				Src:  faker.Internet().Url(),
+				Type: "image/png",
+				Size: "1024x256",
+			},
 		},
 	}
 }
+
+var metadataExample= `
+apiVersion: core.napptive.com/v1alpha1
+kind: ApplicationMetadata
+name: "NGINX server"
+version: 1.20.0
+description: NGINX Service Mesh
+keywords:
+  - "storage"
+license: "Apache License Version 2.0"
+url: "https://www.nginx.com/"
+doc: "http://nginx.org/"
+logo:
+  - src: "https://my.domain/path/logo.png"
+    type: "image/png"
+    size: "120x120"
+`
 
 func CreateTestApplicationInfo() *entities.ApplicationInfo {
 	return &entities.ApplicationInfo{
@@ -68,7 +90,7 @@ func CreateTestApplicationInfo() *entities.ApplicationInfo {
 		ApplicationName: faker.App().Name(),
 		Tag:             faker.App().Version(),
 		Readme:          faker.Lorem().Paragraph(10),
-		Metadata:        faker.Lorem().Paragraph(10),
+		Metadata:        metadataExample,
 		MetadataName:    faker.Name().FirstName(),
 	}
 }

@@ -386,8 +386,8 @@ github.com/napptive/grpc-authx-go v0.3.0 h1:Rve3AchbyiNLe0IEjMLmEoJrK5gMxTAFZXO+
 github.com/napptive/grpc-authx-go v0.3.0/go.mod h1:BHBradRIe4tKea4ze9ju9F1NWTX+c9NGBEh3xV9bpK0=
 github.com/napptive/grpc-catalog-common-go v0.2.0 h1:BdIYVOEmzIZbzbVvjKnd9/8T8nQfNqZeEzzVCXjWhvI=
 github.com/napptive/grpc-catalog-common-go v0.2.0/go.mod h1:bnedZvTuFnhO2q1u66EUseAy3k0/N5MW/BFvb8S23bA=
-github.com/napptive/grpc-catalog-go v0.12.0 h1:AY+ZNTcWvputXuUDsvWNzqOuFRDoEfcWdL6DkjSKIlU=
-github.com/napptive/grpc-catalog-go v0.12.0/go.mod h1:BoOdDpZZlW8rWNlSe2/mjG9JC6+UCLlZkUNovwMFxY0=
+github.com/napptive/grpc-catalog-go v0.16.0 h1:u832OVhpHojFqkM5nK0kK4QY4bMa0U3MPpzlUJj9Eyw=
+github.com/napptive/grpc-catalog-go v0.16.0/go.mod h1:BoOdDpZZlW8rWNlSe2/mjG9JC6+UCLlZkUNovwMFxY0=
 github.com/napptive/grpc-catalog-manager-go v0.2.0 h1:XRGTVlhIOrRzgowb3VIk7GDJjBTfZNh9lAEkOtq18BI=
 github.com/napptive/grpc-catalog-manager-go v0.2.0/go.mod h1:FyjGwRcaUKcNFqwl68r+68nk1brqjmy2xoCtiO/aHG8=
 github.com/napptive/grpc-common-go v0.2.0 h1:ewtSAF75kEl8eYwKNOIXwNWLX8bTB7N2W1qrCPCJYV4=
@@ -412,8 +412,8 @@ github.com/napptive/nerrors v1.0.0 h1:LADBxnAFPfsswumOVQC/17IUDJ2EXYsAYWEnXAmgv2
 github.com/napptive/nerrors v1.0.0/go.mod h1:ZZeFFcm34BFmU8yntdIEngwLbh2btshyPRg/J4fhY+0=
 github.com/napptive/njwt v1.0.1-0.20210419162054-4691ac61a8b9 h1:70/8c2aksoDth8pOrCzT8l50QjY96w+DVhCUthbGJZ8=
 github.com/napptive/njwt v1.0.1-0.20210419162054-4691ac61a8b9/go.mod h1:DBsFKGkWNVYDuH2RGCD3zSFfhxnesyCtF5sGR3DN9zg=
-github.com/napptive/rdbms v1.0.0-rc5 h1:B2pulOe8mvYqJ3r8nC4cj0tm+bsbWyRWpDpG45ePRac=
-github.com/napptive/rdbms v1.0.0-rc5/go.mod h1:WuPR4l5pvB9wm9fdFKoZA1AqchBiOG2aYiFNkBGTusg=
+github.com/napptive/rdbms v1.0.0-rc11 h1:aQClGptPcbJL80ksPDou4eJi+xWiwMOSzVPueWlDilI=
+github.com/napptive/rdbms v1.0.0-rc11/go.mod h1:WuPR4l5pvB9wm9fdFKoZA1AqchBiOG2aYiFNkBGTusg=
 github.com/nishanths/predeclared v0.0.0-20200524104333-86fad755b4d3/go.mod h1:nt3d53pc1VYcphSCIaYAJtnPYnr3Zyn8fMq2wvPGPso=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=

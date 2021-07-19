@@ -208,7 +208,7 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(err).Should(gomega.Succeed())
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
-			time.Sleep(time.Second)
+			time.Sleep(time.Second*2)
 
 			listRetrieved, err := provider.ListSummary("")
 			gomega.Expect(err).Should(gomega.Succeed())
