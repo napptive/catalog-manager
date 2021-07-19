@@ -746,7 +746,7 @@ func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSumma
 				//return nil, nil, err
 				log.Warn().Str("error", err.Error()).Msg("error getting metadata")
 			} else {
-				metadataLogo = metadata.Logo
+					metadataLogo = metadata.Logo
 			}
 
 			// check if the last entry has the same namespace and applicationName as the newer one
@@ -758,28 +758,40 @@ func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSumma
 				}
 				if last.Namespace == application.Namespace && last.ApplicationName == application.ApplicationName {
 					summaryList[len(summaryList)-1].TagMetadataName[application.Tag] = application.MetadataName
-					summaryList[len(summaryList)-1].MetadataLogo[application.Tag] = metadataLogo
+					if metadataLogo != nil {
+						summaryList[len(summaryList)-1].MetadataLogo[application.Tag] = metadataLogo
+					}
 				} else {
 					// new application
 					summary.NumApplications++
-					summaryList = append(summaryList, &entities.AppSummary{
+					newSumm := &entities.AppSummary{
 						Namespace:       application.Namespace,
 						ApplicationName: application.ApplicationName,
 						TagMetadataName: map[string]string{application.Tag: application.MetadataName},
-						MetadataLogo:    map[string][]entities.ApplicationLogo{application.Tag: metadataLogo},
-					})
+						MetadataLogo: map[string][]entities.ApplicationLogo{},
+
+					}
+					if metadataLogo != nil {
+						newSumm.MetadataLogo[application.Tag] = metadataLogo
+					}
+					summaryList = append(summaryList, newSumm)
 				}
 			} else {
 				// new namespace
 				summary.NumNamespaces++
 				// new application (new tag updated above)
 				summary.NumApplications++
-				summaryList = append(summaryList, &entities.AppSummary{
+				newSumm := &entities.AppSummary{
 					Namespace:       application.Namespace,
 					ApplicationName: application.ApplicationName,
 					TagMetadataName: map[string]string{application.Tag: application.MetadataName},
-					MetadataLogo:    map[string][]entities.ApplicationLogo{application.Tag: metadataLogo},
-				})
+					MetadataLogo: map[string][]entities.ApplicationLogo{},
+				}
+				if metadataLogo != nil {
+					newSumm.MetadataLogo[application.Tag] = metadataLogo
+				}
+				summaryList = append(summaryList, newSumm)
+
 			}
 			total++
 		}

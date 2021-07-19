@@ -37,7 +37,7 @@ func (a *AppSummary) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary 
 
 	// map[string][]ApplicationLogo TO map[string]* Logo []*ApplicationLogo
 
-	logoSummary := make (map[string]*grpc_catalog_go.ApplicationLogoList, 0)
+	logoSummary := make (map[string]*grpc_catalog_go.ApplicationLogoList)
 	for key, value := range a.MetadataLogo {
 		logoList := make ([]*grpc_catalog_go.ApplicationLogo, 0)
 		for _, logo := range value {

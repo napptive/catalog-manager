@@ -100,6 +100,30 @@ func CreateTestApplicationInfo() *entities.ApplicationInfo {
 	}
 }
 
+var metadataWithoutLogoExample= `
+apiVersion: core.napptive.com/v1alpha1
+kind: ApplicationMetadata
+name: "NGINX server"
+version: 1.20.0
+description: NGINX Service Mesh
+keywords:
+  - "storage"
+license: "Apache License Version 2.0"
+url: "https://www.nginx.com/"
+doc: "http://nginx.org/"
+
+`
+func CreateTestApplicationInfoWithoutLogo() *entities.ApplicationInfo {
+	return &entities.ApplicationInfo{
+		Namespace:       faker.Name().FirstName(),
+		ApplicationName: faker.App().Name(),
+		Tag:             faker.App().Version(),
+		Readme:          faker.Lorem().Paragraph(10),
+		Metadata:        metadataWithoutLogoExample,
+		MetadataName:    faker.Name().FirstName(),
+	}
+}
+
 // CreateTestJWTAuthIncomingContext creates a test context with metadata as found
 // after passing the interceptor.
 func CreateTestJWTAuthIncomingContext(username string, accountName string, accountAdmin bool) context.Context {
