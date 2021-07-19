@@ -44,6 +44,8 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.Flags().IntVar(&cfg.CatalogManager.GRPCPort, "grpcPort", 7060, "gRPC Port to launch the Catalog-manager")
 	runCmd.Flags().IntVar(&cfg.CatalogManager.HTTPPort, "httpPort", 7061, "HTTP Port to launch the Catalog-manager")
+	runCmd.Flags().IntVar(&cfg.CatalogManager.AdminGRPCPort, "adminGRPCPort", 7062, "gRPC Port to launch the Catalog-manager admin API")
+	runCmd.Flags().BoolVar(&cfg.CatalogManager.AdminAPI, "adminAPIEnabled", false, "Enable administration API")
 	runCmd.Flags().StringVar(&cfg.ElasticAddress, "elasticAddress", "http://localhost:9200", "address to connect to Elastic Search")
 	runCmd.Flags().StringVar(&cfg.Index, "index", "napptive", "Elastic Index to store the repositories")
 	runCmd.Flags().StringVar(&cfg.RepositoryPath, "repositoryPath", "/napptive/repository/", "base path to store the repositories")

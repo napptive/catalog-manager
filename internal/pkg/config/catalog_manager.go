@@ -26,6 +26,10 @@ type CatalogManager struct {
 	GRPCPort int
 	// HTTPPort with the port on which the service will be listening for HTTP connections.
 	HTTPPort int
+	// AdminAPI determines in the administration API is to be launched.
+	AdminAPI bool
+	// AdminGRPCPort with the port on which the administration interface will be listening.
+	AdminGRPCPort int
 	// ElasticAddress with the address to connect to Elastic
 	ElasticAddress string
 	// Index with the name of the elastic index
@@ -54,12 +58,23 @@ func (c *CatalogManager) IsValid() error {
 		return nerrors.NewFailedPreconditionError("RepositoryPath must be filled")
 	}
 
+	if c.AdminAPI {
+		if c.AdminGRPCPort <= 0 {
+			return nerrors.NewFailedPreconditionError("invalid admin gRPC port number")
+		}
+	}
+
 	return nil
 }
 
 // Print the configuration using the application logger.
 func (c *CatalogManager) Print() {
 	log.Info().Int("gRPC", c.GRPCPort).Int("HTTP", c.HTTPPort).Msg("ports")
+	adminLog := log.Info().Bool("enabled", c.AdminAPI)
+	if c.AdminAPI {
+		adminLog.Int("gRPC", c.AdminGRPCPort)
+	}
+	adminLog.Msg("admin API")
 	log.Info().Str("ElasticAddress", c.ElasticAddress).Str("Index", c.Index).Msg("Elastic Search Address")
 	log.Info().Str("CatalogUrl", c.CatalogUrl).Msg("Catalog URL")
 	log.Info().Str("RepositoryPath", c.RepositoryPath).Msg("Repository base path")

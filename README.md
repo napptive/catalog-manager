@@ -1,37 +1,12 @@
 # catalog-manager
-Napptive catalog-manager
 
-Catalog manager is the component responsible for catalog management
+The NAPPTIVE Catalog manager is the component responsible for providing a centralized repository to store application specifications aiming to facilitate the distribution and reusability of Cloud Native applications. Applications are expected to contain [OAM](https://oam.dev) entites with the addition of a new metadata entity to improve the user experience when navigating through the catalog.
 
-## Layout structure
+## Getting started
 
-The layout structure is based on the default golang-template layout.
-
-https://github.com/golang-standards/project-layout
-
-## Usage
-
-A make file is provided with the following targets:
-
-* clean: Remove build files
-* test: Run the available tests
-* build: Build the files for your local environment
-* build-darwin: Build the files for MacOS
-* build-linux: Build the files for Linux
-* k8s: Generate the Kubernetes deployment files
-* docker-prep: Prepare the Dockerfile folder with all the extra files
-* docker-build: Build the Dockerfile locally
-* docker-push: Push the image to the selected repository. You must make login before to push the docker image.
-
----
-**Important**
-
-If you are developing with MacOS/Darwin, you must install gnu-sed.
-
-```
-brew install gnu-sed
-```
----
+* [Using the catalog as part of the NAPPTIVE Playground](https://docs.napptive.com/Catalog.html) (SaaS)
+* [Hosting your own private catalog](docs/guides/PrivateCatalog.md)
+  * [Kind](docs/guides/PrivateCatalogOnKind.md)
 
 ## Development
 
@@ -72,6 +47,10 @@ RUN_INTEGRATION_TEST=all make test
 This repository is integrated with GitHub Actions.
 
 ![Check changes in the Main branch](https://github.com/napptive/catalog-manager/workflows/Check%20changes%20in%20the%20Main%20branch/badge.svg)
+
+## Contributing
+
+Let's make the catalog better, check our [contribution](contributing.md) guidelines to discover how you can contribute to the project.
 
 ## License
 
