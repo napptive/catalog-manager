@@ -30,6 +30,8 @@ type Config struct {
 	TeamConfig
 	// BQConfig contains the configuration to connect to BigQuery
 	BQConfig
+	// TLS configuration
+	TLSConfig
 	// Version of the application.
 	Version string
 	// Commit related to this built.
@@ -52,6 +54,9 @@ func (c *Config) IsValid() error {
 	if err := c.BQConfig.IsValid(); err != nil {
 		return err
 	}
+	if err := c.TLSConfig.IsValid(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -63,4 +68,5 @@ func (c *Config) Print() {
 	c.JWTConfig.Print()
 	c.TeamConfig.Print()
 	c.BQConfig.Print()
+	c.TLSConfig.Print()
 }

@@ -17,7 +17,9 @@
 package catalog_manager
 
 import (
+	"crypto/tls"
 	"fmt"
+	"google.golang.org/grpc/credentials"
 	"net"
 	"net/http"
 	"os"
@@ -164,10 +166,17 @@ func (s *Service) LaunchGRPCService(providers *Providers) {
 		unaryInterceptorsChain = append(unaryInterceptorsChain, bqinterceptor.OpInterceptor(providers.analyticsProvider))
 		unaryStreamChain = append(unaryStreamChain, bqinterceptor.OpStreamInterceptor(providers.analyticsProvider))
 	}
-
-	gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)),
-		grpc_middleware.WithStreamServerChain(unaryStreamChain...))
-
+	if s.cfg.TLSConfig.LaunchSecureService {
+		serverCert, err := credentials.NewServerTLSFromFile(s.cfg.CertificatePath, s.cfg.PrivateKeyPath)
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to create gRPC cert")
+		}
+		gRPCServer = grpc.NewServer(grpc.Creds(serverCert), grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)),
+			grpc_middleware.WithStreamServerChain(unaryStreamChain...))
+	} else {
+		gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)),
+			grpc_middleware.WithStreamServerChain(unaryStreamChain...))
+	}
 	grpc_catalog_go.RegisterCatalogServer(gRPCServer, handler)
 
 	if s.cfg.Debug {
@@ -204,7 +213,16 @@ func (s *Service) withCORSSupport(handler http.Handler) http.Handler {
 func (s *Service) LaunchHTTPService() {
 	mux := runtime.NewServeMux()
 	grpcAddress := fmt.Sprintf(":%d", s.cfg.GRPCPort)
-	grpcOptions := []grpc.DialOption{grpc.WithInsecure()}
+	var grpcOptions []grpc.DialOption
+	if s.cfg.TLSConfig.LaunchSecureService {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+		}
+		tlsCredentials := credentials.NewTLS(tlsConfig)
+		grpcOptions = []grpc.DialOption{grpc.WithTransportCredentials(tlsCredentials)}
+	} else {
+		grpcOptions = []grpc.DialOption{grpc.WithInsecure()}
+	}
 
 	if err := grpc_catalog_go.RegisterCatalogHandlerFromEndpoint(context.Background(), mux, grpcAddress, grpcOptions); err != nil {
 		log.Fatal().Err(err).Msg("failed to start catalog handler")
