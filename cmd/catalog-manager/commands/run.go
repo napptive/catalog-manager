@@ -57,7 +57,7 @@ func init() {
 	runCmd.Flags().StringSliceVar(&cfg.PrivilegedUsers, "teamUsers", nil, "Privileged Users")
 	runCmd.Flags().StringSliceVar(&cfg.TeamNamespaces, "teamRepositories", nil, "Team Repositories")
 
-	runCmd.Flags().BoolVar(&cfg.TLSConfig.LaunchSecureService, "launchSecureService", false, "Whether a secure gRPC server must be launched (uses a different port)")
+	runCmd.Flags().BoolVar(&cfg.TLSConfig.LaunchSecureService, "launchSecureService", false, "Whether a secure gRPC server must be launched")
 	runCmd.Flags().StringVar(&cfg.TLSConfig.CertificatePath, "certificatePath", "/certs/tls.crt", "Path of the certificate to use for the gRPC server")
 	runCmd.Flags().StringVar(&cfg.TLSConfig.PrivateKeyPath, "privateKeyPath", "/certs/tls.key", "Path of the private key associated with the certificate to use for the gRPC server")
 
