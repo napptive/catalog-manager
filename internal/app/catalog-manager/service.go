@@ -216,6 +216,7 @@ func (s *Service) LaunchHTTPService() {
 	var grpcOptions []grpc.DialOption
 	if s.cfg.TLSConfig.LaunchSecureService {
 		tlsConfig := &tls.Config{
+                           // Since the proxy may not be seeing the same DNS address, skip the verification for now.
 			InsecureSkipVerify: true,
 		}
 		tlsCredentials := credentials.NewTLS(tlsConfig)
