@@ -17,6 +17,7 @@
 package catalog_manager
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
@@ -213,8 +214,17 @@ func (m *manager) Get(requestedAppID string) (*entities.ExtendedApplicationMetad
 }
 
 // List returns a list of applications (without metadata and readme content)
+// List ([catalogURL/]namespace)
 func (m *manager) List(namespace string) ([]*entities.AppSummary, error) {
-	return m.provider.ListSummary(namespace)
+	// TODO: Check if the catalogURL matches with repositoryName
+	// DecomposeApplicationID needs [catalogURL/]namespace/appName[:tag]
+	// in this case we have no appName, uses dummyAppName to simulate it
+	_, appID, err := utils.DecomposeApplicationID(fmt.Sprintf("%s/dummyAppName", namespace))
+	if err != nil {
+		return nil, nerrors.NewFailedPreconditionErrorFrom(err, "unable to list applications")
+	}
+
+	return m.provider.ListSummary(appID.Namespace)
 }
 
 // Summary returns catalog summary
