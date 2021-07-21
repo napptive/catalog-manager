@@ -224,6 +224,12 @@ func (s *storageManager) GetApplication(repo string, name string, version string
 func (s *storageManager) loadAppFileTgz(name string, path string) ([]*entities.FileInfo, error) {
 	var buf bytes.Buffer
 
+	// Remove '//' in the path.
+	// The path could be composed with two slash.
+	// This makes impossible to remove the repository path when creating the tgz.
+	// If we delete it, we avoid this issue
+	path = strings.Replace(path, "//", "/", -1)
+
 	zr := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(zr)
 
