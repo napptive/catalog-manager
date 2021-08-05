@@ -260,19 +260,12 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationInfo) (*entities.App
 		return nil, err
 	}
 
-	req := esapi.IndexRequest{
-		DocumentID: id,
-		Index:      e.indexName,
-		Body:       strings.NewReader(metadataJSON),
-		Timeout:    0,
-		Pretty:     false,
-		Human:      false,
-		ErrorTrace: false,
-		Refresh:    "true",
-	}
+	res, err := e.client.Index(e.indexName, strings.NewReader(metadataJSON),
+		e.client.Index.WithRefresh("true"),
+		e.client.Index.WithContext(context.Background()),
+		e.client.Index.WithDocumentID(id))
 
 	// Perform the request with the client.
-	res, err := req.Do(context.Background(), e.client)
 	if err != nil {
 		log.Error().Err(err).Msg("error adding metadata")
 		return nil, err
