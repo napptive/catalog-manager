@@ -279,4 +279,36 @@ func RunTests(provider MetadataProvider) {
 
 		})
 	})
+
+	ginkgo.Context("Checking if an application exists", func() {
+		ginkgo.It("Should be able to check if an application exists", func() {
+			app := utils.CreateTestApplicationInfo()
+
+			returned, err := provider.Add(app)
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
+
+			exists, err := provider.Exists(&entities.ApplicationID{
+				Namespace:       app.Namespace,
+				ApplicationName: app.ApplicationName,
+				Tag:             app.Tag,
+			})
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(exists).Should(gomega.BeTrue())
+
+		})
+		ginkgo.It("Should be able to check if when an application does not exist", func() {
+			app := utils.CreateTestApplicationInfo()
+
+			exists, err := provider.Exists(&entities.ApplicationID{
+				Namespace:       app.Namespace,
+				ApplicationName: app.ApplicationName,
+				Tag:             app.Tag,
+			})
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(exists).ShouldNot(gomega.BeTrue())
+
+		})
+	})
+
 }

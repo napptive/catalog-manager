@@ -20,6 +20,7 @@ BUILD_FOLDER=$(CURDIR)/build
 BIN_FOLDER=$(BUILD_FOLDER)/bin
 DOCKER_FOLDER=$(BUILD_FOLDER)/docker
 K8S_FOLDER=$(BUILD_FOLDER)/k8s
+TEMP_FOLDER=$(CURDIR)/temp
 
 # Obtain the last commit hash
 COMMIT=$(shell git log -1 --pretty=format:"%H")
@@ -191,3 +192,35 @@ release: clean build-darwin build-linux k8s
 	@echo "::set-output name=release_file::$(BUILD_FOLDER)/$(PROJECT_NAME)_$(VERSION).tar.gz"
 	@echo "::set-output name=release_name::$(PROJECT_NAME)_$(VERSION).tar.gz"
 	
+.PHONY: prepare-integration-test-environment
+prepare-integration-test-environment:
+	@echo "Preparing integration tests environment"
+	@echo "Launch elastic docker container..."
+	@docker run -d --name elastic-env -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.13.1
+	@echo "Wait several seconds until elastic is ready"
+	@sleep 10
+	@echo "Elastic ready!"
+	@docker run -d --name local-postgres -e POSTGRES_PASSWORD=Pass2020! -p 5432:5432 postgres:13-alpine
+	@echo "Database ready!"
+
+.PHONY: it-load-db-schema
+it-load-db-schema:
+	@mkdir $(TEMP_FOLDER) || true
+	@kubectl create -f deployments/$(PROJECT_NAME).005.configmap.all.all.yaml --dry-run=client -o "jsonpath={.data['$(PROJECT_NAME)-sql-script\.yaml']}" > $(TEMP_FOLDER)/db.yaml
+	@docker run -it --network host -v $(TEMP_FOLDER):/it napptive/rdbms:latest schema load --scriptLoadPath=/it/db.yaml
+	@echo "database schema has been loaded"
+
+.PHONY: remove-integration-test-environment
+remove-integration-test-environment:
+	@echo "Removing integration tests environment"
+	@docker stop elastic-env
+	@docker rm elastic-env
+	@echo "elastic removed!"
+	@docker stop local-postgres
+	@docker rm local-postgres
+	@echo "postgres removed!"
+
+.PHONY: all-tests
+all-tests:
+	@echo "Executing unit and integration tests"
+	RUN_INTEGRATION_TEST=all IT_RUN_LOCAL=true $(GO_TEST) -v ./...
