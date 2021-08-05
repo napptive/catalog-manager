@@ -16,12 +16,11 @@
 package metadata
 
 import (
-	"time"
-
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
+	"github.com/rs/zerolog/log"
 	"syreclabs.com/go/faker"
 )
 
@@ -57,21 +56,18 @@ func RunTests(provider MetadataProvider) {
 			returned, err := provider.Add(app)
 			gomega.Expect(err).Should(gomega.Succeed())
 
-			// wait to be stored
-			time.Sleep(time.Second)
-
-			retrieved, err := provider.Get(entities.ApplicationID{
+			retrieved, err := provider.Get(&entities.ApplicationID{
 				Namespace:       returned.Namespace,
 				ApplicationName: returned.ApplicationName,
 				Tag:             returned.Tag,
 			})
-			gomega.Expect(err).Should(gomega.Succeed())
+		gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(retrieved).ShouldNot(gomega.BeNil())
 			gomega.Expect(*retrieved).Should(gomega.Equal(*app))
 		})
 
 		ginkgo.It("Should not be able to get an application metadata if it does not exist", func() {
-			_, err := provider.Get(entities.ApplicationID{
+			_, err := provider.Get(&entities.ApplicationID{
 				Namespace:       "repoTest",
 				ApplicationName: "applName",
 				Tag:             "",
@@ -83,21 +79,21 @@ func RunTests(provider MetadataProvider) {
 
 	ginkgo.Context("Removing application metadata", func() {
 		ginkgo.It("Should be able to delete an application metadata", func() {
-			app := utils.CreateTestApplicationInfo()
 
-			returned, err := provider.Add(app)
-			gomega.Expect(err).Should(gomega.Succeed())
+			for i:=0; i<10; i++ {
+				log.Debug().Int("i", i).Msg("...")
+				app := utils.CreateTestApplicationInfo()
 
-			// wait to be stored
-			time.Sleep(time.Second)
+				returned, err := provider.Add(app)
+				gomega.Expect(err).Should(gomega.Succeed())
 
-			err = provider.Remove(&entities.ApplicationID{
-				Namespace:       returned.Namespace,
-				ApplicationName: returned.ApplicationName,
-				Tag:             returned.Tag,
-			})
-			gomega.Expect(err).Should(gomega.Succeed())
-
+				err = provider.Remove(&entities.ApplicationID{
+					Namespace:       returned.Namespace,
+					ApplicationName: returned.ApplicationName,
+					Tag:             returned.Tag,
+				})
+				gomega.Expect(err).Should(gomega.Succeed())
+			}
 		})
 		ginkgo.It("Should not be able to delete an application metadata if it does not exist", func() {
 			app := utils.CreateTestApplicationInfo()
@@ -120,10 +116,7 @@ func RunTests(provider MetadataProvider) {
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 
-			// wait
-			time.Sleep(time.Second)
-
-			retrieved, err := provider.Get(entities.ApplicationID{
+			retrieved, err := provider.Get(&entities.ApplicationID{
 				Namespace:       app.Namespace,
 				ApplicationName: app.ApplicationName,
 				Tag:             app.Tag,
@@ -135,7 +128,7 @@ func RunTests(provider MetadataProvider) {
 		ginkgo.It("should not be able to return a non existing application metadata", func() {
 			app := utils.CreateTestApplicationInfo()
 
-			_, err := provider.Get(entities.ApplicationID{
+			_, err := provider.Get(&entities.ApplicationID{
 				Namespace:       app.Namespace,
 				ApplicationName: app.ApplicationName,
 				Tag:             app.Tag,
@@ -155,7 +148,6 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(err).Should(gomega.Succeed())
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
-			time.Sleep(time.Second)
 
 			listRetrieved, err := provider.List("")
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -180,7 +172,6 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(err).Should(gomega.Succeed())
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
-			time.Sleep(time.Second)
 			listRetrieved, err := provider.List(targetNamespace)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(len(listRetrieved)).Should(gomega.Equal(numApps / 2))
@@ -208,7 +199,6 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(err).Should(gomega.Succeed())
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
-			time.Sleep(time.Second*2)
 
 			listRetrieved, err := provider.ListSummary("")
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -229,7 +219,6 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(err).Should(gomega.Succeed())
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
-			time.Sleep(time.Second*2)
 
 			listRetrieved, err := provider.ListSummary("")
 			gomega.Expect(err).Should(gomega.Succeed())
@@ -252,8 +241,6 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(err).Should(gomega.Succeed())
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
-			time.Sleep(time.Second)
-
 			// Fill cache
 			provider.(*ElasticProvider).FillCache()
 
@@ -280,8 +267,6 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(err).Should(gomega.Succeed())
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
-			time.Sleep(time.Second)
-
 			// Fill cache
 			provider.(*ElasticProvider).FillCache()
 

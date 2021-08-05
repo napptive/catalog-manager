@@ -6,37 +6,38 @@ package catalog_manager
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	metadata "google.golang.org/grpc/metadata"
-	reflect "reflect"
 )
 
-// MockCatalog_AddServer is a mock of Catalog_AddServer interface
+// MockCatalog_AddServer is a mock of Catalog_AddServer interface.
 type MockCatalog_AddServer struct {
 	ctrl     *gomock.Controller
 	recorder *MockCatalog_AddServerMockRecorder
 }
 
-// MockCatalog_AddServerMockRecorder is the mock recorder for MockCatalog_AddServer
+// MockCatalog_AddServerMockRecorder is the mock recorder for MockCatalog_AddServer.
 type MockCatalog_AddServerMockRecorder struct {
 	mock *MockCatalog_AddServer
 }
 
-// NewMockCatalog_AddServer creates a new mock instance
+// NewMockCatalog_AddServer creates a new mock instance.
 func NewMockCatalog_AddServer(ctrl *gomock.Controller) *MockCatalog_AddServer {
 	mock := &MockCatalog_AddServer{ctrl: ctrl}
 	mock.recorder = &MockCatalog_AddServerMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockCatalog_AddServer) EXPECT() *MockCatalog_AddServerMockRecorder {
 	return m.recorder
 }
 
-// Context mocks base method
+// Context mocks base method.
 func (m *MockCatalog_AddServer) Context() context.Context {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Context")
@@ -44,13 +45,13 @@ func (m *MockCatalog_AddServer) Context() context.Context {
 	return ret0
 }
 
-// Context indicates an expected call of Context
+// Context indicates an expected call of Context.
 func (mr *MockCatalog_AddServerMockRecorder) Context() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Context", reflect.TypeOf((*MockCatalog_AddServer)(nil).Context))
 }
 
-// Recv mocks base method
+// Recv mocks base method.
 func (m *MockCatalog_AddServer) Recv() (*grpc_catalog_go.AddApplicationRequest, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Recv")
@@ -59,13 +60,13 @@ func (m *MockCatalog_AddServer) Recv() (*grpc_catalog_go.AddApplicationRequest, 
 	return ret0, ret1
 }
 
-// Recv indicates an expected call of Recv
+// Recv indicates an expected call of Recv.
 func (mr *MockCatalog_AddServerMockRecorder) Recv() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Recv", reflect.TypeOf((*MockCatalog_AddServer)(nil).Recv))
 }
 
-// RecvMsg mocks base method
+// RecvMsg mocks base method.
 func (m *MockCatalog_AddServer) RecvMsg(arg0 interface{}) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RecvMsg", arg0)
@@ -73,13 +74,13 @@ func (m *MockCatalog_AddServer) RecvMsg(arg0 interface{}) error {
 	return ret0
 }
 
-// RecvMsg indicates an expected call of RecvMsg
+// RecvMsg indicates an expected call of RecvMsg.
 func (mr *MockCatalog_AddServerMockRecorder) RecvMsg(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecvMsg", reflect.TypeOf((*MockCatalog_AddServer)(nil).RecvMsg), arg0)
 }
 
-// SendAndClose mocks base method
+// SendAndClose mocks base method.
 func (m *MockCatalog_AddServer) SendAndClose(arg0 *grpc_catalog_common_go.OpResponse) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendAndClose", arg0)
@@ -87,13 +88,13 @@ func (m *MockCatalog_AddServer) SendAndClose(arg0 *grpc_catalog_common_go.OpResp
 	return ret0
 }
 
-// SendAndClose indicates an expected call of SendAndClose
+// SendAndClose indicates an expected call of SendAndClose.
 func (mr *MockCatalog_AddServerMockRecorder) SendAndClose(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendAndClose", reflect.TypeOf((*MockCatalog_AddServer)(nil).SendAndClose), arg0)
 }
 
-// SendHeader mocks base method
+// SendHeader mocks base method.
 func (m *MockCatalog_AddServer) SendHeader(arg0 metadata.MD) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendHeader", arg0)
@@ -101,13 +102,13 @@ func (m *MockCatalog_AddServer) SendHeader(arg0 metadata.MD) error {
 	return ret0
 }
 
-// SendHeader indicates an expected call of SendHeader
+// SendHeader indicates an expected call of SendHeader.
 func (mr *MockCatalog_AddServerMockRecorder) SendHeader(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendHeader", reflect.TypeOf((*MockCatalog_AddServer)(nil).SendHeader), arg0)
 }
 
-// SendMsg mocks base method
+// SendMsg mocks base method.
 func (m *MockCatalog_AddServer) SendMsg(arg0 interface{}) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendMsg", arg0)
@@ -115,13 +116,13 @@ func (m *MockCatalog_AddServer) SendMsg(arg0 interface{}) error {
 	return ret0
 }
 
-// SendMsg indicates an expected call of SendMsg
+// SendMsg indicates an expected call of SendMsg.
 func (mr *MockCatalog_AddServerMockRecorder) SendMsg(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMsg", reflect.TypeOf((*MockCatalog_AddServer)(nil).SendMsg), arg0)
 }
 
-// SetHeader mocks base method
+// SetHeader mocks base method.
 func (m *MockCatalog_AddServer) SetHeader(arg0 metadata.MD) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetHeader", arg0)
@@ -129,19 +130,19 @@ func (m *MockCatalog_AddServer) SetHeader(arg0 metadata.MD) error {
 	return ret0
 }
 
-// SetHeader indicates an expected call of SetHeader
+// SetHeader indicates an expected call of SetHeader.
 func (mr *MockCatalog_AddServerMockRecorder) SetHeader(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetHeader", reflect.TypeOf((*MockCatalog_AddServer)(nil).SetHeader), arg0)
 }
 
-// SetTrailer mocks base method
+// SetTrailer mocks base method.
 func (m *MockCatalog_AddServer) SetTrailer(arg0 metadata.MD) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetTrailer", arg0)
 }
 
-// SetTrailer indicates an expected call of SetTrailer
+// SetTrailer indicates an expected call of SetTrailer.
 func (mr *MockCatalog_AddServerMockRecorder) SetTrailer(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTrailer", reflect.TypeOf((*MockCatalog_AddServer)(nil).SetTrailer), arg0)

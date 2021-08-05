@@ -23,7 +23,7 @@ type MetadataProvider interface {
 	// Add stores new application metadata or updates it if it exists
 	Add(metadata *entities.ApplicationInfo) (*entities.ApplicationInfo, error)
 	// Get returns the application metadata requested or an error if it does not exist
-	Get(appID entities.ApplicationID) (*entities.ApplicationInfo, error)
+	Get(appID *entities.ApplicationID) (*entities.ApplicationInfo, error)
 	// Exists checks if an application metadata exists
 	Exists(appID *entities.ApplicationID) (bool, error)
 	// Remove removes an application metadata
