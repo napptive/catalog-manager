@@ -18,6 +18,7 @@ package metadata
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -78,23 +79,6 @@ type responseWrapper struct {
 	}
 }
 
-// deleteResponseWrapper is an struct used to load a delete result
-type deleteResponseWrapper struct {
-	Batches int
-	Deleted int
-	Noops   int
-	Retries struct {
-		Bulk   int
-		Search int
-	}
-	ThrottledMllis       int  `json:"throttled_millis"`
-	ThrottledUntilMillis int  `json:"throttled_until_millis"`
-	TimedOut             bool `json:"timed_out"`
-	Took                 int
-	Total                int
-	VersionConflicts     int `json:"version_conflicts"`
-}
-
 type ElasticProvider struct {
 	client    *elasticsearch.Client
 	indexName string
@@ -148,28 +132,18 @@ func (e *ElasticProvider) periodicCacheRefresh() {
 
 	// Method executed in one thread to fill the cache every "CacheRefreshTime" time
 	// or when a message is received through the "invalidateCacheChan" channel
-	lastTime := time.Now().Add(-1 * CacheRefreshTime)
 	for {
 		select {
 		case val := <-e.invalidateCacheChan:
 			if val {
-				// When less than x seconds have passed since the last update, we do not update
-				if lastTime.Add(CacheRefreshTime / 3).Before(time.Now()) {
 					e.FillCache()
-					lastTime = time.Now()
-				}
-
 			} else {
 				ticker.Stop()
 				close(e.invalidateCacheChan)
 				return
 			}
 		case <-ticker.C:
-			// When less than x seconds have passed since the last update, we do not update
-			if lastTime.Add(CacheRefreshTime / 3).Before(time.Now()) {
 				e.FillCache()
-				lastTime = time.Now()
-			}
 		}
 	}
 }
@@ -241,66 +215,43 @@ func (e *ElasticProvider) DeleteIndex() error {
 	return nil
 }
 
-// CreateID generates the documentID to store the application metadata
-func (e *ElasticProvider) CreateID(metadata entities.ApplicationInfo) string {
-	id := fmt.Sprintf("%s/%s:%s", metadata.Namespace, metadata.ApplicationName, metadata.Tag)
-	return id
+
+// GenerateCatalogID generates the catalog ID (field stored in elastic) as namespace/appName:tag
+func (e *ElasticProvider) GenerateCatalogID (namespace, appName, tag string) string {
+	return fmt.Sprintf("%s/%s:%s", namespace, appName, tag)
 }
 
-// CreateIDFromAppID creates the documentID from ApplicationID
-func (e *ElasticProvider) CreateIDFromAppID(metadata entities.ApplicationID) string {
-	id := fmt.Sprintf("%s/%s:%s", metadata.Namespace, metadata.ApplicationName, metadata.Tag)
-	return id
+// GenerateID generates the document _id
+func (e *ElasticProvider) GenerateID(info *entities.ApplicationInfo) string {
+	catalogID := e.GenerateCatalogID(info.Namespace, info.ApplicationName, info.Tag)
+	id := md5.Sum([]byte(catalogID))
+	return fmt.Sprintf("%x", id)
 }
 
-// buildTerm creates a term field to search
-func (e *ElasticProvider) buildTerm(field string, value string) map[string]interface{} {
-	return map[string]interface{}{
-		"term": map[string]interface{}{
-			field: value,
-		},
+// GenerateIDFromAppID generates the document _id
+func (e *ElasticProvider) GenerateIDFromAppID(metadata *entities.ApplicationID) string {
+	catalogID := e.GenerateCatalogID(metadata.Namespace, metadata.ApplicationName, metadata.Tag)
+	id := md5.Sum([]byte(catalogID))
+	return fmt.Sprintf("%x", id)
+}
+
+func (e *ElasticProvider) chekElasticError (res *esapi.Response, operation string) error {
+
+	if res.IsError() {
+		log.Warn().Str("err", res.Status()).Str("operation", operation).Msg("Elastic error")
+		return nerrors.NewInternalError("Error %s document: [%s]", operation, res.Status())
 	}
-}
-
-// buildQuery creates the query to ask for an application metadata
-// this method is used to ask about ALL the files (url, repo, appName and tag)
-func (e *ElasticProvider) buildQuery(appID entities.ApplicationID) map[string]interface{} {
-
-	repo := e.buildTerm(NamespaceField, appID.Namespace)
-	appName := e.buildTerm(ApplicationField, appID.ApplicationName)
-	tag := e.buildTerm(TagField, appID.Tag)
-
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"bool": map[string]interface{}{
-				"must": []interface{}{repo, appName, tag},
-			},
-		},
-	}
-
-	return query
+	return nil
 }
 
 // Add stores new application metadata or updates it if it exists
 func (e *ElasticProvider) Add(metadata *entities.ApplicationInfo) (*entities.ApplicationInfo, error) {
 
-	// Check if application already exists -> remove it!
-	appID := metadata.ToApplicationID()
-	exists, err := e.Exists(appID)
-	if err != nil {
-		log.Err(err).Msg("error checking if application exists")
-		return nil, nerrors.NewInternalError("Unable to add application Metadata, unable to check if application already exists")
-	}
-
-	if exists {
-		if err = e.Remove(appID); err != nil {
-			return nil, nerrors.NewInternalError("Unable to add application Metadata, unable to remove previous application")
-		}
-	}
+	// 1.- Generate _id
+	id := e.GenerateID(metadata)
 
 	// Fill Internal ID
-	metadata.CatalogID = e.CreateID(*metadata)
-	//	metadata.MetadataName = metadata.MetadataObj.Name
+	metadata.CatalogID = e.GenerateCatalogID(metadata.Namespace, metadata.ApplicationName, metadata.Tag)
 
 	// convert the metadata to JSON
 	metadataJSON, err := utils.ApplicationInfoToJSON(*metadata)
@@ -309,27 +260,20 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationInfo) (*entities.App
 		return nil, err
 	}
 
-	req := esapi.IndexRequest{
-		Index:      e.indexName,
-		Body:       strings.NewReader(metadataJSON),
-		Timeout:    0,
-		Pretty:     false,
-		Human:      false,
-		ErrorTrace: false,
-	}
+	res, err := e.client.Index(e.indexName, strings.NewReader(metadataJSON),
+		e.client.Index.WithRefresh("true"),
+		e.client.Index.WithContext(context.Background()),
+		e.client.Index.WithDocumentID(id))
 
 	// Perform the request with the client.
-	res, err := req.Do(context.Background(), e.client)
 	if err != nil {
 		log.Error().Err(err).Msg("error adding metadata")
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
-		log.Warn().Str("err", res.Status()).Msg("Error indexing document")
-		return nil, nerrors.NewInternalError("Error indexing document: [%s]", res.Status())
-
+	if err = e.chekElasticError(res, "adding"); err != nil {
+		return nil, err
 	}
 
 	// update the cache
@@ -338,233 +282,72 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationInfo) (*entities.App
 	return metadata, nil
 }
 
-// SearchByApplicationID returns the application metadata requested
-// Right now it is not used neither tested
-func (e *ElasticProvider) SearchByApplicationID(appID entities.ApplicationID) (*entities.ApplicationInfo, error) {
-
-	var buf bytes.Buffer
-
-	query := e.buildQuery(appID)
-	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Err(err).Msg("Error encoding query")
-	}
-
-	// Perform the search request.
-	res, err := e.client.Search(
-		e.client.Search.WithContext(context.Background()),
-		e.client.Search.WithIndex(e.indexName),
-		e.client.Search.WithBody(&buf),
-		e.client.Search.WithTrackTotalHits(true),
-	)
-	if err != nil {
-		log.Err(err).Msg("Error getting response")
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		var e map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-			log.Err(err).Msg("Error parsing the response body")
-			return nil, nerrors.NewInternalError("Error getting application. Error parsing the response body")
-		} else {
-			// Print the response status and error information.
-			log.Err(err).Str("status", res.Status()).Msg("error")
-			return nil, nerrors.NewInternalError(res.Status())
-		}
-	}
-
-	var r responseWrapper
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		return nil, nerrors.FromError(err)
-	}
-
-	// Print the response status, number of results, and request duration.
-	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("SearchByApplicationID operation")
-
-	if r.Hits.Total.Value == 0 {
-		return nil, nerrors.NewNotFoundError("%s metadata is not available", appID.String())
-	}
-
-	var application entities.ApplicationInfo
-	if err := json.Unmarshal(r.Hits.Hits[0].Source, &application); err != nil {
-		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
-	}
-
-	return &application, nil
-}
-
 // Exists checks if the application Metadata already exists
 func (e *ElasticProvider) Exists(appID *entities.ApplicationID) (bool, error) {
 
-	catalogID := e.CreateIDFromAppID(*appID)
-
-	var buf bytes.Buffer
-
-	// Query Field
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"term": map[string]interface{}{
-				CatalogIDField: catalogID,
-			},
-		},
-	}
-
-	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Err(err).Msg("Error encoding query")
-		return false, nerrors.NewInternalErrorFrom(err, "error getting metadata by ID")
-	}
-
-	// Perform the search request.
-	res, err := e.client.Search(
-		e.client.Search.WithContext(context.Background()),
-		e.client.Search.WithIndex(e.indexName),
-		e.client.Search.WithBody(&buf),
-		e.client.Search.WithTrackTotalHits(true),
-	)
+	id := e.GenerateIDFromAppID(appID)
+	res, err := e.client.Exists(e.indexName, id, e.client.Exists.WithContext(context.Background()))
 	if err != nil {
 		log.Err(err).Msg("Error getting response")
+		return false, nerrors.FromError(err)
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
-		var e map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-			log.Err(err).Msg("Error parsing the response body")
-			return false, nerrors.NewInternalError("Error getting application. Error parsing the response body")
-		} else {
-			// Print the response status and error information.
-			log.Err(err).Str("status", res.Status()).Msg("error")
-			return false, nerrors.NewInternalError(res.Status())
-		}
-	}
-
-	var r responseWrapper
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		return false, nerrors.FromError(err)
-	}
-
-	return r.Hits.Total.Value != 0, nil
-
+	return !res.IsError(), nil
 }
 
 // Get returns the application metadata requested
-func (e *ElasticProvider) Get(appID entities.ApplicationID) (*entities.ApplicationInfo, error) {
-	catalogID := e.CreateIDFromAppID(appID)
-	var buf bytes.Buffer
+func (e *ElasticProvider) Get(appID *entities.ApplicationID) (*entities.ApplicationInfo, error) {
 
-	// Query Field
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"term": map[string]interface{}{
-				CatalogIDField: catalogID,
-			},
-		},
-	}
-
-	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Err(err).Msg("Error encoding query")
-		return nil, nerrors.NewInternalErrorFrom(err, "error getting metadata by ID")
-	}
-
-	// Perform the search request.
-	res, err := e.client.Search(
-		e.client.Search.WithContext(context.Background()),
-		e.client.Search.WithIndex(e.indexName),
-		e.client.Search.WithBody(&buf),
-		e.client.Search.WithTrackTotalHits(true),
-	)
+	id := e.GenerateIDFromAppID(appID)
+	res, err := e.client.Get(e.indexName, id, e.client.Get.WithContext(context.Background()))
 	if err != nil {
 		log.Err(err).Msg("Error getting response")
 		return nil, nerrors.NewInternalErrorFrom(err, "Error getting application")
 	}
+
 	defer res.Body.Close()
 
-	if res.IsError() {
-		var e map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-			log.Err(err).Msg("Error parsing the response body")
-			return nil, nerrors.NewInternalError("Error getting application. Error parsing the response body")
-		} else {
-			// Print the response status and error information.
-			log.Err(err).Str("status", res.Status()).Msg("error")
-			return nil, nerrors.NewInternalError(res.Status())
-		}
+	if err = e.chekElasticError(res, "getting"); err != nil {
+		return nil, err
 	}
 
-	var r responseWrapper
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+	var p map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&p); err != nil {
 		return nil, nerrors.FromError(err)
 	}
-
-	// Print the response status, number of results, and request duration.
-	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("Get operation")
-
-	if r.Hits.Total.Value == 0 {
-		return nil, nerrors.NewNotFoundError("%s metadata is not available", appID.String())
-	}
-	if r.Hits.Total.Value != 1 {
-		log.Error().Str("catalogID", catalogID).Msg("Error getting application metadata, duplicated entries")
-		return nil, nerrors.NewInternalError("Error getting application metadata, duplicated entries")
+	data, exists := p["_source"]
+	if !exists {
+		return nil, nerrors.NewInternalError("Error getting application, no _source found")
 	}
 
 	var application entities.ApplicationInfo
-	if err := json.Unmarshal(r.Hits.Hits[0].Source, &application); err != nil {
-		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+	other, err := json.Marshal(data)
+	if err != nil {
+		return nil, nerrors.FromError(err)
 	}
-
+	err = json.Unmarshal(other, &application)
+	if err != nil {
+		return nil, nerrors.FromError(err)
+	}
 	return &application, nil
 
 }
 
 // Remove deletes an application from the catalog
 func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
+	id := e.GenerateIDFromAppID(appID)
+	res, err := e.client.Delete(e.indexName, id, e.client.Delete.WithContext(context.Background()), e.client.Delete.WithRefresh("true"))
 
-	catalogID := e.CreateIDFromAppID(*appID)
-	var buf bytes.Buffer
-
-	// Query Field
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"term": map[string]interface{}{
-				CatalogIDField: catalogID,
-			},
-		},
-	}
-
-	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Err(err).Msg("Error deleting metadata. Error encoding query")
-		return nerrors.NewInternalErrorFrom(err, "error deleting metadata by ID")
-	}
-
-	req := esapi.DeleteByQueryRequest{
-		Index: []string{e.indexName},
-		Body:  strings.NewReader(buf.String()),
-	}
-
-	// Perform the request with the client.
-	res, err := req.Do(context.Background(), e.client)
 	if err != nil {
-		log.Err(err).Msg("Error deleting metadata")
+		log.Error().Str("error", err.Error()).Msg("Error deleting metadata")
 		return nerrors.NewInternalErrorFrom(err, "error deleting metadata by ID")
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
-		log.Err(err).Str("status", res.Status()).Msg("Error deleting metadata")
-		return nerrors.NewInternalError("error deleting metadata by ID [%s]", res.Status())
+	if err = e.chekElasticError(res, "removing"); err != nil {
+		return err
 	}
-
-	var d deleteResponseWrapper
-	if err := json.NewDecoder(res.Body).Decode(&d); err != nil {
-		return nerrors.FromError(err)
-	}
-
-	if d.Deleted == 0 {
-		return nerrors.NewNotFoundError("%s metadata is not available", appID.String())
-	}
-
-	// Print the response status, number of results, and request duration.
-	log.Debug().Str("Status", res.Status()).Int("total", d.Total).Int("took(ms)", d.Took).Msg("Delete operation")
 
 	e.invalidateCacheChan <- true
 
@@ -579,7 +362,7 @@ func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, e
 	applications := make([]*entities.ApplicationInfo, 0)
 
 	for query {
-		r, err := e.list(namespace, lastReceived)
+		r, err := e.listFrom(namespace, lastReceived)
 		if err != nil {
 			return nil, err
 		}
@@ -600,8 +383,8 @@ func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, e
 
 }
 
-// list lists the applications from one retrieved
-func (e *ElasticProvider) list(namespace string, lastReceived int) (*responseWrapper, error) {
+// listFrom returns applications from last received
+func (e *ElasticProvider) listFrom(namespace string, lastReceived int, getFields... string) (*responseWrapper, error) {
 
 	sortedBy := []string{"Namespace", "ApplicationName", "Tag"}
 	searchFunctions := []func(*esapi.SearchRequest){
@@ -610,6 +393,10 @@ func (e *ElasticProvider) list(namespace string, lastReceived int) (*responseWra
 		e.client.Search.WithTrackTotalHits(true),
 		e.client.Search.WithFrom(lastReceived),
 		e.client.Search.WithSort(sortedBy...),
+	}
+
+	if len(getFields) > 0 {
+		searchFunctions = append(searchFunctions, e.client.Search.WithSourceIncludes(getFields...))
 	}
 
 	if namespace != "" {
@@ -629,83 +416,17 @@ func (e *ElasticProvider) list(namespace string, lastReceived int) (*responseWra
 		searchFunctions = append(searchFunctions, e.client.Search.WithBody(&buf))
 
 	}
+
 	// Perform the search request.
 	res, err := e.client.Search(searchFunctions...)
 	if err != nil {
 		log.Err(err).Msg("Error getting response")
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		var e map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-			log.Err(err).Msg("Error parsing the response body")
-			return nil, nerrors.NewInternalError("Error getting application. Error parsing the response body")
-		} else {
-			// Print the response status and error information.
-			log.Err(err).Str("status", res.Status()).Msg("error")
-			return nil, nerrors.NewInternalError(res.Status())
-		}
-	}
-
-	var r responseWrapper
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		return nil, nerrors.FromError(err)
 	}
-	// Print the response status, number of results, and request duration.
-	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("List operation")
-
-	return &r, nil
-}
-
-// listFrom returns applications from last received
-func (e *ElasticProvider) listFrom(namespace string, lastReceived int) (*responseWrapper, error) {
-
-	sortedBy := []string{"Namespace", "ApplicationName", "Tag"}
-	getFields := []string{"Namespace", "ApplicationName", "Tag", "MetadataName", "Metadata"}
-	searchFunctions := []func(*esapi.SearchRequest){
-		e.client.Search.WithContext(context.Background()),
-		e.client.Search.WithIndex(e.indexName),
-		e.client.Search.WithTrackTotalHits(true),
-		e.client.Search.WithFrom(lastReceived),
-		e.client.Search.WithSort(sortedBy...),
-		e.client.Search.WithSourceIncludes(getFields...),
-	}
-
-	if namespace != "" {
-		query := map[string]interface{}{
-			"query": map[string]interface{}{
-				"match": map[string]interface{}{
-					NamespaceField: namespace,
-				},
-			},
-		}
-
-		var buf bytes.Buffer
-		if err := json.NewEncoder(&buf).Encode(query); err != nil {
-			log.Err(err).Msg("Error encoding namespaced query")
-			return nil, nerrors.NewInternalErrorFrom(err, "error creating query to list by namespace")
-		}
-		searchFunctions = append(searchFunctions, e.client.Search.WithBody(&buf))
-
-	}
-	// Perform the search request.
-	res, err := e.client.Search(searchFunctions...)
-	if err != nil {
-		log.Err(err).Msg("Error getting response")
-	}
 	defer res.Body.Close()
 
-	if res.IsError() {
-		var e map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-			log.Err(err).Msg("Error parsing the response body")
-			return nil, nerrors.NewInternalError("Error getting application. Error parsing the response body")
-		} else {
-			// Print the response status and error information.
-			log.Err(err).Str("status", res.Status()).Msg("error")
-			return nil, nerrors.NewInternalError(res.Status())
-		}
+	if err = e.chekElasticError(res, "listing"); err != nil {
+		return nil, err
 	}
 
 	var r responseWrapper
@@ -719,13 +440,15 @@ func (e *ElasticProvider) listFrom(namespace string, lastReceived int) (*respons
 }
 
 func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSummary, *entities.Summary, error) {
+
 	lastReceived := 0
 	query := true
 	summaryList := make([]*entities.AppSummary, 0)
 	var summary entities.Summary
 	total := 0
+	getFields := []string{"Namespace", "ApplicationName", "Tag", "MetadataName", "Metadata"}
 	for query {
-		r, err := e.listFrom(namespace, lastReceived)
+		r, err := e.listFrom(namespace, lastReceived, getFields...)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -746,7 +469,7 @@ func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSumma
 				//return nil, nil, err
 				log.Warn().Str("error", err.Error()).Msg("error getting metadata")
 			} else {
-					metadataLogo = metadata.Logo
+				metadataLogo = metadata.Logo
 			}
 
 			// check if the last entry has the same namespace and applicationName as the newer one
@@ -768,8 +491,7 @@ func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSumma
 						Namespace:       application.Namespace,
 						ApplicationName: application.ApplicationName,
 						TagMetadataName: map[string]string{application.Tag: application.MetadataName},
-						MetadataLogo: map[string][]entities.ApplicationLogo{},
-
+						MetadataLogo:    map[string][]entities.ApplicationLogo{},
 					}
 					if metadataLogo != nil {
 						newSumm.MetadataLogo[application.Tag] = metadataLogo
@@ -785,7 +507,7 @@ func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSumma
 					Namespace:       application.Namespace,
 					ApplicationName: application.ApplicationName,
 					TagMetadataName: map[string]string{application.Tag: application.MetadataName},
-					MetadataLogo: map[string][]entities.ApplicationLogo{},
+					MetadataLogo:    map[string][]entities.ApplicationLogo{},
 				}
 				if metadataLogo != nil {
 					newSumm.MetadataLogo[application.Tag] = metadataLogo

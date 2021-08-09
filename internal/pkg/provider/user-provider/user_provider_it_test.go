@@ -20,7 +20,7 @@ RUN_INTEGRATION_TEST=all
 RUN_INTEGRATION_TEST=userprovider
 
 2.- run a postgres container
-docker run -d --name local-postgres -e POSTGRES_PASSWORD=Pass2020 -p 5432:5432 postgres:13-alpine
+docker run -d --name local-postgres -e POSTGRES_PASSWORD=Pass2020! -p 5432:5432 postgres:13-alpine
 docker exec -it local-postgres psql -h localhost -U postgres -d postgres -p 5432
 
 3.- create the schema and table
@@ -53,7 +53,7 @@ var _ = ginkgo.Describe("Provider test", func() {
 		return
 	}
 
-	var connString = "host=localhost user=postgres password=Pass2020 port=5432"
+	var connString = "host=localhost user=postgres password=Pass2020! port=5432"
 
 	var provider UserProvider
 	conn, err := rdbms.NewRDBMS().PoolConnect(context.Background(), connString)

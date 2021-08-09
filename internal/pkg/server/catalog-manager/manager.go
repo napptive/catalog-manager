@@ -188,7 +188,7 @@ func (m *manager) Get(requestedAppID string) (*entities.ExtendedApplicationMetad
 		return nil, err
 	}
 
-	app, err := m.provider.Get(*appID)
+	app, err := m.provider.Get(appID)
 	if err != nil {
 		return nil, err
 	}
