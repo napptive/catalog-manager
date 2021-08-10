@@ -17,7 +17,7 @@
 package commands
 
 import (
-	"github.com/napptive/catalog-manager/internal/app/cli"
+	cli2 "github.com/napptive/catalog-manager/internal/app/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -47,7 +47,7 @@ var createUserCmd = &cobra.Command{
 	Short: createUserCmdShortHelp,
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cli := cli.NewUserCli()
+		cli := cli2.NewUserCli()
 		return cli.CreateNewUser(args[0], args[1], connString)
 	},
 }
@@ -62,7 +62,7 @@ var loginUserCmd = &cobra.Command{
 	Short: loginUserCmdShortHelp,
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cli := cli.NewUserCli()
+		cli := cli2.NewUserCli()
 		return cli.LoginUser(args[0], args[1], connString)
 	},
 }
