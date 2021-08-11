@@ -14,7 +14,6 @@ type JWTConfig struct {
 	nwjtConfig.JWTConfig
 }
 
-
 // IsValid checks if the configuration options are valid.
 func (c *JWTConfig) IsValid() error {
 	if c.AuthEnabled {

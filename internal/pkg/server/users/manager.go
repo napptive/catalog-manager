@@ -29,18 +29,17 @@ import (
 	"time"
 )
 
-type Manager struct{
+type Manager struct {
 	connString string
 }
 
-func NewManager (connString string) *Manager {
+func NewManager(connString string) *Manager {
 	return &Manager{connString: connString}
 }
 
-
 // generateSaltedPassword generates and returns the salted_password
 // - Hash(concatenate salt and password)
-func (m *Manager) generateSaltedPassword (password string, salt string) (string, error) {
+func (m *Manager) generateSaltedPassword(password string, salt string) (string, error) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(fmt.Sprintf("%s%s", password, salt)), bcrypt.DefaultCost)
 	if err != nil {
@@ -51,7 +50,7 @@ func (m *Manager) generateSaltedPassword (password string, salt string) (string,
 }
 
 // CreateUser stores new user
-func (m *Manager) CreateUser (username string, password string) error{
+func (m *Manager) CreateUser(username string, password string) error {
 	salt, err := utils.GenerateRandomString(16)
 	if err != nil {
 		return nerrors.NewInternalErrorFrom(err, "error creating user")
@@ -69,7 +68,7 @@ func (m *Manager) CreateUser (username string, password string) error{
 		return err
 	}
 	defer conn.Close()
-	provider := user_provider.NewUserProvider(conn, time.Second *10)
+	provider := user_provider.NewUserProvider(conn, time.Second*10)
 
 	_, err = provider.Add(&entities.User{
 		Username:       username,
@@ -98,14 +97,14 @@ func (m *Manager) CheckPassword(b64Password string, password string) error {
 
 // TODO: returns JWT token
 // LoginUser gets the user and checks the credentials
-func (m *Manager) LoginUser (username string, password string) error{
+func (m *Manager) LoginUser(username string, password string) error {
 	// Create Provider
 	conn, err := rdbms.NewRDBMS().PoolConnect(context.Background(), m.connString)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-	provider := user_provider.NewUserProvider(conn, time.Second *10)
+	provider := user_provider.NewUserProvider(conn, time.Second*10)
 
 	user, err := provider.Get(username)
 	if err != nil {

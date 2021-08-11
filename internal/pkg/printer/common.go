@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package config
+package printer
 
-// UserSQL contains all the configuration to connect to database
-type UserSQL struct {
-	// ConnStr with the connection string to connect to database
-	ConnStr string
+// ResultPrinter defines the operations that a printer must define. Multiple printer are
+// offered depending on the desired output format.
+type ResultPrinter interface {
+	// Print the result.
+	Print(result interface{}) error
 }

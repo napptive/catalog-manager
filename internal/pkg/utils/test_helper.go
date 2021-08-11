@@ -72,7 +72,7 @@ func CreateTestApplicationMetadata() *entities.ApplicationMetadata {
 	}
 }
 
-var metadataExample= `
+var metadataExample = `
 apiVersion: core.napptive.com/v1alpha1
 kind: ApplicationMetadata
 name: "NGINX server"
@@ -100,7 +100,7 @@ func CreateTestApplicationInfo() *entities.ApplicationInfo {
 	}
 }
 
-var metadataWithoutLogoExample= `
+var metadataWithoutLogoExample = `
 apiVersion: core.napptive.com/v1alpha1
 kind: ApplicationMetadata
 name: "NGINX server"
@@ -113,6 +113,7 @@ url: "https://www.nginx.com/"
 doc: "http://nginx.org/"
 
 `
+
 func CreateTestApplicationInfoWithoutLogo() *entities.ApplicationInfo {
 	return &entities.ApplicationInfo{
 		Namespace:       faker.Name().FirstName(),

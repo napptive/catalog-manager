@@ -136,14 +136,14 @@ func (e *ElasticProvider) periodicCacheRefresh() {
 		select {
 		case val := <-e.invalidateCacheChan:
 			if val {
-					e.FillCache()
+				e.FillCache()
 			} else {
 				ticker.Stop()
 				close(e.invalidateCacheChan)
 				return
 			}
 		case <-ticker.C:
-				e.FillCache()
+			e.FillCache()
 		}
 	}
 }
@@ -215,9 +215,8 @@ func (e *ElasticProvider) DeleteIndex() error {
 	return nil
 }
 
-
 // GenerateCatalogID generates the catalog ID (field stored in elastic) as namespace/appName:tag
-func (e *ElasticProvider) GenerateCatalogID (namespace, appName, tag string) string {
+func (e *ElasticProvider) GenerateCatalogID(namespace, appName, tag string) string {
 	return fmt.Sprintf("%s/%s:%s", namespace, appName, tag)
 }
 
@@ -235,7 +234,7 @@ func (e *ElasticProvider) GenerateIDFromAppID(metadata *entities.ApplicationID) 
 	return fmt.Sprintf("%x", id)
 }
 
-func (e *ElasticProvider) chekElasticError (res *esapi.Response, operation string) error {
+func (e *ElasticProvider) checkElasticError(res *esapi.Response, operation string) error {
 
 	if res.IsError() {
 		log.Warn().Str("err", res.Status()).Str("operation", operation).Msg("Elastic error")
@@ -272,7 +271,7 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationInfo) (*entities.App
 	}
 	defer res.Body.Close()
 
-	if err = e.chekElasticError(res, "adding"); err != nil {
+	if err = e.checkElasticError(res, "adding"); err != nil {
 		return nil, err
 	}
 
@@ -308,7 +307,7 @@ func (e *ElasticProvider) Get(appID *entities.ApplicationID) (*entities.Applicat
 
 	defer res.Body.Close()
 
-	if err = e.chekElasticError(res, "getting"); err != nil {
+	if err = e.checkElasticError(res, "getting"); err != nil {
 		return nil, err
 	}
 
@@ -345,7 +344,7 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 	}
 	defer res.Body.Close()
 
-	if err = e.chekElasticError(res, "removing"); err != nil {
+	if err = e.checkElasticError(res, "removing"); err != nil {
 		return err
 	}
 
@@ -384,7 +383,7 @@ func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, e
 }
 
 // listFrom returns applications from last received
-func (e *ElasticProvider) listFrom(namespace string, lastReceived int, getFields... string) (*responseWrapper, error) {
+func (e *ElasticProvider) listFrom(namespace string, lastReceived int, getFields ...string) (*responseWrapper, error) {
 
 	sortedBy := []string{"Namespace", "ApplicationName", "Tag"}
 	searchFunctions := []func(*esapi.SearchRequest){
@@ -425,7 +424,7 @@ func (e *ElasticProvider) listFrom(namespace string, lastReceived int, getFields
 	}
 	defer res.Body.Close()
 
-	if err = e.chekElasticError(res, "listing"); err != nil {
+	if err = e.checkElasticError(res, "listing"); err != nil {
 		return nil, err
 	}
 

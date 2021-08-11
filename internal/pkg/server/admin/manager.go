@@ -17,13 +17,21 @@
 package admin
 
 import (
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
+	"github.com/napptive/catalog-manager/internal/pkg/utils"
+	"github.com/napptive/nerrors/pkg/nerrors"
+	"github.com/rs/zerolog/log"
 )
 
 type Manager interface {
 	// DeleteNamespace deletes a namespace so that the applications contained on it are not longer available.
 	DeleteNamespace(namespace string) error
+	// DeleteApplication removes an application from the repository
+	DeleteApplication(requestedAppID string) error
+	// List returns a list of applications (without metadata and readme content)
+	List(namespace string) ([]*entities.AppSummary, error)
 }
 
 type manager struct {
@@ -56,4 +64,35 @@ func (m *manager) DeleteNamespace(namespace string) error {
 	}
 	// Finally, delete the repository
 	return m.stManager.RemoveRepository(namespace)
+}
+
+// DeleteApplication removes an application from the repository
+func (m *manager) DeleteApplication(requestedAppID string) error {
+
+	// - Validate the appName
+	_, appID, err := utils.DecomposeApplicationID(requestedAppID)
+	if err != nil {
+		return nerrors.NewFailedPreconditionErrorFrom(err, "unable to remove application, wrong name")
+	}
+
+	// - Remove from metadata provider
+	err = m.provider.Remove(appID)
+	if err != nil {
+		log.Err(err).Str("appName", requestedAppID).Msg("Unable to remove application metadata")
+		return err
+	}
+
+	// - Remove from storage
+	err = m.stManager.RemoveApplication(appID.Namespace, appID.ApplicationName, appID.Tag)
+	if err != nil {
+		log.Err(err).Str("requestedAppID", requestedAppID).Msg("Unable to remove application")
+		return err
+	}
+
+	return nil
+}
+
+// List returns a list of applications (without metadata and readme content)
+func (m *manager) List(namespace string) ([]*entities.AppSummary, error) {
+	return m.provider.ListSummary(namespace)
 }

@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	Schema 			     string = "catalog"
+	Schema               string = "catalog"
 	UserTable            string = "users"
 	UsernameColumn       string = "username"
 	SaltColumn           string = "salt"

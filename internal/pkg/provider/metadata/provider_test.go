@@ -61,7 +61,7 @@ func RunTests(provider MetadataProvider) {
 				ApplicationName: returned.ApplicationName,
 				Tag:             returned.Tag,
 			})
-		gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(retrieved).ShouldNot(gomega.BeNil())
 			gomega.Expect(*retrieved).Should(gomega.Equal(*app))
 		})
@@ -80,7 +80,7 @@ func RunTests(provider MetadataProvider) {
 	ginkgo.Context("Removing application metadata", func() {
 		ginkgo.It("Should be able to delete an application metadata", func() {
 
-			for i:=0; i<10; i++ {
+			for i := 0; i < 10; i++ {
 				log.Debug().Int("i", i).Msg("...")
 				app := utils.CreateTestApplicationInfo()
 
@@ -232,7 +232,7 @@ func RunTests(provider MetadataProvider) {
 		})
 	})
 
-	ginkgo.Context("Getting summary", func () {
+	ginkgo.Context("Getting summary", func() {
 		ginkgo.It("should be able to get summary", func() {
 			numApp := 5
 			for i := 0; i < numApp; i++ {

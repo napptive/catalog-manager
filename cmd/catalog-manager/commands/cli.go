@@ -69,7 +69,7 @@ var loginUserCmd = &cobra.Command{
 
 func init() {
 
-	userCmd.PersistentFlags().StringVarP(&connString, "connectionString", "c", "host=postgres user=postgres password=postgres port=5432","connection string to connect postgres database")
+	userCmd.PersistentFlags().StringVarP(&connString, "connectionString", "c", "host=postgres user=postgres password=postgres port=5432", "connection string to connect postgres database")
 
 	rootCmd.AddCommand(userCmd)
 	userCmd.AddCommand(createUserCmd)

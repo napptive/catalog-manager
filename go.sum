@@ -397,8 +397,8 @@ github.com/napptive/grpc-authx-go v0.9.0 h1:hU4LP5l+bbj7eGQu/uElDZZUUG44q9jTxiZ4
 github.com/napptive/grpc-authx-go v0.9.0/go.mod h1:BHBradRIe4tKea4ze9ju9F1NWTX+c9NGBEh3xV9bpK0=
 github.com/napptive/grpc-catalog-common-go v0.2.0 h1:BdIYVOEmzIZbzbVvjKnd9/8T8nQfNqZeEzzVCXjWhvI=
 github.com/napptive/grpc-catalog-common-go v0.2.0/go.mod h1:bnedZvTuFnhO2q1u66EUseAy3k0/N5MW/BFvb8S23bA=
-github.com/napptive/grpc-catalog-go v0.16.0 h1:u832OVhpHojFqkM5nK0kK4QY4bMa0U3MPpzlUJj9Eyw=
-github.com/napptive/grpc-catalog-go v0.16.0/go.mod h1:BoOdDpZZlW8rWNlSe2/mjG9JC6+UCLlZkUNovwMFxY0=
+github.com/napptive/grpc-catalog-go v0.17.0 h1:y2m+9LER//Hu2RvXlKuyA7E23AxCWR1KxI7cmbeuk34=
+github.com/napptive/grpc-catalog-go v0.17.0/go.mod h1:BoOdDpZZlW8rWNlSe2/mjG9JC6+UCLlZkUNovwMFxY0=
 github.com/napptive/grpc-common-go v0.2.0/go.mod h1:Q896cZY+yIkted9zYw3jtguVDdfL1bqTHjjiirBTjnw=
 github.com/napptive/grpc-common-go v0.4.0 h1:uN6sxr8tidDEPwhVLA6UwnGpNHwuI+QTwWdfTseoiQc=
 github.com/napptive/grpc-common-go v0.4.0/go.mod h1:Q896cZY+yIkted9zYw3jtguVDdfL1bqTHjjiirBTjnw=
