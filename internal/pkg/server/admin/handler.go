@@ -19,7 +19,6 @@ package admin
 import (
 	"context"
 	"fmt"
-
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
@@ -49,4 +48,36 @@ func (h *Handler) Delete(_ context.Context, request *grpc_catalog_go.DeleteNames
 		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
 		UserInfo:   fmt.Sprintf("namespace %s has been removed", request.Namespace),
 	}, nil
+}
+
+// DeleteApplication deletes an application
+func (h *Handler) DeleteApplication(_ context.Context, request *grpc_catalog_go.RemoveApplicationRequest) (*grpc_catalog_common_go.OpResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	if err := h.manager.DeleteApplication(request.ApplicationId); err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	return &grpc_catalog_common_go.OpResponse{
+		Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
+		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
+		UserInfo:   fmt.Sprintf("Application [%s] removed", request.ApplicationId),
+	}, nil
+}
+
+// List all the applications in the catalog
+func (h *Handler) List(_ context.Context, request *grpc_catalog_go.ListApplicationsRequest) (*grpc_catalog_go.ApplicationList, error) {
+	returned, err := h.manager.List(request.Namespace)
+	if err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	summaryList := make([]*grpc_catalog_go.ApplicationSummary, 0)
+	for _, app := range returned {
+		summaryList = append(summaryList, app.ToApplicationSummary())
+	}
+
+	return &grpc_catalog_go.ApplicationList{Applications: summaryList}, nil
 }

@@ -45,7 +45,7 @@ type Manager interface {
 	// List returns a list of applications (without metadata and readme content)
 	List(namespace string) ([]*entities.AppSummary, error)
 	// Summary returns catalog summary
-	Summary()(*entities.Summary, error)
+	Summary() (*entities.Summary, error)
 }
 
 type manager struct {
@@ -228,6 +228,6 @@ func (m *manager) List(namespace string) ([]*entities.AppSummary, error) {
 }
 
 // Summary returns catalog summary
-func (m *manager) Summary()(*entities.Summary, error) {
+func (m *manager) Summary() (*entities.Summary, error) {
 	return m.provider.GetSummary()
 }

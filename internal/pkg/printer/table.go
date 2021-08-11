@@ -18,7 +18,7 @@ package printer
 
 import (
 	"fmt"
-	"github.com/napptive/catalog-manager/internal/pkg/entities"
+	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"os"
 	"text/tabwriter"
 	"text/template"
@@ -54,7 +54,7 @@ func (tp *TablePrinter) toString(content []byte) string {
 
 // fromApplicationSummary composes the application in a catalog as
 // namespace/appName:tag Medatada_Name
-func (tp *TablePrinter) fromApplicationSummary(app *entities.AppSummary) string {
+func (tp *TablePrinter) fromApplicationSummary(app *grpc_catalog_go.ApplicationSummary) string {
 
 	var result string
 	for version, name := range app.TagMetadataName {

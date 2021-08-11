@@ -24,14 +24,14 @@ type BQConfig struct {
 	Config bqconfig.BigQueryConfig
 }
 
-func (bq *BQConfig) IsValid () error {
+func (bq *BQConfig) IsValid() error {
 	if bq.Enabled {
 		return bq.Config.IsValid()
 	}
 	return nil
 }
 
-func (bq *BQConfig) Print () {
+func (bq *BQConfig) Print() {
 	if bq.Enabled {
 		bq.Config.Print()
 	}

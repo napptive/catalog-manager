@@ -35,9 +35,9 @@ type Config struct {
 	// Version of the application.
 	Version string
 	// Commit related to this built.
-	Commit  string
+	Commit string
 	// Debug flag.
-	Debug   bool
+	Debug bool
 }
 
 // IsValid checks if the configuration options are valid.

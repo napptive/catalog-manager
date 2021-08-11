@@ -136,14 +136,14 @@ func (e *ElasticProvider) periodicCacheRefresh() {
 		select {
 		case val := <-e.invalidateCacheChan:
 			if val {
-					e.FillCache()
+				e.FillCache()
 			} else {
 				ticker.Stop()
 				close(e.invalidateCacheChan)
 				return
 			}
 		case <-ticker.C:
-				e.FillCache()
+			e.FillCache()
 		}
 	}
 }
@@ -215,9 +215,8 @@ func (e *ElasticProvider) DeleteIndex() error {
 	return nil
 }
 
-
 // GenerateCatalogID generates the catalog ID (field stored in elastic) as namespace/appName:tag
-func (e *ElasticProvider) GenerateCatalogID (namespace, appName, tag string) string {
+func (e *ElasticProvider) GenerateCatalogID(namespace, appName, tag string) string {
 	return fmt.Sprintf("%s/%s:%s", namespace, appName, tag)
 }
 
@@ -235,7 +234,7 @@ func (e *ElasticProvider) GenerateIDFromAppID(metadata *entities.ApplicationID) 
 	return fmt.Sprintf("%x", id)
 }
 
-func (e *ElasticProvider) chekElasticError (res *esapi.Response, operation string) error {
+func (e *ElasticProvider) chekElasticError(res *esapi.Response, operation string) error {
 
 	if res.IsError() {
 		log.Warn().Str("err", res.Status()).Str("operation", operation).Msg("Elastic error")
@@ -384,7 +383,7 @@ func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, e
 }
 
 // listFrom returns applications from last received
-func (e *ElasticProvider) listFrom(namespace string, lastReceived int, getFields... string) (*responseWrapper, error) {
+func (e *ElasticProvider) listFrom(namespace string, lastReceived int, getFields ...string) (*responseWrapper, error) {
 
 	sortedBy := []string{"Namespace", "ApplicationName", "Tag"}
 	searchFunctions := []func(*esapi.SearchRequest){

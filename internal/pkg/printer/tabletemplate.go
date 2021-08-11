@@ -17,19 +17,25 @@
 package printer
 
 import (
-	"github.com/napptive/catalog-manager/internal/pkg/entities"
+	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
+	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"reflect"
 
 	"github.com/napptive/nerrors/pkg/nerrors"
 )
 
 const ApplicationListTemplate = `APPLICATION	NAME
-{{range $other, $app := .}}{{fromApplicationSummary $app}}{{end}}`
+{{range $other, $app := .Applications}}{{fromApplicationSummary $app}}{{end}}`
 
+// OpResponseTemplate with the table representation of an OpResponse.
+const OpResponseTemplate = `STATUS	INFO
+{{.StatusName}}	{{.UserInfo}}
+`
 
 // structTemplates map associating type and template to print it.
 var structTemplates = map[reflect.Type]string{
-	reflect.TypeOf([]*entities.AppSummary{}):  ApplicationListTemplate,
+	reflect.TypeOf(&grpc_catalog_go.ApplicationList{}):   ApplicationListTemplate,
+	reflect.TypeOf(&grpc_catalog_common_go.OpResponse{}): OpResponseTemplate,
 }
 
 // GetTemplate returns a template to print an arbitrary structure in table format.

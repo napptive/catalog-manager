@@ -20,27 +20,40 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var appCmdLongHelp = `Manage apps`
+var adminCmdLongHelp = `admin commands`
+var adminCmdShortHelp = `admin commands`
 
-var appCmdShortHelp = `Manage apps`
-
-var appCmd = &cobra.Command{
+var adminCmd = &cobra.Command{
 	Use:   "admin",
-	Long:  appCmdLongHelp,
-	Short: appCmdShortHelp,
-	Args: cobra.MaximumNArgs(1),
+	Long:  adminCmdLongHelp,
+	Short: adminCmdShortHelp,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Help()
+	},
+}
+
+var listCmdLongHelp = `list the catalog applications`
+var listCmdShortHelp = `list the catalog applications`
+var listCmd = &cobra.Command{
+	Use:   "list [namespace]",
+	Long:  listCmdLongHelp,
+	Short: listCmdShortHelp,
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		namespace := ""
 		if len(args) > 0 {
 			namespace = args[0]
 		}
-		op := cli.NewApplicationCli(cfg.Index, cfg.ElasticAddress, cfg.RepositoryPath, "")
+		op, err := cli.NewApplicationCli(cfg.AdminGRPCPort)
+		if err != nil {
+			return err
+		}
 		return op.List(namespace)
 	},
 }
 
-var deleteAppCmdLongHelp = `Delete an application from catalog`
-
+var deleteAppCmdLongHelp = `Delete applications from catalog. 
+You can delete a namespace indicating the name as arg or delete only one application by passing the name as namespace/applicationName`
 var deleteAppCmdShortHelp = `Delete catalog application`
 
 var deleteAppCmd = &cobra.Command{
@@ -49,15 +62,19 @@ var deleteAppCmd = &cobra.Command{
 	Short: deleteAppCmdShortHelp,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		op := cli.NewApplicationCli(cfg.Index, cfg.ElasticAddress, cfg.RepositoryPath, "")
-		return op.DeleteApplication(args[0])
+		op, err := cli.NewApplicationCli(cfg.AdminGRPCPort)
+		if err != nil {
+			return err
+		}
+		return op.Delete(args[0])
 	},
 }
-func init() {
-	rootCmd.AddCommand(appCmd)
-	appCmd.AddCommand(deleteAppCmd)
 
-	appCmd.PersistentFlags().StringVar(&cfg.Index, "index", "napptive", "Elastic Index to store the repositories")
-	appCmd.PersistentFlags().StringVar(&cfg.RepositoryPath, "repositoryPath", "/napptive/repository/", "base path to store the repositories")
-	appCmd.PersistentFlags().StringVar(&cfg.ElasticAddress, "elasticAddress", "http://localhost:9200", "address to connect to Elastic Search")
+func init() {
+	rootCmd.AddCommand(adminCmd)
+
+	adminCmd.AddCommand(deleteAppCmd)
+	adminCmd.AddCommand(listCmd)
+
+	adminCmd.PersistentFlags().IntVar(&cfg.CatalogManager.AdminGRPCPort, "adminGRPCPort", 7062, "gRPC Port to connect the Catalog-manager admin API")
 }
