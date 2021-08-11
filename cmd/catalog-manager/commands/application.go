@@ -25,7 +25,7 @@ var appCmdLongHelp = `Manage apps`
 var appCmdShortHelp = `Manage apps`
 
 var appCmd = &cobra.Command{
-	Use:   "apps",
+	Use:   "admin",
 	Long:  appCmdLongHelp,
 	Short: appCmdShortHelp,
 	Args: cobra.MaximumNArgs(1),
