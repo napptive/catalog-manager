@@ -234,7 +234,7 @@ func (e *ElasticProvider) GenerateIDFromAppID(metadata *entities.ApplicationID) 
 	return fmt.Sprintf("%x", id)
 }
 
-func (e *ElasticProvider) chekElasticError(res *esapi.Response, operation string) error {
+func (e *ElasticProvider) checkElasticError(res *esapi.Response, operation string) error {
 
 	if res.IsError() {
 		log.Warn().Str("err", res.Status()).Str("operation", operation).Msg("Elastic error")
@@ -271,7 +271,7 @@ func (e *ElasticProvider) Add(metadata *entities.ApplicationInfo) (*entities.App
 	}
 	defer res.Body.Close()
 
-	if err = e.chekElasticError(res, "adding"); err != nil {
+	if err = e.checkElasticError(res, "adding"); err != nil {
 		return nil, err
 	}
 
@@ -307,7 +307,7 @@ func (e *ElasticProvider) Get(appID *entities.ApplicationID) (*entities.Applicat
 
 	defer res.Body.Close()
 
-	if err = e.chekElasticError(res, "getting"); err != nil {
+	if err = e.checkElasticError(res, "getting"); err != nil {
 		return nil, err
 	}
 
@@ -344,7 +344,7 @@ func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 	}
 	defer res.Body.Close()
 
-	if err = e.chekElasticError(res, "removing"); err != nil {
+	if err = e.checkElasticError(res, "removing"); err != nil {
 		return err
 	}
 
@@ -424,7 +424,7 @@ func (e *ElasticProvider) listFrom(namespace string, lastReceived int, getFields
 	}
 	defer res.Body.Close()
 
-	if err = e.chekElasticError(res, "listing"); err != nil {
+	if err = e.checkElasticError(res, "listing"); err != nil {
 		return nil, err
 	}
 
