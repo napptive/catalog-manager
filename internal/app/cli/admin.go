@@ -60,7 +60,7 @@ func (ac *ApplicationCli) Delete(app string) error {
 	// check if app is an applicationName or is a namespace
 	// applicationName -> namespace/appName
 	// namespace -> namespace
-	if strings.Index(app, "/") != -1 {
+	if strings.Contains(app, "/") {
 		response, err := ac.adminClient.DeleteApplication(ctx, &grpc_catalog_go.RemoveApplicationRequest{ApplicationId: app})
 		PrintResultOrError(response, err)
 	} else {
