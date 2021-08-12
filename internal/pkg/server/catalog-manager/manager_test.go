@@ -220,4 +220,44 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			gomega.Expect(received).Should(gomega.BeEmpty())
 		})
 	})
+
+	ginkgo.Context("Adding applications", func() {
+		ginkgo.It("Should be able to add an application", func() {
+
+			namespace := "namespace"
+			appName := "app"
+			tag := "v1.0"
+			filesReturned := []*entities.FileInfo{
+				{
+					Path: "./app.yaml",
+					Data: []byte("Kind: ApplicationConfiguration"),
+				}, {
+					Path: "./metadata.yaml",
+					Data: []byte(metadataFile),
+				}}
+			metadataProvider.EXPECT().Add(gomock.Any()).Return(nil, nil)
+			storageProvider.EXPECT().StoreApplication(namespace, appName, tag, gomock.Any()).Return(nil)
+
+			manager := NewManager(storageProvider, metadataProvider, "")
+			err := manager.Add(fmt.Sprintf("%s/%s:%s", namespace, appName, tag), filesReturned)
+			gomega.Expect(err).Should(gomega.Succeed())
+		})
+		ginkgo.It("Should not be able to add an application if the namespace is wrong", func() {
+
+			namespace := "Namespace"
+			appName := "app"
+			tag := "v1.0"
+			filesReturned := []*entities.FileInfo{
+				{
+					Path: "./app.yaml",
+					Data: []byte("Kind: ApplicationConfiguration"),
+				}, {
+					Path: "./metadata.yaml",
+					Data: []byte(metadataFile),
+				}}
+			manager := NewManager(storageProvider, metadataProvider, "")
+			err := manager.Add(fmt.Sprintf("%s/%s:%s", namespace, appName, tag), filesReturned)
+			gomega.Expect(err).ShouldNot(gomega.Succeed())
+		})
+	})
 })
