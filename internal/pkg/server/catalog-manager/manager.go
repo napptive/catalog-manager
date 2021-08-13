@@ -18,6 +18,7 @@ package catalog_manager
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
@@ -31,7 +32,15 @@ import (
 const (
 	// readmeFile with the name of the readme file
 	readmeFile = "readme.md"
+	// NamespaceRegex with the regular expression to match namspaces.
+	// * Must not contain two consecutive hyphens
+	// * Must be lowercase
+	// * Cannot start or end with hyphen
+	NamespaceRegex = "^[a-z0-9]+([a-z0-9-{1}][a-z0-9]+)+[a-z0-9]?$"
 )
+
+// validNamespace regex parser.
+var validNamespace = regexp.MustCompile(NamespaceRegex)
 
 type Manager interface {
 	// Add Adds a new application in the repository.
@@ -95,6 +104,12 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo) error {
 		log.Err(err).Str("name", requestedAppID).Msg("Error decomposing the application identifier")
 		return err
 	}
+
+	// Validate namespace
+	if !validNamespace.Match([]byte(appID.Namespace)) {
+		return nerrors.NewFailedPreconditionError("Invalid namespace, must contain lowercase letters, can contain single hyphens and numbers.")
+	}
+
 
 	// if catalogURL is not empty, check it!
 	if m.catalogURL != "" {
