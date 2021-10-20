@@ -222,7 +222,9 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 }
 
 func (h *Handler) isPrivilegedUser(userName string) bool {
-
+	if !h.teamConfig.Enabled {
+		return false
+	}
 	for _, user := range h.teamConfig.PrivilegedUsers {
 		if user == userName {
 			return true
@@ -233,7 +235,9 @@ func (h *Handler) isPrivilegedUser(userName string) bool {
 }
 
 func (h *Handler) isTeamNamespace(repoName string) bool {
-
+	if !h.teamConfig.Enabled {
+		return false
+	}
 	for _, repo := range h.teamConfig.TeamNamespaces {
 		if repo == repoName {
 			return true
