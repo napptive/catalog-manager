@@ -20,7 +20,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
-	"github.com/napptive/mockup-generator/pkg/mockups"
+	"github.com/napptive/mock-extensions/pkg/matcher"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 )
@@ -58,7 +58,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 		numApps := 10
 		apps := createTestApps(namespace, numApps)
 		metadataProvider.EXPECT().List(namespace).Return(apps, nil)
-		namespaceMatcher := mockups.NewStructMatcher(map[string]interface{}{"Namespace": namespace})
+		namespaceMatcher := matcher.NewStructMatcher(map[string]interface{}{"Namespace": namespace})
 		metadataProvider.EXPECT().Remove(namespaceMatcher).Times(numApps).Return(nil)
 		storageProvider.EXPECT().RemoveRepository(namespace).Return(nil)
 		err := manager.DeleteNamespace(namespace)

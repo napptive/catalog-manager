@@ -18,11 +18,11 @@ package utils
 
 import (
 	"context"
+	"github.com/rs/xid"
 	"os"
 	"strconv"
 
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	"github.com/napptive/mockup-generator/pkg/mockups"
 	njwthelper "github.com/napptive/njwt/pkg/helper"
 	"google.golang.org/grpc/metadata"
 	"syreclabs.com/go/faker"
@@ -129,13 +129,28 @@ func CreateTestApplicationInfoWithoutLogo() *entities.ApplicationInfo {
 // after passing the interceptor.
 func CreateTestJWTAuthIncomingContext(username string, accountName string, accountAdmin bool) context.Context {
 	md := metadata.New(map[string]string{
-		njwthelper.UserIDKey:        mockups.GetUserId(),
+		njwthelper.UserIDKey:        GetUserId(),
 		njwthelper.UsernameKey:      username,
-		njwthelper.AccountIDKey:     mockups.GetAccountId(),
+		njwthelper.AccountIDKey:     GetAccountId(),
 		njwthelper.AccountNameKey:   accountName,
-		njwthelper.EnvironmentIDKey: mockups.GetEnvironmentId(),
+		njwthelper.EnvironmentIDKey: GetEnvironmentId(),
 		njwthelper.AccountAdminKey:  strconv.FormatBool(accountAdmin),
 	})
 	parentCtx := context.Background()
 	return metadata.NewIncomingContext(parentCtx, md)
+}
+
+// GetUserId generates a random UserId
+func GetUserId() string {
+	return xid.New().String()
+}
+
+// GetAccountId generates a random AccountId
+func GetAccountId() string {
+	return xid.New().String()
+}
+
+// GetEnvironmentId generates a random environmentId
+func GetEnvironmentId() string {
+	return xid.New().String()
 }
