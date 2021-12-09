@@ -81,7 +81,8 @@ func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte
 			// 2.- Get Metadata
 			isMetadata, metadataObj, err := utils.IsMetadata(file.Data)
 			if err != nil {
-				return nil, nil, err
+				log.Error().Err(err).Str("file", file.Path).Msg("Error looking for the metadata file")
+				return nil, nil, nerrors.NewInternalErrorFrom(err, "error in %s file", file.Path)
 			}
 			if isMetadata {
 				return file.Data, metadataObj, nil

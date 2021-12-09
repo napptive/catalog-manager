@@ -21,7 +21,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	"github.com/napptive/mockup-generator/pkg/mockups"
+	"github.com/napptive/mock-extensions/pkg/matcher"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -127,7 +127,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			namespace := "namespace"
 			appName := "appName"
 
-			matcher := mockups.NewStructMatcher(map[string]interface{}{"Namespace": namespace, "ApplicationName": appName})
+			matcher := matcher.NewStructMatcher(map[string]interface{}{"Namespace": namespace, "ApplicationName": appName})
 			metadataProvider.EXPECT().Get(matcher).Return(&entities.ApplicationInfo{
 				CatalogID:       "",
 				Namespace:       namespace,
@@ -148,7 +148,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			namespace := "namespace"
 			appName := "appName"
 
-			matcher := mockups.NewStructMatcher(map[string]interface{}{"Namespace": namespace, "ApplicationName": appName})
+			matcher := matcher.NewStructMatcher(map[string]interface{}{"Namespace": namespace, "ApplicationName": appName})
 			metadataProvider.EXPECT().Get(matcher).Return(nil, nerrors.NewNotFoundError("not found"))
 
 			manager := NewManager(storageProvider, metadataProvider, "")

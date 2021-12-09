@@ -26,14 +26,13 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
-	"github.com/napptive/mockup-generator/pkg/mockups"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 )
 
 var (
-	validUsername             = mockups.GetUserName()
-	validAccountName          = mockups.GetUserName()
+	validUsername             = "username"
+	validAccountName          = "accountName"
 	unauthorizedApplicationID = "unauthorized/test:latest"
 )
 
