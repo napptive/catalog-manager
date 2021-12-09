@@ -17,7 +17,7 @@ require (
 	github.com/napptive/mock-extensions v1.0.0
 	github.com/napptive/nerrors v1.0.0
 	github.com/napptive/njwt v1.2.1
-	github.com/napptive/rdbms v1.0.0-rc9
+	github.com/napptive/rdbms v1.0.2
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
 	github.com/rs/xid v1.2.1
