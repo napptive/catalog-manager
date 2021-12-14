@@ -111,7 +111,6 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo) error {
 		return nerrors.NewFailedPreconditionError("Invalid namespace, must contain lowercase letters, can contain single hyphens and numbers.")
 	}
 
-
 	// if catalogURL is not empty, check it!
 	if m.catalogURL != "" {
 		// check that the url of the application matches the url of the catalog

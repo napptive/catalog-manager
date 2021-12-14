@@ -35,11 +35,11 @@ var adminCmd = &cobra.Command{
 var listCmdLongHelp = `list the catalog applications`
 var listCmdShortHelp = `list the catalog applications`
 var listCmd = &cobra.Command{
-	Use:   "list [namespace]",
-	Long:  listCmdLongHelp,
-	Short: listCmdShortHelp,
+	Use:     "list [namespace]",
+	Long:    listCmdLongHelp,
+	Short:   listCmdShortHelp,
 	Aliases: []string{"ls"},
-	Args:  cobra.MaximumNArgs(1),
+	Args:    cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		namespace := ""
 		if len(args) > 0 {
@@ -58,11 +58,11 @@ You can delete a namespace indicating the name as arg or delete only one applica
 var deleteAppCmdShortHelp = `Delete catalog application`
 
 var deleteAppCmd = &cobra.Command{
-	Use:   "delete <applicationName>",
-	Long:  deleteAppCmdLongHelp,
-	Short: deleteAppCmdShortHelp,
+	Use:     "delete <applicationName>",
+	Long:    deleteAppCmdLongHelp,
+	Short:   deleteAppCmdShortHelp,
 	Aliases: []string{"rm", "remove"},
-	Args:  cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		op, err := cli.NewApplicationCli(cfg.AdminGRPCPort)
 		if err != nil {

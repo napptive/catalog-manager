@@ -19,12 +19,13 @@ package catalog_manager
 import (
 	"crypto/tls"
 	"fmt"
-	"google.golang.org/grpc/credentials"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"google.golang.org/grpc/credentials"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -244,7 +245,7 @@ func (s *Service) LaunchHTTPService() {
 }
 
 func (s *Service) registerShutdownListener(providers *Providers) {
-	osChannel := make(chan os.Signal)
+	osChannel := make(chan os.Signal, 2)
 	signal.Notify(osChannel, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-osChannel
