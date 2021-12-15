@@ -17,13 +17,15 @@ package cli
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"strings"
-	"time"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type ApplicationCli struct {
@@ -34,7 +36,7 @@ type ApplicationCli struct {
 func NewApplicationCli(adminPort int) (*ApplicationCli, error) {
 	dir := fmt.Sprintf(":%d", adminPort)
 	log.Info().Str("dir", dir).Msg("admin direction")
-	conn, err := grpc.Dial(dir, grpc.WithInsecure())
+	conn, err := grpc.Dial(dir, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}

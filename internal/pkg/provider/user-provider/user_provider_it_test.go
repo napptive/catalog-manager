@@ -38,7 +38,7 @@ import (
 	"time"
 
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
-	"github.com/napptive/rdbms/pkg/rdbms"
+	"github.com/napptive/rdbms/v2/pkg/rdbms"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"

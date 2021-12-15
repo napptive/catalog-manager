@@ -26,6 +26,7 @@ import (
 	"syscall"
 
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -223,7 +224,7 @@ func (s *Service) LaunchHTTPService() {
 		tlsCredentials := credentials.NewTLS(tlsConfig)
 		grpcOptions = []grpc.DialOption{grpc.WithTransportCredentials(tlsCredentials)}
 	} else {
-		grpcOptions = []grpc.DialOption{grpc.WithInsecure()}
+		grpcOptions = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	}
 
 	if err := grpc_catalog_go.RegisterCatalogHandlerFromEndpoint(context.Background(), mux, grpcAddress, grpcOptions); err != nil {
