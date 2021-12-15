@@ -3,10 +3,7 @@ on:
   push:
     tags:
       - "v*" #Napptive uses Semantic Versioning with the prefix 'v'
-env:
-  GOPRIVATE: "github.com/napptive/*"
-  GH_NAPP_USER: ${{ secrets.GH_NAPP_USER }}
-  GH_NAPP_TOKEN: ${{ secrets.GH_NAPP_TOKEN }}
+
 jobs:
   gh:
     name: Create GitHub Release Asset
@@ -15,11 +12,8 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.15
+          go-version: ^1.16
         id: go
-
-      - name: Configure git for private modules
-        run: git config --global url."https://${GH_NAPP_USER}:${GH_NAPP_TOKEN}@github.com".insteadOf "https://github.com"
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -67,11 +61,8 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.15
+          go-version: ^1.16
         id: go
-
-      - name: Configure git for private modules
-        run: git config --global url."https://${GH_NAPP_USER}:${GH_NAPP_TOKEN}@github.com".insteadOf "https://github.com"
 
       - name: Checkout code
         uses: actions/checkout@v2
