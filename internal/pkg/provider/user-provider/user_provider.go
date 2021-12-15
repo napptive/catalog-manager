@@ -17,12 +17,13 @@ package user_provider
 
 import (
 	"context"
+	"time"
+
 	"github.com/doug-martin/goqu/v9"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
-	"github.com/napptive/rdbms/pkg/rdbms"
+	"github.com/napptive/rdbms/v2/pkg/rdbms"
 	"github.com/rs/zerolog/log"
-	"time"
 )
 
 const (

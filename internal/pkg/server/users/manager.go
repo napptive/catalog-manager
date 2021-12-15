@@ -19,14 +19,15 @@ package users
 import (
 	"encoding/base64"
 	"fmt"
+	"time"
+
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	"github.com/napptive/catalog-manager/internal/pkg/provider/user-provider"
+	user_provider "github.com/napptive/catalog-manager/internal/pkg/provider/user-provider"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/napptive/nerrors/pkg/nerrors"
-	"github.com/napptive/rdbms/pkg/rdbms"
+	"github.com/napptive/rdbms/v2/pkg/rdbms"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
-	"time"
 )
 
 type Manager struct {
