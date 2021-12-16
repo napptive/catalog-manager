@@ -21,12 +21,12 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/elastic/go-elasticsearch/v7"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
