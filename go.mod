@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/doug-martin/goqu/v9 v9.18.0
-	github.com/elastic/go-elasticsearch/v8 v8.0.0-20211214143643-cd88bcfe6133
+	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
