@@ -111,7 +111,12 @@ A user can download any available application by executing:
 
 ```bash
 $ catalog pull <repo>/<appName>:<version> <application_path> --catalogAddress localhost --catalogPort 37060  --useTLS=false
+
+STATUS     INFO
+SUCCESS    application saved on ./<appName>.tgz
 ```
+
+all the application files will be downloaded in _appName.tgz_ file.
 
 ## Remove an application
 
@@ -121,7 +126,7 @@ To remove an existing application, execute:
 $ catalog remove <repo>/<appName>:<version> <application_path> --catalogAddress localhost --catalogPort 37060  --useTLS=false
 
 STATUS     INFO
-SUCCESS    <repositiry>/<appName> added to catalog
+SUCCESS    <repo>/<appName>:<version> removed from catalog
 ```
 
 ## List avaiblable applications
@@ -142,4 +147,21 @@ To receive a summary of the number of applications available in the catalog:
 $ catalog summary --catalogAddress localhost --catalogPort 37060  --useTLS=false
 NAMESPACES    APPLICATIONS    TAGS
 <num>         <num>           <num>
+```
+
+## Get application info
+
+To get the information of an application, execute:
+
+```bash
+$ catalog  --catalogAddress localhost --catalogPort 37060  --useTLS=false  info <repo>/<appName>:<version>
+
+APP_ID                      NAME
+<repo>/<appName>:<version>  Application Name
+
+DESCRIPTION
+<application description>
+
+README
+<readme file>
 ```
