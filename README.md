@@ -7,6 +7,7 @@ The NAPPTIVE Catalog manager is the component responsible for providing a centra
 * [Using the catalog as part of the NAPPTIVE Playground](https://docs.napptive.com/Catalog.html) (SaaS)
 * [Hosting your own private catalog](docs/guides/PrivateCatalog.md)
   * [Kind](docs/guides/PrivateCatalogOnKind.md)
+* [First steps](docs/guides/FirstSteps.md)
 
 ## Development
 

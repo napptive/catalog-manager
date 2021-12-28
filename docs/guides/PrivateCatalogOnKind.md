@@ -58,7 +58,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main
 
 Clone the repository and generate the files
 
-```
+```bash
 cd <your_development_path>
 git clone git@github.com:napptive/rdbms.git
 cd rdbms
@@ -68,16 +68,15 @@ kubectl create -f build/k8s
 
 ## Creating the Kubernetes entities
 
-First create the target yaml files.
+First create the target yaml files:
 
-```
+```bash
 TARGET_DOCKER_REGISTRY=napptive VERSION=latest TARGET_K8S_NAMESPACE=napptive make k8s-kind
 ```
 
 Deploy them on the cluster
 
-```
-kubectl create ns napptive
+```bash
 kubectl create -f build/k8s
 ```
 
@@ -87,7 +86,7 @@ At this point all entities are being created and trying to connect to each other
 
 Use the [catalog-cli](https://github.com/napptive/catalog-cli)
 
-```
-$ catalog --catalogAddress localhost --catalogPort 37060 list
+```bash
+$ catalog --catalogAddress localhost --catalogPort 37060 --useTLS=false list
 APPLICATION    NAME
 ```
