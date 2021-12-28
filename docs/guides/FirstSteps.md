@@ -4,6 +4,15 @@ Once the catalog is installed, you are ready to upload applications!.
 
 The NAPPTIVE Catalog is highly inspired by the way container registries work. The applications uploaded by a user will be available to all the users who have access to the catalog.
 
+* [Applications](#applications)
+* [Catalog Client](#cli)
+* [Upload an application](#upload-an-application)
+* [Download an applications](#download-an-application)
+* [Remove an application](#remove-an-application)
+* [List avaiblable applications](#list-avaiblable-applications)
+* [Get Summary](#get-summary)
+* [Get application info](#get-application-info)
+
 ## Applications
 
 Each user will have a repository whose name will match their username. It will be in this repository where you must upload your applications.
