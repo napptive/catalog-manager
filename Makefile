@@ -170,6 +170,8 @@ k8s-kind:
 		mkdir -p $(K8S_FOLDER); \
 		cp deployments/*.yaml $(K8S_FOLDER)/. ; \
 		rm $(K8S_FOLDER)/*.gcp.*.yaml ; \
+		rm $(K8S_FOLDER)/*.aks.*.yaml ; \
+		rm $(K8S_FOLDER)/*.onpremise.*.yaml ; \
 		$(SED) -i 's/TARGET_K8S_NAMESPACE/$(TARGET_K8S_NAMESPACE)/' $(K8S_FOLDER)/*.yaml ;\
 		$(SED) -i 's/TARGET_DOCKER_REGISTRY/'$(TARGET_DOCKER_REGISTRY)'/' $(K8S_FOLDER)/*.yaml ;\
 		$(SED) -i 's/VERSION/$(VERSION)/' $(K8S_FOLDER)/*.yaml ;\
