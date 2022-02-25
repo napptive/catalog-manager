@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package catalog_manager
+package apps
 
-//go:generate  mockgen -destination metadata_provider_mock.go -package=catalog_manager github.com/napptive/catalog-manager/internal/pkg/provider/metadata MetadataProvider
-//go:generate  mockgen -destination storage_mock.go -package=catalog_manager github.com/napptive/catalog-manager/internal/pkg/storage StorageManager
-//go:generate  mockgen -destination catalog_add_server_mock.go -package=catalog_manager github.com/napptive/grpc-catalog-go Catalog_AddServer
-//go:generate  mockgen -destination manager_mock.go  -package=catalog_manager  github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager Manager
+//go:generate  mockgen -destination manager_mock.go  -package=apps  github.com/napptive/catalog-manager/internal/pkg/server/apps Manager
 
 //Mock is a place holder to unify all mock generators.
 func Mock() {}

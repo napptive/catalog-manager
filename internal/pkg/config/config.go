@@ -32,6 +32,8 @@ type Config struct {
 	BQConfig
 	// TLS configuration
 	TLSConfig
+	// Playground connection configuration.
+	PlaygroundConnection
 	// Version of the application.
 	Version string
 	// Commit related to this built.
@@ -57,6 +59,9 @@ func (c *Config) IsValid() error {
 	if err := c.TLSConfig.IsValid(); err != nil {
 		return err
 	}
+	if err := c.PlaygroundConnection.IsValid(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -69,4 +74,5 @@ func (c *Config) Print() {
 	c.TeamConfig.Print()
 	c.BQConfig.Print()
 	c.TLSConfig.Print()
+	c.PlaygroundConnection.Print()
 }

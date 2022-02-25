@@ -37,10 +37,10 @@ var (
 )
 
 func GetTestMemberContext() context.Context {
-	return utils.CreateTestJWTAuthIncomingContext(validUsername, validAccountName, false)
+	return utils.CreateTestJWTAuthIncomingContext(validUsername, validAccountName, false, "authorization", "jwt")
 }
 func GetTestAdminContext() context.Context {
-	return utils.CreateTestJWTAuthIncomingContext(validUsername, validAccountName, true)
+	return utils.CreateTestJWTAuthIncomingContext(validUsername, validAccountName, true, "authorization", "jwt")
 }
 func GetTestMemberApplicationId() string {
 	return fmt.Sprintf("%s/test:latest", validUsername)

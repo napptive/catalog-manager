@@ -38,6 +38,7 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
 	"github.com/napptive/catalog-manager/internal/pkg/server/admin"
+	"github.com/napptive/catalog-manager/internal/pkg/server/apps"
 	catalog_manager "github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
 	"github.com/napptive/catalog-manager/internal/pkg/storage"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
@@ -146,6 +147,9 @@ func (s *Service) LaunchGRPCService(providers *Providers) {
 	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider, s.cfg.CatalogUrl)
 	handler := catalog_manager.NewHandler(manager, s.cfg.AuthEnabled, s.cfg.TeamConfig)
 
+	appManager := apps.NewManager(&s.cfg, manager)
+	appHandler := apps.NewHandler(&s.cfg.JWTConfig, appManager)
+
 	var unaryInterceptorsChain []grpc.UnaryServerInterceptor
 	//var unaryStreamChain grpc.ServerOption
 	var unaryStreamChain []grpc.StreamServerInterceptor
@@ -180,6 +184,7 @@ func (s *Service) LaunchGRPCService(providers *Providers) {
 			grpc_middleware.WithStreamServerChain(unaryStreamChain...))
 	}
 	grpc_catalog_go.RegisterCatalogServer(gRPCServer, handler)
+	grpc_catalog_go.RegisterApplicationsServer(gRPCServer, appHandler)
 
 	if s.cfg.Debug {
 		// Register reflection service on gRPC server.
@@ -230,6 +235,11 @@ func (s *Service) LaunchHTTPService() {
 	if err := grpc_catalog_go.RegisterCatalogHandlerFromEndpoint(context.Background(), mux, grpcAddress, grpcOptions); err != nil {
 		log.Fatal().Err(err).Msg("failed to start catalog handler")
 	}
+
+	if err := grpc_catalog_go.RegisterApplicationsHandlerFromEndpoint(context.Background(), mux, grpcAddress, grpcOptions); err != nil {
+		log.Fatal().Err(err).Msg("failed to start applications handler")
+	}
+
 	if err := mux.HandlePath("GET", "/healthz", s.HealthzHandler); err != nil {
 		log.Fatal().Err(err).Msg("unable to register healthz handler")
 	}
