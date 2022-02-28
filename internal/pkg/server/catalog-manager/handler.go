@@ -203,7 +203,14 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 		if appID.Namespace != claim.Username {
 
 			// Check target account
-			if appID.Namespace == claim.AccountName && requireAdminPriviledge == claim.AccountAdmin {
+			if appID.Namespace == claim.AccountName {
+				if requireAdminPriviledge {
+					if claim.AccountAdmin {
+						return nil
+					} else {
+						return nerrors.NewPermissionDeniedError("%s operation requires ADMIN privileges", action)
+					}
+				}
 				return nil
 			}
 
