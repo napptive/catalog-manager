@@ -29,6 +29,12 @@ jobs:
           VERSION: latest
           TARGET_DOCKER_REGISTRY: napptive
 
+    # security Job, checks vulnerabilities      
+    security-scan:
+      name: Scan vulnerabilities
+      needs: build
+      runs-on: ubuntu-latest
+
       steps:
       # Scan vulnerabilities with tivy
       - name: Vulnerability scanner
