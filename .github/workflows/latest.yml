@@ -28,3 +28,18 @@ jobs:
         env:
           VERSION: latest
           TARGET_DOCKER_REGISTRY: napptive
+
+      steps:
+      # Scan vulnerabilities with tivy
+      - name: Vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{$GITHUB_REPOSITORY}}/latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      # Upload rersults to Github Security tab
+      - name: Upload scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: 'trivy-results.sarif'
