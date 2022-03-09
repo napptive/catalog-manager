@@ -23,6 +23,7 @@ import (
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_playground_apps_go "github.com/napptive/grpc-playground-apps-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
+	"github.com/rs/zerolog/log"
 )
 
 type Manager interface {
@@ -53,6 +54,7 @@ func NewManager(cfg *config.Config, catalogManager catalog_manager.Manager) Mana
 // will gather the application information and send it to the target
 // playground platform.
 func (m *manager) Deploy(userToken string, applicationID string, targetEnvironmentQualifiedName string, targetPlaygroundApiURL string) (*grpc_catalog_common_go.OpResponse, error) {
+	log.Debug().Str("application_id", applicationID).Str("eqn", targetEnvironmentQualifiedName).Str("target_playground_api_url", targetPlaygroundApiURL).Msg("deploying application")
 	// Retrieve the target application
 	app, err := m.catalogManager.Download(applicationID, true)
 	if err != nil {
