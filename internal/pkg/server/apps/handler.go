@@ -65,7 +65,11 @@ func (h *Handler) Deploy(ctx context.Context, request *grpc_catalog_go.DeployApp
 	}
 	jwt, err := h.extractIncomingJWT(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nerrors.FromError(err).ToGRPC()
 	}
-	return h.manager.Deploy(jwt, request.ApplicationId, request.TargetEnvironmentQualifiedName, request.TargetPlaygroundApiUrl)
+	response, err :=  h.manager.Deploy(jwt, request.ApplicationId, request.TargetEnvironmentQualifiedName, request.TargetPlaygroundApiUrl)
+	if err != nil {
+	  return nil, nerrors.FromError(err).ToGRPC()
+	}
+	return response, nil
 }

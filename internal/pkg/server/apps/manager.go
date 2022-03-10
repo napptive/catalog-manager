@@ -58,7 +58,7 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 	// Retrieve the target application
 	app, err := m.catalogManager.Download(applicationID, true)
 	if err != nil {
-		return nil, err
+		return nil, nerrors.FromGRPC(err)
 	}
 
 	// GetConnection
@@ -78,7 +78,7 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 		TargetEnvironmentQualifiedName: targetEnvironmentQualifiedName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nerrors.FromGRPC(err)
 	}
 	return &grpc_catalog_common_go.OpResponse{
 		Status:     grpc_catalog_common_go.OpStatus(grpc_catalog_common_go.OpStatus_value[response.StatusName]),
