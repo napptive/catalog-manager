@@ -67,5 +67,8 @@ func init() {
 	runCmd.Flags().StringVar(&cfg.BQConfig.Config.Schema, "analyticsSchema", "analytics", "analytics schema")
 	runCmd.Flags().StringVar(&cfg.BQConfig.Config.Table, "analyticsTable", "operation", "analytics table")
 	runCmd.Flags().DurationVar(&cfg.BQConfig.Config.SendingTime, "analyticsLoop", 5*time.Second, "time to send the data to analytics provider")
+	runCmd.Flags().BoolVar(&cfg.PlaygroundConnection.SkipCertValidation, "skipPlaygroundCertValidation", false, "Set this flag to accept any certificate presented by the playground-api. Altering this value is not recommended in production environments.")
+	runCmd.Flags().BoolVar(&cfg.PlaygroundConnection.UseTLS, "useTLSWithPlayground", true, "Whether a TLS protected connection is to be used when connecting with a target playground-api. Altering this value is not recommended in production environments.")
+	runCmd.Flags().StringVar(&cfg.PlaygroundConnection.ClientCA, "playgroundCA", "", "CA that will be used by the playground-api")
 
 }
