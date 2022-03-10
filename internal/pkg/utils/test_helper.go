@@ -18,9 +18,10 @@ package utils
 
 import (
 	"context"
-	"github.com/rs/xid"
 	"os"
 	"strconv"
+
+	"github.com/rs/xid"
 
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	njwthelper "github.com/napptive/njwt/pkg/helper"
@@ -126,8 +127,9 @@ func CreateTestApplicationInfoWithoutLogo() *entities.ApplicationInfo {
 }
 
 // CreateTestJWTAuthIncomingContext creates a test context with metadata as found
-// after passing the interceptor.
-func CreateTestJWTAuthIncomingContext(username string, accountName string, accountAdmin bool) context.Context {
+// after passing the interceptor. The jwt elements allow to test scenarios where
+// no JWT has been provided in the request.
+func CreateTestJWTAuthIncomingContext(username string, accountName string, accountAdmin bool, jwtKey string, jwt string) context.Context {
 	md := metadata.New(map[string]string{
 		njwthelper.UserIDKey:        GetUserId(),
 		njwthelper.UsernameKey:      username,
@@ -135,6 +137,7 @@ func CreateTestJWTAuthIncomingContext(username string, accountName string, accou
 		njwthelper.AccountNameKey:   accountName,
 		njwthelper.EnvironmentIDKey: GetEnvironmentId(),
 		njwthelper.AccountAdminKey:  strconv.FormatBool(accountAdmin),
+		jwtKey:                      jwt,
 	})
 	parentCtx := context.Background()
 	return metadata.NewIncomingContext(parentCtx, md)
