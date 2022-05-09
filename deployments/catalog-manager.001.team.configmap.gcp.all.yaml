@@ -7,4 +7,4 @@ metadata:
     app: catalog-manager-team
 data:
   TEAM_REPOSITORIES: napptive,test
-  TEAM_PRIVILEGED_USERS: aagea,dhiguero,ivdiaz,Carmendelope
+  TEAM_PRIVILEGED_USERS: aagea,dhiguero,ivdiaz,cdelope
