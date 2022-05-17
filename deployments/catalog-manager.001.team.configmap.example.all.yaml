@@ -6,5 +6,5 @@ metadata:
   labels:
     app: catalog-manager-team
 data:
-  TEAM_REPOSITORIES: napptive,test
-  TEAM_PRIVILEGED_USERS: aagea,dhiguero,ivdiaz,Carmendelope
+  TEAM_REPOSITORIES: <repo1>,<repo2>
+  TEAM_PRIVILEGED_USERS: <user1>,<user2>
