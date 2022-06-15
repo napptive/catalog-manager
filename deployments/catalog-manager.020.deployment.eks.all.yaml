@@ -42,6 +42,9 @@ spec:
           - "--authEnabled"
           - "--authHeader=$(AUTH_HEADER)"
           - "--authSecret=$(AUTH_SECRET)"
+          - "--teamPrivileges"
+          - "--teamUsers=$(TEAM_PRIVILEGED_USERS)"
+          - "--teamRepositories=$(TEAM_REPOSITORIES)"
           - "--analyticsEnabled=false"
           - "--launchSecureService"
         volumeMounts:
