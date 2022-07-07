@@ -136,7 +136,7 @@ docker-build: $(addsuffix .docker-build, $(BUILD_TARGETS))
 %.docker-build: %.docker-prep
 	@if [ -f $(DOCKER_FOLDER)/$(basename $@)/Dockerfile ]; then\
 		echo "Building docker file for "$(basename $@);\
-		$(DOCKERCMD) build $(DOCKER_FOLDER)/$(basename $@) -t $(TARGET_DOCKER_REGISTRY)/$(basename $@):$(VERSION);\
+		$(DOCKERCMD) build --platform linux/amd64 $(DOCKER_FOLDER)/$(basename $@) -t $(TARGET_DOCKER_REGISTRY)/$(basename $@):$(VERSION);\
 	fi
 
 .PHONY: docker-push
