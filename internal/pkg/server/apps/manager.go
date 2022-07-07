@@ -58,7 +58,7 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 	// Retrieve the target application
 	app, err := m.catalogManager.Download(applicationID, true)
 	if err != nil {
-		return nil, nerrors.FromGRPC(err)
+		return nil, err
 	}
 
 	// GetConnection

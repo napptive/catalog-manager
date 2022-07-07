@@ -215,9 +215,20 @@ func (s *storageManager) GetApplication(repo string, name string, version string
 	// Find the application directory
 	path := fmt.Sprintf("%s/%s/%s/%s", s.basePath, repo, name, version)
 	log.Debug().Str("path", path).Msg("getting application")
+
+	// Check if the application exists
+	exists, err := s.ApplicationExists(repo, name, version)
+	if err != nil {
+		return nil, nerrors.NewInternalErrorFrom(err, "error checking if the catalog application exists")
+	}
+	if !exists {
+		return nil, nerrors.NewNotFoundError("Application not found")
+	}
+
 	if compressed {
 		return s.loadAppFileTgz(name, path)
 	}
+
 	return s.loadAppFile(path, fmt.Sprintf("./%s", name))
 }
 
@@ -260,7 +271,8 @@ func (s *storageManager) loadAppFileTgz(name string, path string) ([]*entities.F
 		}
 		return nil
 	}); wErr != nil {
-		return nil, nerrors.NewInternalErrorFrom(wErr, "Error getting application")
+		log.Error().Err(wErr).Msg("error getting application")
+		return nil, nerrors.NewInternalError("Error getting application")
 
 	}
 
