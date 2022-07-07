@@ -21,10 +21,11 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/elastic/go-elasticsearch/v7"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v7"
 
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 
@@ -336,6 +337,7 @@ func (e *ElasticProvider) Get(appID *entities.ApplicationID) (*entities.Applicat
 // Remove deletes an application from the catalog
 func (e *ElasticProvider) Remove(appID *entities.ApplicationID) error {
 	id := e.GenerateIDFromAppID(appID)
+	log.Debug().Str("id", id).Msg("Remove app id")
 	res, err := e.client.Delete(e.indexName, id, e.client.Delete.WithContext(context.Background()), e.client.Delete.WithRefresh("true"))
 
 	if err != nil {
