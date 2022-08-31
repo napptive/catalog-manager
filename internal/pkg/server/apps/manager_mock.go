@@ -9,6 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
+	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 )
 
 // MockManager is a mock of Manager interface.
@@ -47,4 +48,19 @@ func (m *MockManager) Deploy(arg0, arg1, arg2, arg3 string) (*grpc_catalog_commo
 func (mr *MockManagerMockRecorder) Deploy(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Deploy", reflect.TypeOf((*MockManager)(nil).Deploy), arg0, arg1, arg2, arg3)
+}
+
+// GetConfiguration mocks base method.
+func (m *MockManager) GetConfiguration(arg0 string) (*grpc_catalog_go.GetConfigurationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConfiguration", arg0)
+	ret0, _ := ret[0].(*grpc_catalog_go.GetConfigurationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConfiguration indicates an expected call of GetConfiguration.
+func (mr *MockManagerMockRecorder) GetConfiguration(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfiguration", reflect.TypeOf((*MockManager)(nil).GetConfiguration), arg0)
 }

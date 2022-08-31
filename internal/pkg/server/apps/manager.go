@@ -21,8 +21,10 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/connection"
 	catalog_manager "github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
+	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	grpc_playground_apps_go "github.com/napptive/grpc-playground-apps-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
+	oamutils "github.com/napptive/oam-utils/pkg/oam-utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -31,6 +33,8 @@ type Manager interface {
 	// will gather the application information and send it to the target
 	// playground platform.
 	Deploy(userToken string, applicationID string, targetEnvironmentQualifiedName string, targetPlaygroundApiURL string) (*grpc_catalog_common_go.OpResponse, error)
+	// GetConfiguration returns the application configuration (name for now)
+	GetConfiguration(applicationID string) (*grpc_catalog_go.GetConfigurationResponse, error)
 }
 
 // Manager for apps operations.
@@ -84,5 +88,45 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 		Status:     grpc_catalog_common_go.OpStatus(grpc_catalog_common_go.OpStatus_value[response.StatusName]),
 		StatusName: response.StatusName,
 		UserInfo:   response.UserInfo,
+	}, nil
+}
+
+// GetConfiguration returns the application configuration (name for now)
+// TODO: add spec
+func (m *manager) GetConfiguration(applicationID string) (*grpc_catalog_go.GetConfigurationResponse, error) {
+
+	// Get application files (Checking if application exists)
+	files, err := m.catalogManager.Download(applicationID, false)
+	if err != nil {
+		log.Error().Err(err).Str("applicationID", applicationID).Msg("error getting application files")
+		return nil, nerrors.NewInternalErrorFrom(err, "error getting application configuration")
+	}
+
+	appFiles := make([][]byte, 0)
+
+	// Get Application configuration
+	for _, file := range files {
+		appFiles = append(appFiles, file.Data)
+	}
+
+	app, err := oamutils.NewApplication(appFiles)
+	if err != nil {
+		// check the error, perhaps the catalog application no correspond to an oam application
+		if nerrors.FromError(err).Code == nerrors.NotFound {
+			return &grpc_catalog_go.GetConfigurationResponse{
+				IsApplication:          false,
+				ApplicationDefaultName: "",
+				SpecComponentsRaw:      "",
+			}, nil
+		}
+		log.Error().Err(err).Str("applicationID", applicationID).Msg("error getting application files")
+		return nil, nerrors.NewInternalErrorFrom(err, "error getting application configuration")
+
+	}
+
+	return &grpc_catalog_go.GetConfigurationResponse{
+		IsApplication:          true,
+		ApplicationDefaultName: app.GetName(),
+		SpecComponentsRaw:      "",
 	}, nil
 }

@@ -23,6 +23,7 @@ import (
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -67,9 +68,23 @@ func (h *Handler) Deploy(ctx context.Context, request *grpc_catalog_go.DeployApp
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
-	response, err :=  h.manager.Deploy(jwt, request.ApplicationId, request.TargetEnvironmentQualifiedName, request.TargetPlaygroundApiUrl)
+	response, err := h.manager.Deploy(jwt, request.ApplicationId, request.TargetEnvironmentQualifiedName, request.TargetPlaygroundApiUrl)
 	if err != nil {
-	  return nil, nerrors.FromError(err).ToGRPC()
+		return nil, nerrors.FromError(err).ToGRPC()
 	}
 	return response, nil
+}
+
+func (h *Handler) GetConfiguration(ctx context.Context, request *grpc_catalog_go.GetConfigurationRequest) (*grpc_catalog_go.GetConfigurationResponse, error) {
+
+	if err := request.Validate(); err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	conf, err := h.manager.GetConfiguration(request.ApplicationId)
+	if err != nil {
+		log.Error().Err(err).Msg("error getting application configuration")
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+	return conf, nil
 }

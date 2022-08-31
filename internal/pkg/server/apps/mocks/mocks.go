@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package apps
+package mocks
 
-//go:generate  mockgen -destination manager_mock.go  -package=apps  github.com/napptive/catalog-manager/internal/pkg/server/apps Manager
+// this package is required to avoid conficts between the catalog-manager manager and the apps manager
+
+//go:generate  mockgen -destination catalog_manager_mock.go  -package=mocks  github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager Manager
 
 // Mock is a place holder to unify all mock generators.
 func Mock() {}
