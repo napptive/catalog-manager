@@ -21,7 +21,6 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	"github.com/napptive/catalog-manager/internal/pkg/server/apps/mocks"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -67,13 +66,13 @@ data:
 var _ = ginkgo.Describe("Apps manager test", func() {
 
 	var ctrl *gomock.Controller
-	var catalogManager *mocks.MockManager
+	var catalogManager *MockCatalogManager
 
 	var manager Manager
 
 	ginkgo.BeforeEach(func() {
 		ctrl = gomock.NewController(ginkgo.GinkgoT())
-		catalogManager = mocks.NewMockManager(ctrl)
+		catalogManager = NewMockCatalogManager(ctrl)
 		manager = NewManager(&config.Config{}, catalogManager)
 	})
 

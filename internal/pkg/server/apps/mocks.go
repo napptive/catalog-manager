@@ -16,6 +16,7 @@
 package apps
 
 //go:generate  mockgen -destination manager_mock.go  -package=apps  github.com/napptive/catalog-manager/internal/pkg/server/apps Manager
+//go:generate  mockgen -destination catalog_manager_mock.go -mock_names=Manager=MockCatalogManager  -package=apps  github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager Manager
 
 // Mock is a place holder to unify all mock generators.
 func Mock() {}
