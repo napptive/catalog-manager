@@ -77,7 +77,7 @@ var _ = ginkgo.Describe("Apps manager test", func() {
 	})
 
 	ginkgo.Context("Getting application config", func() {
-		ginkgo.FIt("Should be able to get application configuration", func() {
+		ginkgo.It("Should be able to get application configuration", func() {
 
 			appID := fmt.Sprintf("%s/%s", "username", "application")
 
