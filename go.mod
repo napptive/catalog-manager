@@ -27,7 +27,7 @@ require (
 	github.com/napptive/mock-extensions v1.0.0
 	github.com/napptive/nerrors v1.1.0
 	github.com/napptive/njwt v1.3.0
-	github.com/napptive/oam-utils v0.0.0-20220831164319-22e23a682071
+	github.com/napptive/oam-utils v0.0.0-20220901103731-b929402e319b
 	github.com/napptive/rdbms/v2 v2.3.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.20.2

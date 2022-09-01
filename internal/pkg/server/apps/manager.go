@@ -102,11 +102,11 @@ func (m *manager) GetConfiguration(applicationID string) (*grpc_catalog_go.GetCo
 		return nil, nerrors.NewInternalErrorFrom(err, "error getting application configuration")
 	}
 
-	appFiles := make([][]byte, 0)
+	appFiles := make([]*oamutils.ApplicationFile, 0)
 
 	// Get Application configuration
 	for _, file := range files {
-		appFiles = append(appFiles, file.Data)
+		appFiles = append(appFiles, &oamutils.ApplicationFile{FileName: file.Path, Content: file.Data})
 	}
 
 	app, err := oamutils.NewApplication(appFiles)
