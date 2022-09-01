@@ -20,8 +20,11 @@ require (
 	github.com/napptive/grpc-catalog-common-go v0.2.0
 	github.com/napptive/grpc-catalog-go v0.20.0
 	github.com/napptive/grpc-playground-apps-go v0.22.0
+	github.com/napptive/grpc-playground-common-go v0.5.0 // indirect
+	github.com/napptive/grpc-playground-environments-go v0.10.0 // indirect
+	github.com/napptive/grpc-playground-oam-go v0.9.0 // indirect
+	github.com/napptive/grpc-playground-oam3-go v0.5.0 // indirect
 	github.com/napptive/mock-extensions v1.0.0
-	github.com/napptive/mockup-generator v1.3.3-0.20220823084743-cfffd524fc3c
 	github.com/napptive/nerrors v1.1.0
 	github.com/napptive/njwt v1.3.0
 	github.com/napptive/oam-utils v0.0.0-20220831164319-22e23a682071

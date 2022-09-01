@@ -22,7 +22,6 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/server/apps/mocks"
-	"github.com/napptive/mockup-generator/pkg/mockups"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
@@ -81,7 +80,7 @@ var _ = ginkgo.Describe("Apps manager test", func() {
 	ginkgo.Context("Getting application config", func() {
 		ginkgo.It("Should be able to get application configuration", func() {
 
-			appID := fmt.Sprintf("%s/%s", mockups.GetUserName(), "application")
+			appID := fmt.Sprintf("%s/%s", "username", "application")
 
 			catalogManager.EXPECT().Download(appID, false).Return([]*entities.FileInfo{{
 				Path: "/../..",
@@ -96,7 +95,7 @@ var _ = ginkgo.Describe("Apps manager test", func() {
 		})
 		ginkgo.It("Should be able to get application configuration, when the files do not containt any applications", func() {
 
-			appID := fmt.Sprintf("%s/%s", mockups.GetUserName(), "application")
+			appID := fmt.Sprintf("%s/%s", "username", "application")
 
 			catalogManager.EXPECT().Download(appID, false).Return([]*entities.FileInfo{{
 				Path: "/../..",
@@ -111,7 +110,7 @@ var _ = ginkgo.Describe("Apps manager test", func() {
 
 		ginkgo.It("Should not be able to get application configuration if the application does not exists", func() {
 
-			appID := fmt.Sprintf("%s/%s", mockups.GetUserName(), "application")
+			appID := fmt.Sprintf("%s/%s", "username", "application")
 
 			catalogManager.EXPECT().Download(appID, false).Return([]*entities.FileInfo{}, nerrors.NewNotFoundError("Application not found"))
 

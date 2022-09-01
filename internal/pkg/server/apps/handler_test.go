@@ -25,7 +25,6 @@ import (
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
-	"github.com/napptive/mockup-generator/pkg/mockups"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 )
@@ -85,7 +84,7 @@ var _ = ginkgo.Describe("Apps handler test with auth enabled by JWT", func() {
 
 	ginkgo.Context("getting application configuration", func() {
 		ginkgo.It("Should be able to return application configuration", func() {
-			appID := fmt.Sprintf("%s/%s", mockups.GetUserName(), "application")
+			appID := fmt.Sprintf("%s/%s", "username", "application")
 
 			manager.EXPECT().GetConfiguration(appID).Return(&grpc_catalog_go.GetConfigurationResponse{
 				IsApplication:          true,
@@ -100,7 +99,7 @@ var _ = ginkgo.Describe("Apps handler test with auth enabled by JWT", func() {
 			gomega.Expect(conf).ShouldNot(gomega.BeNil())
 		})
 		ginkgo.It("Should be able to return application configuration when the catalog application is not an oam application", func() {
-			appID := fmt.Sprintf("%s/%s", mockups.GetUserName(), "application")
+			appID := fmt.Sprintf("%s/%s", "username", "application")
 
 			manager.EXPECT().GetConfiguration(appID).Return(&grpc_catalog_go.GetConfigurationResponse{
 				IsApplication:          false,
