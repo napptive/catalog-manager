@@ -99,7 +99,7 @@ func (m *manager) GetConfiguration(applicationID string) (*grpc_catalog_go.GetCo
 	files, err := m.catalogManager.Download(applicationID, false)
 	if err != nil {
 		log.Error().Err(err).Str("applicationID", applicationID).Msg("error getting application files")
-		return nil, nerrors.NewInternalErrorFrom(err, "error getting application configuration")
+		return nil, err
 	}
 
 	appFiles := make([]*oamutils.ApplicationFile, 0)
