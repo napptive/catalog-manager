@@ -83,7 +83,7 @@ func (h *Handler) GetConfiguration(ctx context.Context, request *grpc_catalog_go
 
 	conf, err := h.manager.GetConfiguration(request.ApplicationId)
 	if err != nil {
-		log.Error().Err(err).Msg("error getting application configuration")
+		log.Error().Err(err).Str("applicationID", request.ApplicationId).Msg("error getting application configuration")
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
 	return conf, nil
