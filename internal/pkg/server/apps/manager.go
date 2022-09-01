@@ -32,7 +32,7 @@ type Manager interface {
 	// Deploy an application on a target Playground platform. This endpoint
 	// will gather the application information and send it to the target
 	// playground platform.
-	Deploy(userToken string, applicationID string, targetEnvironmentQualifiedName string, targetPlaygroundApiURL string) (*grpc_catalog_common_go.OpResponse, error)
+	Deploy(userToken string, applicationID string, targetEnvironmentQualifiedName string, targetPlaygroundApiURL string, instanceConfiguration map[string]*grpc_catalog_go.ApplicationInstanceConfiguration) (*grpc_catalog_common_go.OpResponse, error)
 	// GetConfiguration returns the application configuration (name for now)
 	GetConfiguration(applicationID string) (*grpc_catalog_go.GetConfigurationResponse, error)
 }
@@ -57,8 +57,12 @@ func NewManager(cfg *config.Config, catalogManager catalog_manager.Manager) Mana
 // Deploy an application on a target Playground platform. This endpoint
 // will gather the application information and send it to the target
 // playground platform.
-func (m *manager) Deploy(userToken string, applicationID string, targetEnvironmentQualifiedName string, targetPlaygroundApiURL string) (*grpc_catalog_common_go.OpResponse, error) {
+func (m *manager) Deploy(userToken string, applicationID string, targetEnvironmentQualifiedName string, targetPlaygroundApiURL string,
+	instanceConfiguration map[string]*grpc_catalog_go.ApplicationInstanceConfiguration) (*grpc_catalog_common_go.OpResponse, error) {
+
 	log.Debug().Str("application_id", applicationID).Str("eqn", targetEnvironmentQualifiedName).Str("target_playground_api_url", targetPlaygroundApiURL).Msg("deploying application")
+	log.Debug().Interface("instanceConfig", instanceConfiguration).Msg("instance configuration")
+
 	// Retrieve the target application
 	app, err := m.catalogManager.Download(applicationID, true)
 	if err != nil {
@@ -80,6 +84,7 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 	response, err := client.Deploy(ctx, &grpc_playground_apps_go.DeployApplicationRequest{
 		ApplicationData:                app[0].Data,
 		TargetEnvironmentQualifiedName: targetEnvironmentQualifiedName,
+		InstanceConfiguration:          m.toInstanceConfiguration(instanceConfiguration),
 	})
 	if err != nil {
 		return nil, nerrors.FromGRPC(err)
@@ -89,6 +94,17 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 		StatusName: response.StatusName,
 		UserInfo:   response.UserInfo,
 	}, nil
+}
+
+func (m *manager) toInstanceConfiguration(instanceConfiguration map[string]*grpc_catalog_go.ApplicationInstanceConfiguration) map[string]*grpc_playground_apps_go.ApplicationInstanceConfiguration {
+	newConf := make(map[string]*grpc_playground_apps_go.ApplicationInstanceConfiguration, 0)
+	for appName, conf := range instanceConfiguration {
+		newConf[appName] = &grpc_playground_apps_go.ApplicationInstanceConfiguration{
+			ApplicationName:   conf.ApplicationDefaultName,
+			SpecComponentsRaw: conf.SpecComponentsRaw,
+		}
+	}
+	return newConf
 }
 
 // GetConfiguration returns the application configuration (name for now)
@@ -112,21 +128,32 @@ func (m *manager) GetConfiguration(applicationID string) (*grpc_catalog_go.GetCo
 	app, err := oamutils.NewApplication(appFiles)
 	if err != nil {
 		// check the error, perhaps the catalog application no correspond to an oam application
-		if nerrors.FromError(err).Code == nerrors.NotFound {
-			return &grpc_catalog_go.GetConfigurationResponse{
-				IsApplication:          false,
-				ApplicationDefaultName: "",
-				SpecComponentsRaw:      "",
-			}, nil
-		}
 		log.Error().Err(err).Str("applicationID", applicationID).Msg("error getting application files")
 		return nil, nerrors.NewInternalErrorFrom(err, "error getting application configuration")
 
 	}
 
+	names := app.GetNames()
+	if len(names) > 1 {
+		log.Warn().Str("applicationID", applicationID).Int("applications", len(names)).Msg("Application with more than one oam applications")
+	}
+	// There is no oam application, the catalog application contains another entities
+	if len(names) == 0 {
+		return &grpc_catalog_go.GetConfigurationResponse{
+			IsApplication:          false,
+			ApplicationDefaultName: "",
+			SpecComponentsRaw:      "",
+		}, nil
+	}
+	defaultName := ""
+	for _, name := range names {
+		defaultName = name
+		break
+	}
+
 	return &grpc_catalog_go.GetConfigurationResponse{
 		IsApplication:          true,
-		ApplicationDefaultName: app.GetName(),
+		ApplicationDefaultName: defaultName,
 		SpecComponentsRaw:      "",
 	}, nil
 }

@@ -71,7 +71,7 @@ var _ = ginkgo.Describe("Apps handler test with auth enabled by JWT", func() {
 	ginkgo.Context("with a JWT", func() {
 		ginkgo.It("should be able to deploy apps", func() {
 			ctx := utils.CreateTestJWTAuthIncomingContext("user", "account", true, "authorization", "jwt")
-			manager.EXPECT().Deploy(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&grpc_catalog_common_go.OpResponse{}, nil)
+			manager.EXPECT().Deploy(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&grpc_catalog_common_go.OpResponse{}, nil)
 			response, err := handler.Deploy(ctx, &grpc_catalog_go.DeployApplicationRequest{
 				ApplicationId:                  testAppName,
 				TargetEnvironmentQualifiedName: testTargetEnvironment,

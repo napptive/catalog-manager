@@ -97,7 +97,7 @@ var _ = ginkgo.Describe("Apps manager test", func() {
 			appID := fmt.Sprintf("%s/%s", "username", "application")
 
 			catalogManager.EXPECT().Download(appID, false).Return([]*entities.FileInfo{{
-				Path: "/../..",
+				Path: "cm.yaml",
 				Data: []byte(cm),
 			}}, nil)
 

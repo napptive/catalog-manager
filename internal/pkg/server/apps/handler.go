@@ -68,7 +68,7 @@ func (h *Handler) Deploy(ctx context.Context, request *grpc_catalog_go.DeployApp
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
-	response, err := h.manager.Deploy(jwt, request.ApplicationId, request.TargetEnvironmentQualifiedName, request.TargetPlaygroundApiUrl)
+	response, err := h.manager.Deploy(jwt, request.ApplicationId, request.TargetEnvironmentQualifiedName, request.TargetPlaygroundApiUrl, request.InstanceConfiguration)
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
