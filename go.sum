@@ -498,6 +498,8 @@ github.com/napptive/oam-utils v0.0.0-20220901140410-b7414f0f57c9 h1:bsZRczCz3UDB
 github.com/napptive/oam-utils v0.0.0-20220901140410-b7414f0f57c9/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
 github.com/napptive/oam-utils v0.0.0-20220901200037-37d0da86d93f h1:hd79RanrjB2A0RbBAWwUcg9ym9iNDTUet2HUbDXVHiQ=
 github.com/napptive/oam-utils v0.0.0-20220901200037-37d0da86d93f/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
+github.com/napptive/oam-utils v0.0.0-20220902073959-cc2f5674d699 h1:vZJCsaZ9Bi4+GjcbNpiLqpjwkce18Li/4tXu/kqPQHQ=
+github.com/napptive/oam-utils v0.0.0-20220902073959-cc2f5674d699/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
 github.com/napptive/rdbms/v2 v2.3.0 h1:McSXZW5mrGDk2EXuMjYaXbQZcx7bSa6lMeK/Irc34JQ=
 github.com/napptive/rdbms/v2 v2.3.0/go.mod h1:K4B3KTBSUrrl/sITRFscRrWJAxqY/TcOsDsfYmajxV8=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
