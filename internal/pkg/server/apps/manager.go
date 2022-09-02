@@ -133,12 +133,18 @@ func (m *manager) GetConfiguration(applicationID string) (*grpc_catalog_go.GetCo
 
 	}
 
-	names := app.GetNames()
-	if len(names) > 1 {
-		log.Warn().Str("applicationID", applicationID).Int("applications", len(names)).Msg("Application with more than one oam applications")
+	appConfig, err := app.GetConfigurations()
+	if err != nil {
+		// check the error, perhaps the catalog application no correspond to an oam application
+		log.Error().Err(err).Str("applicationID", applicationID).Msg("error getting application parameters")
+		return nil, err
+
+	}
+	if len(appConfig) > 1 {
+		log.Warn().Str("applicationID", applicationID).Int("applications", len(appConfig)).Msg("Application with more than one oam applications")
 	}
 	// There is no oam application, the catalog application contains another entities
-	if len(names) == 0 {
+	if len(appConfig) == 0 {
 		return &grpc_catalog_go.GetConfigurationResponse{
 			IsApplication:          false,
 			ApplicationDefaultName: "",
@@ -146,14 +152,16 @@ func (m *manager) GetConfiguration(applicationID string) (*grpc_catalog_go.GetCo
 		}, nil
 	}
 	defaultName := ""
-	for _, name := range names {
-		defaultName = name
+	spec := ""
+	for _, conf := range appConfig {
+		defaultName = conf.Name
+		spec = conf.ComponentSpec
 		break
 	}
 
 	return &grpc_catalog_go.GetConfigurationResponse{
 		IsApplication:          true,
 		ApplicationDefaultName: defaultName,
-		SpecComponentsRaw:      "",
+		SpecComponentsRaw:      spec,
 	}, nil
 }

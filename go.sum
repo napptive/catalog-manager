@@ -500,6 +500,10 @@ github.com/napptive/oam-utils v0.0.0-20220901200037-37d0da86d93f h1:hd79RanrjB2A
 github.com/napptive/oam-utils v0.0.0-20220901200037-37d0da86d93f/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
 github.com/napptive/oam-utils v0.0.0-20220902073959-cc2f5674d699 h1:vZJCsaZ9Bi4+GjcbNpiLqpjwkce18Li/4tXu/kqPQHQ=
 github.com/napptive/oam-utils v0.0.0-20220902073959-cc2f5674d699/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
+github.com/napptive/oam-utils v0.0.0-20220902110349-94a1a09a39e6 h1:eXI/Vz+L673kZrRq8upKmwZA8A2OmvjNnMc4ezeKFw4=
+github.com/napptive/oam-utils v0.0.0-20220902110349-94a1a09a39e6/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
+github.com/napptive/oam-utils v0.0.0-20220902130619-40159832fff5 h1:4ppnKq9vWT8rDWN8S1v8hXMt3ahMqMapqN6WgPPJKaM=
+github.com/napptive/oam-utils v0.0.0-20220902130619-40159832fff5/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
 github.com/napptive/rdbms/v2 v2.3.0 h1:McSXZW5mrGDk2EXuMjYaXbQZcx7bSa6lMeK/Irc34JQ=
 github.com/napptive/rdbms/v2 v2.3.0/go.mod h1:K4B3KTBSUrrl/sITRFscRrWJAxqY/TcOsDsfYmajxV8=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
