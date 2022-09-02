@@ -17,6 +17,9 @@
 package apps
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
@@ -68,7 +71,7 @@ var _ = ginkgo.Describe("Apps handler test with auth enabled by JWT", func() {
 	ginkgo.Context("with a JWT", func() {
 		ginkgo.It("should be able to deploy apps", func() {
 			ctx := utils.CreateTestJWTAuthIncomingContext("user", "account", true, "authorization", "jwt")
-			manager.EXPECT().Deploy(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&grpc_catalog_common_go.OpResponse{}, nil)
+			manager.EXPECT().Deploy(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&grpc_catalog_common_go.OpResponse{}, nil)
 			response, err := handler.Deploy(ctx, &grpc_catalog_go.DeployApplicationRequest{
 				ApplicationId:                  testAppName,
 				TargetEnvironmentQualifiedName: testTargetEnvironment,
@@ -76,6 +79,39 @@ var _ = ginkgo.Describe("Apps handler test with auth enabled by JWT", func() {
 			})
 			gomega.Expect(err).To(gomega.Succeed())
 			gomega.Expect(response).ShouldNot(gomega.BeNil())
+		})
+	})
+
+	ginkgo.Context("getting application configuration", func() {
+		ginkgo.It("Should be able to return application configuration", func() {
+			appID := fmt.Sprintf("%s/%s", "username", "application")
+
+			manager.EXPECT().GetConfiguration(appID).Return(&grpc_catalog_go.GetConfigurationResponse{
+				IsApplication:          true,
+				ApplicationDefaultName: "name",
+				SpecComponentsRaw:      "",
+			}, nil)
+
+			conf, err := handler.GetConfiguration(context.Background(), &grpc_catalog_go.GetConfigurationRequest{
+				ApplicationId: appID,
+			})
+			gomega.Expect(err).To(gomega.Succeed())
+			gomega.Expect(conf).ShouldNot(gomega.BeNil())
+		})
+		ginkgo.It("Should be able to return application configuration when the catalog application is not an oam application", func() {
+			appID := fmt.Sprintf("%s/%s", "username", "application")
+
+			manager.EXPECT().GetConfiguration(appID).Return(&grpc_catalog_go.GetConfigurationResponse{
+				IsApplication:          false,
+				ApplicationDefaultName: "",
+				SpecComponentsRaw:      "",
+			}, nil)
+
+			conf, err := handler.GetConfiguration(context.Background(), &grpc_catalog_go.GetConfigurationRequest{
+				ApplicationId: appID,
+			})
+			gomega.Expect(err).To(gomega.Succeed())
+			gomega.Expect(conf).ShouldNot(gomega.BeNil())
 		})
 	})
 

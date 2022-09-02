@@ -113,7 +113,7 @@ func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, 
 	return nil
 }
 
-//Remove an application from the catalog
+// Remove an application from the catalog
 func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApplicationRequest) (*grpc_catalog_common_go.OpResponse, error) {
 
 	if err := request.Validate(); err != nil {
@@ -148,7 +148,6 @@ func (h *Handler) List(ctx context.Context, request *grpc_catalog_go.ListApplica
 		summaryList = append(summaryList, app.ToApplicationSummary())
 	}
 
-	log.Debug().Interface("list", summaryList).Msg("lst")
 	return &grpc_catalog_go.ApplicationList{Applications: summaryList}, nil
 
 }

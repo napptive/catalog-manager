@@ -22,7 +22,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -294,7 +293,7 @@ func (s *storageManager) loadAppFileTgz(name string, path string) ([]*entities.F
 // loadAppFile gets the content of application files
 func (s *storageManager) loadAppFile(path string, filePath string) ([]*entities.FileInfo, error) {
 
-	fileInfo, err := ioutil.ReadDir(path)
+	fileInfo, err := os.ReadDir(path)
 	if err != nil {
 		return nil, nerrors.NewNotFoundErrorFrom(err, "Application not found")
 	}
@@ -309,7 +308,7 @@ func (s *storageManager) loadAppFile(path string, filePath string) ([]*entities.
 			filesToReturn = append(filesToReturn, files...)
 		} else {
 			newPath := fmt.Sprintf("%s/%s", path, file.Name())
-			data, err := ioutil.ReadFile(newPath)
+			data, err := os.ReadFile(newPath)
 			if err != nil {
 				return nil, nerrors.NewInternalErrorFrom(err, "Error reading file")
 			}
