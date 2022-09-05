@@ -504,6 +504,16 @@ github.com/napptive/oam-utils v0.0.0-20220902110349-94a1a09a39e6 h1:eXI/Vz+L673k
 github.com/napptive/oam-utils v0.0.0-20220902110349-94a1a09a39e6/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
 github.com/napptive/oam-utils v0.0.0-20220902130619-40159832fff5 h1:4ppnKq9vWT8rDWN8S1v8hXMt3ahMqMapqN6WgPPJKaM=
 github.com/napptive/oam-utils v0.0.0-20220902130619-40159832fff5/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
+github.com/napptive/oam-utils v0.0.0-20220905112122-2c2b95e9eadd h1:t9m6Bz6E2xqWF8N4OwkZVqqwSptbDEZs96ZZb/53dyw=
+github.com/napptive/oam-utils v0.0.0-20220905112122-2c2b95e9eadd/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
+github.com/napptive/oam-utils v0.0.0-20220905114219-4681812635cc h1:19bavrDzK9Y/+T/kg4S//Gf/cSE9MobfPVd6RoB5r2Y=
+github.com/napptive/oam-utils v0.0.0-20220905114219-4681812635cc/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
+github.com/napptive/oam-utils v0.0.0-20220905114933-5c01dcd21cc0 h1:1FdxWH7Z/oFG3m7ZTz4BDaP+YH5I5jj9OhzzCrcmQF8=
+github.com/napptive/oam-utils v0.0.0-20220905114933-5c01dcd21cc0/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
+github.com/napptive/oam-utils v0.0.0-20220905132525-d0a62ca7d96d h1:L46cSImmwLocdnZI2Wv0ENYXu8jLLXPbXFPzh2YjR1U=
+github.com/napptive/oam-utils v0.0.0-20220905132525-d0a62ca7d96d/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
+github.com/napptive/oam-utils v0.0.0-20220905133226-c48c4a72cb6d h1:MQt/Rw8F9f0d5n9ebBJnRMlC+j644VysC+6TUa7D/sw=
+github.com/napptive/oam-utils v0.0.0-20220905133226-c48c4a72cb6d/go.mod h1:eGN0/sYZM0I+kkn8+2LiGwj7Tg35vwih44v+5pSCzR4=
 github.com/napptive/rdbms/v2 v2.3.0 h1:McSXZW5mrGDk2EXuMjYaXbQZcx7bSa6lMeK/Irc34JQ=
 github.com/napptive/rdbms/v2 v2.3.0/go.mod h1:K4B3KTBSUrrl/sITRFscRrWJAxqY/TcOsDsfYmajxV8=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
