@@ -16,7 +16,73 @@
 
 package metadata
 
-import "github.com/napptive/catalog-manager/internal/pkg/entities"
+import (
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
+)
+
+type ListFilter struct {
+	Namespace *string
+	Private   *bool
+}
+
+/*
+   curl -X GET "localhost:9200/napptive/_search?pretty" -H 'Content-Type: application/json' -d'
+   {
+     "query": {
+       "bool" : {
+         "must" : {
+           "term" : { "Private" : <private> }
+         },
+         "filter": {
+           "term" : { "Namespace" : <namespace> }
+         }
+       }
+     }
+   }
+   '
+*/
+
+func (f *ListFilter) ToElasticQuery() map[string]interface{} {
+	var query map[string]interface{}
+
+	if f == nil {
+		return query
+	}
+
+	// Namespace && Private
+	if f.Namespace != nil && *f.Namespace != "" && f.Private != nil {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": map[string]interface{}{
+						"term": map[string]interface{}{PrivateField: *f.Private},
+					},
+					"filter": map[string]interface{}{
+						"term": map[string]interface{}{NamespaceField: *f.Namespace},
+					},
+				},
+			},
+		} // Private
+	} else if f.Private != nil && (f.Namespace == nil || *f.Namespace == "") {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"term": map[string]interface{}{
+					PrivateField: *f.Private,
+				},
+			},
+		}
+		// Namespace
+	} else if f.Namespace != nil && *f.Namespace != "" && f.Private == nil {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"term": map[string]interface{}{
+					NamespaceField: *f.Namespace,
+				},
+			},
+		}
+	}
+	return query
+}
 
 // MetadataProvider is an interface with the methods of a metadata provider must implement
 type MetadataProvider interface {
@@ -34,4 +100,9 @@ type MetadataProvider interface {
 	ListSummary(namespace string) ([]*entities.AppSummary, error)
 	// GetSummary returns the catalog summary
 	GetSummary() (*entities.Summary, error)
+
+	ListSummaryWithFilter(filter *ListFilter) ([]*entities.AppSummary, *entities.Summary, error)
+	GetPublicApps() []*entities.AppSummary
+	// GetApplicationVisibility returns is an application is private or not or nil if the application does not exist
+	GetApplicationVisibility(namespace string, applicationName string) (*bool, error)
 }

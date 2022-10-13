@@ -473,6 +473,8 @@ github.com/napptive/grpc-catalog-common-go v0.2.0 h1:BdIYVOEmzIZbzbVvjKnd9/8T8nQ
 github.com/napptive/grpc-catalog-common-go v0.2.0/go.mod h1:bnedZvTuFnhO2q1u66EUseAy3k0/N5MW/BFvb8S23bA=
 github.com/napptive/grpc-catalog-go v0.21.0 h1:7jVt3nltb3pinljB8lzWcV0YdvszOlsmT24lA8u02bc=
 github.com/napptive/grpc-catalog-go v0.21.0/go.mod h1:BoOdDpZZlW8rWNlSe2/mjG9JC6+UCLlZkUNovwMFxY0=
+github.com/napptive/grpc-catalog-go v0.24.0 h1:1tjhmnMgDln/UTAxS2hceFIU72JEUb+rhV64qpNFCmw=
+github.com/napptive/grpc-catalog-go v0.24.0/go.mod h1:BoOdDpZZlW8rWNlSe2/mjG9JC6+UCLlZkUNovwMFxY0=
 github.com/napptive/grpc-common-go v0.2.0/go.mod h1:Q896cZY+yIkted9zYw3jtguVDdfL1bqTHjjiirBTjnw=
 github.com/napptive/grpc-common-go v0.4.0 h1:uN6sxr8tidDEPwhVLA6UwnGpNHwuI+QTwWdfTseoiQc=
 github.com/napptive/grpc-common-go v0.4.0/go.mod h1:Q896cZY+yIkted9zYw3jtguVDdfL1bqTHjjiirBTjnw=
@@ -480,6 +482,8 @@ github.com/napptive/grpc-ping-go v0.1.0 h1:/hNDGXAOPbGA/jszauggfDG3PcVsfpgrxrS5l
 github.com/napptive/grpc-ping-go v0.1.0/go.mod h1:hBIdzClG9sZCHcq+tYZGNLaZ0TtQZ6s/YIRbNyhKES4=
 github.com/napptive/grpc-playground-apps-go v0.24.0 h1:bnDAm8bwO0ji3rpb6MGaJpEJA9E65wN5l+ADUojsESk=
 github.com/napptive/grpc-playground-apps-go v0.24.0/go.mod h1:0U/uXuVz7u9nRNXFTBnvVv4JY/+cY4I4bWzEm/tbeeA=
+github.com/napptive/grpc-playground-apps-go v0.25.0 h1:2eXTtvyohQcEVZJfjqXRmdw8ihXEEtS8/eDVqHhaZes=
+github.com/napptive/grpc-playground-apps-go v0.25.0/go.mod h1:0U/uXuVz7u9nRNXFTBnvVv4JY/+cY4I4bWzEm/tbeeA=
 github.com/napptive/grpc-playground-common-go v0.6.0 h1:TQDS1qy6c1O6Bb1M3Rt0FW94/2l3lrDmozoHEEvCPNw=
 github.com/napptive/grpc-playground-common-go v0.6.0/go.mod h1:foiyt6GxEG8T10a7QpuJk/iUcKKFbk1v/9vqyfx7vqw=
 github.com/napptive/grpc-playground-environments-go v0.10.0 h1:ysXhqu+d1AyKC54LF4CwRgXvuo3KVvhvANVAFPjdY40=

@@ -53,18 +53,27 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 	// TODO: create a map to load the files and avoid send a file twice
 	applicationID := ""
 	var applicationFiles []*entities.FileInfo
+	private := false
 
 	for {
 		// From https://grpc.io/docs/languages/go/basics/#server-side-streaming-rpc-1
 		request, err := server.Recv()
 		if err == io.EOF {
-			if err := h.manager.Add(applicationID, applicationFiles); err != nil {
+			isPrivate, err := h.manager.Add(applicationID, applicationFiles, private)
+			if err != nil {
 				return nerrors.FromError(err).ToGRPC()
 			} else {
+				var message string
+				if isPrivate {
+					message = fmt.Sprintf("Private application %s added.", applicationID)
+				} else {
+					message = fmt.Sprintf("Public application %s added.", applicationID)
+				}
+
 				return server.SendAndClose(&grpc_catalog_common_go.OpResponse{
 					Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
 					StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
-					UserInfo:   fmt.Sprintf(appAddedMsg, applicationID),
+					UserInfo:   message,
 				})
 			}
 		}
@@ -75,9 +84,16 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 		// the first time save the application identifier
 		if applicationID == "" {
 			applicationID = request.ApplicationId
+			private = request.Private
 			// Also, validate the user.
 			if vErr := h.validateUser(server.Context(), request.ApplicationId, "push", false); vErr != nil {
 				return vErr
+			}
+
+			// if the application is private and the authentication is no enable -> error
+			if private && !h.authEnabled {
+				sErr := nerrors.NewFailedPreconditionError("enable authentication to make use of private apps")
+				return nerrors.FromError(sErr).ToGRPC()
 			}
 		}
 
@@ -87,9 +103,12 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 			sErr := nerrors.NewFailedPreconditionError("cannot send different applications in the same stream")
 			return nerrors.FromError(sErr).ToGRPC()
 		}
+		if request.Private != private {
+			sErr := nerrors.NewFailedPreconditionError("cannot send different private flag in the same stream")
+			return nerrors.FromError(sErr).ToGRPC()
+		}
 		// Append the files
 		applicationFiles = append(applicationFiles, entities.NewFileInfo(request.File))
-
 	}
 }
 
@@ -99,7 +118,18 @@ func (h *Handler) Download(request *grpc_catalog_go.DownloadApplicationRequest, 
 		return nerrors.FromError(err).ToGRPC()
 	}
 
-	files, err := h.manager.Download(request.ApplicationId, request.Compressed)
+	username := ""
+	// if authentication is enabled -> Get the account name to filter all private apps by namespace
+	if h.authEnabled {
+		usernameFromCtx, err := h.getUsernameFromContext(server.Context())
+		if err != nil {
+			log.Error().Err(err).Msg("error getting username from context")
+			return err
+		}
+		username = *usernameFromCtx
+	}
+
+	files, err := h.manager.Download(request.ApplicationId, request.Compressed, username)
 	if err != nil {
 		return nerrors.FromError(err).ToGRPC()
 	}
@@ -138,7 +168,19 @@ func (h *Handler) Remove(ctx context.Context, request *grpc_catalog_go.RemoveApp
 
 // List returns a list with all the applications
 func (h *Handler) List(ctx context.Context, request *grpc_catalog_go.ListApplicationsRequest) (*grpc_catalog_go.ApplicationList, error) {
-	returned, err := h.manager.List(request.Namespace)
+
+	username := ""
+	// if authentication is enabled -> Get the account name to filter all private apps by namespace
+	if h.authEnabled {
+		usernameFromCtx, err := h.getUsernameFromContext(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("error getting username from context")
+			return nil, err
+		}
+		username = *usernameFromCtx
+	}
+
+	returned, err := h.manager.List(request.Namespace, username)
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
@@ -158,7 +200,18 @@ func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplica
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
 
-	retrieved, err := h.manager.Get(request.ApplicationId)
+	username := ""
+	// if authentication is enabled -> Get the account name to filter all private apps by namespace
+	if h.authEnabled {
+		usernameFromCtx, err := h.getUsernameFromContext(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("error getting username from context")
+			return nil, err
+		}
+		username = *usernameFromCtx
+	}
+
+	retrieved, err := h.manager.Get(request.ApplicationId, username)
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
@@ -172,6 +225,7 @@ func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplica
 	}, nil
 }
 
+// Summary returns the summary of the catalog (#repositories, #applications and #tags)
 func (h *Handler) Summary(ctx context.Context, request *grpc_catalog_common_go.EmptyRequest) (*grpc_catalog_go.SummaryResponse, error) {
 
 	summary, err := h.manager.Summary()
@@ -182,7 +236,7 @@ func (h *Handler) Summary(ctx context.Context, request *grpc_catalog_common_go.E
 }
 
 // validateUser check if the user in the context is the same as the repo name
-func (h *Handler) validateUser(ctx context.Context, appName string, action string, requireAdminPriviledge bool) error {
+func (h *Handler) validateUser(ctx context.Context, appName string, action string, requireAdminPrivilege bool) error {
 
 	// check the user (check if after validation to be sure the ApplicationName is filled
 	if h.authEnabled {
@@ -203,7 +257,7 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 
 			// Check target account
 			if appID.Namespace == claim.AccountName {
-				if requireAdminPriviledge {
+				if requireAdminPrivilege {
 					if claim.AccountAdmin {
 						return nil
 					} else {
@@ -227,6 +281,7 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 	return nil
 }
 
+// isPrivilegedUser checks the user role
 func (h *Handler) isPrivilegedUser(userName string) bool {
 	if !h.teamConfig.Enabled {
 		return false
@@ -240,6 +295,7 @@ func (h *Handler) isPrivilegedUser(userName string) bool {
 	return false
 }
 
+// isTeamNamespace checks the namespace role
 func (h *Handler) isTeamNamespace(repoName string) bool {
 	if !h.teamConfig.Enabled {
 		return false
@@ -251,4 +307,18 @@ func (h *Handler) isTeamNamespace(repoName string) bool {
 	}
 
 	return false
+}
+
+// getUsernameFromContext returns the username from the token
+func (h *Handler) getUsernameFromContext(ctx context.Context) (*string, error) {
+	if !h.authEnabled {
+		// TODO: ask @Dani about what to do... perhaps is better to allow get private applications if authorization is not enable
+		// Use case: catalog with authentication and private apps becomes to unauthenticated mode
+		return nil, nerrors.NewFailedPreconditionError("no authentication enabled")
+	}
+	claim, err := interceptors.GetClaimFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &claim.Username, nil
 }

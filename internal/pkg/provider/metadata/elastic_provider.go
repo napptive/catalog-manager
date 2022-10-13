@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package metadata
 
 import (
@@ -45,6 +46,8 @@ const (
 	TagField = "Tag"
 	// CatalogIDField with the name of the field where we store the internal ID
 	CatalogIDField = "CatalogID"
+	// PrivateField with the name of the field where we store the application scope
+	PrivateField = "Private"
 	// CacheRefreshTime ick duration to update cache
 	CacheRefreshTime = time.Second * 30
 )
@@ -59,12 +62,13 @@ var mapping = `{
           "Tag":         		{ "type": "keyword" },
           "Readme": 			{ "type": "text" },
           "Metadata":  			{ "type": "text" },
-          "MetadataName":		{ "type": "text" }
+          "MetadataName":		{ "type": "text" },
+          "Private": 			{ "type": "boolean" }
       }
     }
 }`
 
-// responseWrapper is an struct used to load a search result
+// responseWrapper is a struct used to load a search result
 type responseWrapper struct {
 	Took int
 	Hits struct {
@@ -83,18 +87,20 @@ type responseWrapper struct {
 type ElasticProvider struct {
 	client    *elasticsearch.Client
 	indexName string
-	// appCache with a cache that contains all the catalog applications
+	// appCache with a cache that contains all the catalog PUBLIC applications
 	appCache []*entities.AppSummary
-	// summaryCache with a cache that contains the catalog summary
+	// summaryCache with a cache that contains the catalog summary (with PUBLIC applications)
 	summaryCache *entities.Summary
 	// Mutex to protect cache access
 	sync.Mutex
 	// invalidateCacheChan with a chan te send/receive message to fill Cache after remove or add an application
 	invalidateCacheChan chan bool
+	// authEnable with a flag to indicate if the authorization is enabled
+	authEnable bool
 }
 
 // NewElasticProvider returns new Elastic provider
-func NewElasticProvider(index string, address string) (*ElasticProvider, error) {
+func NewElasticProvider(index string, address string, authEnable bool) (*ElasticProvider, error) {
 
 	conf := elasticsearch.Config{
 		Addresses: []string{address},
@@ -109,6 +115,7 @@ func NewElasticProvider(index string, address string) (*ElasticProvider, error) 
 		indexName:           index,
 		appCache:            make([]*entities.AppSummary, 0),
 		invalidateCacheChan: make(chan bool),
+		authEnable:          authEnable,
 	}, nil
 }
 
@@ -543,7 +550,20 @@ func (e *ElasticProvider) ListSummary(namespace string) ([]*entities.AppSummary,
 // FillCache refresh the cache with the applications
 func (e *ElasticProvider) FillCache() {
 	// ListSummary and fillCache
-	summaryList, summary, err := e.getSummaryList("")
+	var listFilter *ListFilter
+	if e.authEnable {
+		private := false
+		listFilter = &ListFilter{
+			Namespace: nil,
+			Private:   &private,
+		}
+	} else {
+		listFilter = &ListFilter{
+			Namespace: nil,
+			Private:   nil,
+		}
+	}
+	summaryList, summary, err := e.ListSummaryWithFilter(listFilter)
 	if err != nil {
 		log.Error().Str("error", err.Error()).Msg("error filling the cache")
 	} else {
@@ -551,6 +571,7 @@ func (e *ElasticProvider) FillCache() {
 		defer e.Unlock()
 
 		e.appCache = summaryList
+		log.Debug().Int("len", len(e.appCache)).Msg("applications in cache")
 		e.summaryCache = summary
 	}
 }
