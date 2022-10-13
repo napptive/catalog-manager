@@ -268,6 +268,7 @@ func (m *manager) Get(requestedAppID string, username string) (*entities.Extende
 		Readme:          app.Readme,
 		Metadata:        app.Metadata,
 		MetadataObj:     obj,
+		Private:         app.Private,
 	}, nil
 }
 

@@ -96,11 +96,11 @@ type MetadataProvider interface {
 	Remove(appID *entities.ApplicationID) error
 	// List returns the applications stored
 	List(namespace string) ([]*entities.ApplicationInfo, error)
-
 	// GetSummary returns the catalog summary
 	GetSummary() (*entities.Summary, error)
-
+	// ListSummaryWithFilter returns entities.AppSummary and entities.Summary applying a filter in the search method
 	ListSummaryWithFilter(filter *ListFilter) ([]*entities.AppSummary, *entities.Summary, error)
+	// GetPublicApps returns the public apps
 	GetPublicApps() []*entities.AppSummary
 	// GetApplicationVisibility returns is an application is private or not or nil if the application does not exist
 	GetApplicationVisibility(namespace string, applicationName string) (*bool, error)

@@ -232,6 +232,7 @@ func (h *Handler) Info(ctx context.Context, request *grpc_catalog_go.InfoApplica
 		MetadataFile:    []byte(retrieved.Metadata),
 		ReadmeFile:      []byte(retrieved.Readme),
 		Metadata:        retrieved.MetadataObj.ToGRPC(),
+		Private:         retrieved.Private,
 	}, nil
 }
 

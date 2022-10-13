@@ -96,8 +96,8 @@ func (m *Manager) CheckPassword(b64Password string, password string) error {
 	return nil
 }
 
-// TODO: returns JWT token
 // LoginUser gets the user and checks the credentials
+// TODO: returns JWT token
 func (m *Manager) LoginUser(username string, password string) error {
 	// Create Provider
 	conn, err := rdbms.NewRDBMS().PoolConnect(context.Background(), m.connString)

@@ -22,6 +22,7 @@ import (
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 )
 
+// AppSummary with the application summary (all the application tags and logos)
 type AppSummary struct {
 	// Namespace with the namespace of the application
 	Namespace string
@@ -60,9 +61,12 @@ func (a *AppSummary) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary 
 
 // Summary with catalog summary
 type Summary struct {
-	NumNamespaces   int
+	// NumNamespaces with the number of the namespaces in the catalog
+	NumNamespaces int
+	// NumApplications with the number of the applications in the catalog
 	NumApplications int
-	NumTags         int
+	// NumTags with the number of the application tags in the catalog
+	NumTags int
 }
 
 // ToSummaryResponse converts Summary to GRPC
@@ -75,18 +79,6 @@ func (s *Summary) ToSummaryResponse() *grpc_catalog_go.SummaryResponse {
 		NumApplications: int32(s.NumApplications),
 		NumTags:         int32(s.NumTags),
 	}
-}
-
-type ExtendedAppSummary struct {
-	// Namespace with the namespace of the application
-	Namespace string
-	// ApplicationName with the name of the application
-	ApplicationName string
-	// TagMetadataName with the MetadataName indexed by Tag
-	Tag          string
-	MetadataName string
-	Metadata     string
-	Private      bool
 }
 
 // -- ApplicationMetadata
@@ -259,6 +251,8 @@ type ExtendedApplicationMetadata struct {
 	Metadata string
 	// MetadataObj with the metadata object
 	MetadataObj ApplicationMetadata
+	// Private
+	Private bool
 }
 
 // --

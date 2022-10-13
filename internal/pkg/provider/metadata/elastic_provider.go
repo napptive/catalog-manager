@@ -44,6 +44,10 @@ const (
 	ApplicationField = "ApplicationName"
 	// TagField with the name of the field where we store the name of tag/version
 	TagField = "Tag"
+	// MetadataNameField with the name of the field where we store the name in the metadata
+	MetadataNameField = "MetadataName"
+	// MetadataField with the name of the field where we store the application metadata
+	MetadataField = "Metadata"
 	// CatalogIDField with the name of the field where we store the internal ID
 	CatalogIDField = "CatalogID"
 	// PrivateField with the name of the field where we store the application scope
@@ -396,162 +400,6 @@ func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, e
 
 }
 
-// listFrom returns applications from last received
-func (e *ElasticProvider) listFrom(namespace string, lastReceived int, getFields ...string) (*responseWrapper, error) {
-
-	sortedBy := []string{"Namespace", "ApplicationName", "Tag"}
-	searchFunctions := []func(*esapi.SearchRequest){
-		e.client.Search.WithContext(context.Background()),
-		e.client.Search.WithIndex(e.indexName),
-		e.client.Search.WithTrackTotalHits(true),
-		e.client.Search.WithFrom(lastReceived),
-		e.client.Search.WithSort(sortedBy...),
-	}
-
-	if len(getFields) > 0 {
-		searchFunctions = append(searchFunctions, e.client.Search.WithSourceIncludes(getFields...))
-	}
-
-	if namespace != "" {
-		query := map[string]interface{}{
-			"query": map[string]interface{}{
-				"match": map[string]interface{}{
-					NamespaceField: namespace,
-				},
-			},
-		}
-
-		var buf bytes.Buffer
-		if err := json.NewEncoder(&buf).Encode(query); err != nil {
-			log.Err(err).Msg("Error encoding namespaced query")
-			return nil, nerrors.NewInternalErrorFrom(err, "error creating query to list by namespace")
-		}
-		searchFunctions = append(searchFunctions, e.client.Search.WithBody(&buf))
-
-	}
-
-	// Perform the search request.
-	res, err := e.client.Search(searchFunctions...)
-	if err != nil {
-		log.Err(err).Msg("Error getting response")
-		return nil, nerrors.FromError(err)
-	}
-	defer res.Body.Close()
-
-	if err = e.checkElasticError(res, "listing"); err != nil {
-		return nil, err
-	}
-
-	var r responseWrapper
-	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		return nil, nerrors.FromError(err)
-	}
-	// Print the response status, number of results, and request duration.
-	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("List operation")
-
-	return &r, nil
-}
-
-func (e *ElasticProvider) getSummaryList(namespace string) ([]*entities.AppSummary, *entities.Summary, error) {
-
-	lastReceived := 0
-	query := true
-	summaryList := make([]*entities.AppSummary, 0)
-	var summary entities.Summary
-	total := 0
-	getFields := []string{"Namespace", "ApplicationName", "Tag", "MetadataName", "Metadata"}
-	for query {
-		r, err := e.listFrom(namespace, lastReceived, getFields...)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		for _, app := range r.Hits.Hits {
-			var application entities.ExtendedAppSummary
-			if err := json.Unmarshal(app.Source, &application); err != nil {
-				return nil, nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
-			}
-
-			// new version
-			summary.NumTags++
-
-			var metadataLogo []entities.ApplicationLogo
-			_, metadata, err := utils.IsMetadata([]byte(application.Metadata))
-			if err != nil {
-				// If returns the error, the catalog could be inaccessible. It could be better not return an error and allows to continue listing
-				//return nil, nil, err
-				log.Warn().Str("error", err.Error()).Msg("error getting metadata")
-			} else {
-				metadataLogo = metadata.Logo
-			}
-
-			// check if the last entry has the same namespace and applicationName as the newer one
-			if len(summaryList) > 0 {
-				last := summaryList[len(summaryList)-1]
-				if last.Namespace != application.Namespace {
-					// new namespace
-					summary.NumNamespaces++
-				}
-				if last.Namespace == application.Namespace && last.ApplicationName == application.ApplicationName {
-					summaryList[len(summaryList)-1].TagMetadataName[application.Tag] = application.MetadataName
-					if metadataLogo != nil {
-						summaryList[len(summaryList)-1].MetadataLogo[application.Tag] = metadataLogo
-					}
-				} else {
-					// new application
-					summary.NumApplications++
-					newSumm := &entities.AppSummary{
-						Namespace:       application.Namespace,
-						ApplicationName: application.ApplicationName,
-						TagMetadataName: map[string]string{application.Tag: application.MetadataName},
-						MetadataLogo:    map[string][]entities.ApplicationLogo{},
-					}
-					if metadataLogo != nil {
-						newSumm.MetadataLogo[application.Tag] = metadataLogo
-					}
-					summaryList = append(summaryList, newSumm)
-				}
-			} else {
-				// new namespace
-				summary.NumNamespaces++
-				// new application (new tag updated above)
-				summary.NumApplications++
-				newSumm := &entities.AppSummary{
-					Namespace:       application.Namespace,
-					ApplicationName: application.ApplicationName,
-					TagMetadataName: map[string]string{application.Tag: application.MetadataName},
-					MetadataLogo:    map[string][]entities.ApplicationLogo{},
-				}
-				if metadataLogo != nil {
-					newSumm.MetadataLogo[application.Tag] = metadataLogo
-				}
-				summaryList = append(summaryList, newSumm)
-
-			}
-			total++
-		}
-		lastReceived += len(r.Hits.Hits)
-		query = r.Hits.Total.Value != total && len(r.Hits.Hits) != 0
-	}
-
-	return summaryList, &summary, nil
-}
-
-// ListSummary returns all the catalog applications.
-// if it doesn't ask for namespace -> returns cache
-// if namespace is filled -> elastic query
-func (e *ElasticProvider) ListSummary(namespace string) ([]*entities.AppSummary, error) {
-
-	if namespace == "" {
-		e.Lock()
-		defer e.Unlock()
-		return e.appCache, nil
-	}
-	summaryList, _, err := e.getSummaryList(namespace)
-
-	return summaryList, err
-}
-
 // FillCache refresh the cache with the applications
 func (e *ElasticProvider) FillCache() {
 	// ListSummary and fillCache
@@ -589,4 +437,210 @@ func (e *ElasticProvider) GetSummary() (*entities.Summary, error) {
 		return nil, nerrors.NewInternalError("error getting catalog summary")
 	}
 	return e.summaryCache, nil
+}
+
+// listFromWithFilter search applications in elastic with pagination
+func (e *ElasticProvider) listFromWithFilter(filter *ListFilter, lastReceived int, getFields ...string) (*responseWrapper, error) {
+
+	sortedBy := []string{NamespaceField, ApplicationField, TagField}
+	searchFunctions := []func(*esapi.SearchRequest){
+		e.client.Search.WithContext(context.Background()),
+		e.client.Search.WithIndex(e.indexName),
+		e.client.Search.WithTrackTotalHits(true),
+		e.client.Search.WithFrom(lastReceived),
+		e.client.Search.WithSort(sortedBy...),
+	}
+
+	if len(getFields) > 0 {
+		searchFunctions = append(searchFunctions, e.client.Search.WithSourceIncludes(getFields...))
+	}
+
+	query := filter.ToElasticQuery()
+	if len(query) > 0 {
+
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(query); err != nil {
+			log.Err(err).Msg("Error encoding namespaced query")
+			return nil, nerrors.NewInternalErrorFrom(err, "error creating query to list by namespace")
+		}
+		searchFunctions = append(searchFunctions, e.client.Search.WithBody(&buf))
+	}
+
+	// Perform the search request.
+	res, err := e.client.Search(searchFunctions...)
+	if err != nil {
+		log.Err(err).Msg("Error getting response")
+		return nil, nerrors.FromError(err)
+	}
+	defer res.Body.Close()
+
+	if err = e.checkElasticError(res, "listing"); err != nil {
+		return nil, err
+	}
+
+	var r responseWrapper
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, nerrors.FromError(err)
+	}
+	// Print the response status, number of results, and request duration.
+	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("List operation")
+
+	return &r, nil
+}
+
+// ListSummaryWithFilter returns entities.AppSummary and entities.Summary applying a filter in the search method
+func (e *ElasticProvider) ListSummaryWithFilter(filter *ListFilter) ([]*entities.AppSummary, *entities.Summary, error) {
+	lastReceived := 0
+	query := true
+	summaryList := make([]*entities.AppSummary, 0)
+	var summary entities.Summary
+	total := 0
+	getFields := []string{NamespaceField, ApplicationField, TagField, MetadataNameField, MetadataField, PrivateField}
+
+	for query {
+		r, err := e.listFromWithFilter(filter, lastReceived, getFields...)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		for _, app := range r.Hits.Hits {
+			// var application entities.ExtendedAppSummary
+			var application entities.ApplicationInfo
+			if err := json.Unmarshal(app.Source, &application); err != nil {
+				return nil, nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+			}
+
+			// new version
+			summary.NumTags++
+
+			var metadataLogo []entities.ApplicationLogo
+			_, metadata, err := utils.IsMetadata([]byte(application.Metadata))
+			if err != nil {
+				// If returns the error, the catalog could be inaccessible. It could be better not return an error and allows to continue listing
+				//return nil, nil, err
+				log.Warn().Str("error", err.Error()).Msg("error getting metadata")
+			} else {
+				metadataLogo = metadata.Logo
+			}
+
+			// check if the last entry has the same namespace and applicationName as the newer one
+			if len(summaryList) > 0 {
+				last := summaryList[len(summaryList)-1]
+				if last.Namespace != application.Namespace {
+					// new namespace
+					summary.NumNamespaces++
+				}
+				if last.Namespace == application.Namespace && last.ApplicationName == application.ApplicationName {
+					summaryList[len(summaryList)-1].TagMetadataName[application.Tag] = application.MetadataName
+					if metadataLogo != nil {
+						summaryList[len(summaryList)-1].MetadataLogo[application.Tag] = metadataLogo
+					}
+				} else {
+					// new application
+					summary.NumApplications++
+					newAppSummary := &entities.AppSummary{
+						Namespace:       application.Namespace,
+						ApplicationName: application.ApplicationName,
+						TagMetadataName: map[string]string{application.Tag: application.MetadataName},
+						MetadataLogo:    map[string][]entities.ApplicationLogo{},
+						Private:         application.Private,
+					}
+					if metadataLogo != nil {
+						newAppSummary.MetadataLogo[application.Tag] = metadataLogo
+					}
+					summaryList = append(summaryList, newAppSummary)
+				}
+			} else {
+				// new namespace
+				summary.NumNamespaces++
+				// new application (new tag updated above)
+				summary.NumApplications++
+				newAppSummary := &entities.AppSummary{
+					Namespace:       application.Namespace,
+					ApplicationName: application.ApplicationName,
+					TagMetadataName: map[string]string{application.Tag: application.MetadataName},
+					MetadataLogo:    map[string][]entities.ApplicationLogo{},
+					Private:         application.Private,
+				}
+				if metadataLogo != nil {
+					newAppSummary.MetadataLogo[application.Tag] = metadataLogo
+				}
+				summaryList = append(summaryList, newAppSummary)
+
+			}
+			total++
+		}
+		lastReceived += len(r.Hits.Hits)
+		query = r.Hits.Total.Value != total && len(r.Hits.Hits) != 0
+	}
+
+	return summaryList, &summary, nil
+}
+
+// GetPublicApps returns the public apps stored in the cache
+func (e *ElasticProvider) GetPublicApps() []*entities.AppSummary {
+	e.Lock()
+	defer e.Unlock()
+	return e.appCache
+}
+
+// GetApplicationVisibility returns the application visibility or nil if the application does not exist
+func (e *ElasticProvider) GetApplicationVisibility(namespace string, applicationName string) (*bool, error) {
+
+	sortedBy := []string{NamespaceField, ApplicationField, TagField}
+	searchFunctions := []func(*esapi.SearchRequest){
+		e.client.Search.WithContext(context.Background()),
+		e.client.Search.WithIndex(e.indexName),
+		e.client.Search.WithTrackTotalHits(true),
+		e.client.Search.WithSize(1), // only one requested -> all the applications have the same visibility
+		e.client.Search.WithSort(sortedBy...),
+		e.client.Search.WithSourceIncludes(NamespaceField, ApplicationField, TagField, PrivateField),
+	}
+
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": map[string]interface{}{
+					"term": map[string]interface{}{NamespaceField: namespace},
+				},
+				"filter": map[string]interface{}{
+					"term": map[string]interface{}{ApplicationField: applicationName},
+				},
+			},
+		},
+	}
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		log.Err(err).Msg("Error encoding namespaced query")
+		return nil, nerrors.NewInternalErrorFrom(err, "error all applications tags")
+	}
+	searchFunctions = append(searchFunctions, e.client.Search.WithBody(&buf))
+
+	// Perform the search request.
+	res, err := e.client.Search(searchFunctions...)
+	if err != nil {
+		log.Err(err).Msg("Error getting response")
+		return nil, nerrors.FromError(err)
+	}
+	defer res.Body.Close()
+
+	if err = e.checkElasticError(res, "getting tag"); err != nil {
+		return nil, err
+	}
+
+	var r responseWrapper
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, nerrors.FromError(err)
+	}
+
+	if len(r.Hits.Hits) <= 0 {
+		return nil, nil
+	}
+
+	var application entities.ApplicationInfo
+	if err := json.Unmarshal(r.Hits.Hits[0].Source, &application); err != nil {
+		return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+	}
+	return &application.Private, nil
+
 }
