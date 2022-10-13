@@ -24,8 +24,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
-	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
+	"github.com/napptive/grpc-catalog-common-go"
+	"github.com/napptive/grpc-catalog-go"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 )
@@ -55,7 +55,7 @@ func MockApplicationUpload(addServerStream *MockCatalog_AddServer, applicationID
 		File:          &grpc_catalog_go.FileInfo{},
 	}
 	addServerStream.EXPECT().Recv().Return(request, nil)
-	addServerStream.EXPECT().Context().Return(ctx)
+	addServerStream.EXPECT().Context().Return(ctx).AnyTimes()
 	addServerStream.EXPECT().Recv().Return(nil, io.EOF)
 	addServerStream.EXPECT().SendAndClose(gomock.Any()).Return(nil)
 }
@@ -66,7 +66,7 @@ func MockApplicationUploadAuthorizationFailed(addServerStream *MockCatalog_AddSe
 		File:          &grpc_catalog_go.FileInfo{},
 	}
 	addServerStream.EXPECT().Recv().Return(request, nil)
-	addServerStream.EXPECT().Context().Return(ctx)
+	addServerStream.EXPECT().Context().Return(ctx).AnyTimes()
 }
 
 var _ = ginkgo.Describe("Catalog handler test with auth enabled by JWT", func() {
@@ -93,7 +93,7 @@ var _ = ginkgo.Describe("Catalog handler test with auth enabled by JWT", func() 
 		ginkgo.It("should allow the user to create/update an application in his namespace", func() {
 			appID := GetTestMemberApplicationId()
 			MockApplicationUpload(addServerStream, appID, GetTestMemberContext())
-			manager.EXPECT().Add(appID, gomock.Any()).Return(nil)
+			manager.EXPECT().Add(appID, gomock.Any(), false, "username").Return(false, nil)
 			err := handler.Add(addServerStream)
 			gomega.Expect(err).To(gomega.Succeed())
 		})
@@ -127,14 +127,14 @@ var _ = ginkgo.Describe("Catalog handler test with auth enabled by JWT", func() 
 		ginkgo.It("should allow the user to create/update an application in his account name being a member", func() {
 			appID := GetTestMemberApplicationId()
 			MockApplicationUpload(addServerStream, appID, GetTestMemberContext())
-			manager.EXPECT().Add(appID, gomock.Any()).Return(nil)
+			manager.EXPECT().Add(appID, gomock.Any(), false, "username").Return(false, nil)
 			err := handler.Add(addServerStream)
 			gomega.Expect(err).To(gomega.Succeed())
 		})
 		ginkgo.It("should allow the user to create/update an application in his account name being an admin", func() {
 			appID := GetTestMemberApplicationId()
 			MockApplicationUpload(addServerStream, appID, GetTestAdminContext())
-			manager.EXPECT().Add(appID, gomock.Any()).Return(nil)
+			manager.EXPECT().Add(appID, gomock.Any(), false, "username").Return(false, nil)
 			err := handler.Add(addServerStream)
 			gomega.Expect(err).To(gomega.Succeed())
 		})

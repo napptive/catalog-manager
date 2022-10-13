@@ -9,6 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	entities "github.com/napptive/catalog-manager/internal/pkg/entities"
+	metadata "github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
 )
 
 // MockMetadataProvider is a mock of MetadataProvider interface.
@@ -79,6 +80,35 @@ func (mr *MockMetadataProviderMockRecorder) Get(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockMetadataProvider)(nil).Get), arg0)
 }
 
+// GetApplicationVisibility mocks base method.
+func (m *MockMetadataProvider) GetApplicationVisibility(arg0, arg1 string) (*bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetApplicationVisibility", arg0, arg1)
+	ret0, _ := ret[0].(*bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetApplicationVisibility indicates an expected call of GetApplicationVisibility.
+func (mr *MockMetadataProviderMockRecorder) GetApplicationVisibility(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApplicationVisibility", reflect.TypeOf((*MockMetadataProvider)(nil).GetApplicationVisibility), arg0, arg1)
+}
+
+// GetPublicApps mocks base method.
+func (m *MockMetadataProvider) GetPublicApps() []*entities.AppSummary {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPublicApps")
+	ret0, _ := ret[0].([]*entities.AppSummary)
+	return ret0
+}
+
+// GetPublicApps indicates an expected call of GetPublicApps.
+func (mr *MockMetadataProviderMockRecorder) GetPublicApps() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicApps", reflect.TypeOf((*MockMetadataProvider)(nil).GetPublicApps))
+}
+
 // GetSummary mocks base method.
 func (m *MockMetadataProvider) GetSummary() (*entities.Summary, error) {
 	m.ctrl.T.Helper()
@@ -109,19 +139,20 @@ func (mr *MockMetadataProviderMockRecorder) List(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockMetadataProvider)(nil).List), arg0)
 }
 
-// ListSummary mocks base method.
-func (m *MockMetadataProvider) ListSummary(arg0 string) ([]*entities.AppSummary, error) {
+// ListSummaryWithFilter mocks base method.
+func (m *MockMetadataProvider) ListSummaryWithFilter(arg0 *metadata.ListFilter) ([]*entities.AppSummary, *entities.Summary, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSummary", arg0)
+	ret := m.ctrl.Call(m, "ListSummaryWithFilter", arg0)
 	ret0, _ := ret[0].([]*entities.AppSummary)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(*entities.Summary)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// ListSummary indicates an expected call of ListSummary.
-func (mr *MockMetadataProviderMockRecorder) ListSummary(arg0 interface{}) *gomock.Call {
+// ListSummaryWithFilter indicates an expected call of ListSummaryWithFilter.
+func (mr *MockMetadataProviderMockRecorder) ListSummaryWithFilter(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSummary", reflect.TypeOf((*MockMetadataProvider)(nil).ListSummary), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSummaryWithFilter", reflect.TypeOf((*MockMetadataProvider)(nil).ListSummaryWithFilter), arg0)
 }
 
 // Remove mocks base method.

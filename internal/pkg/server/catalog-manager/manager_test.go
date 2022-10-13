@@ -98,7 +98,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			storageProvider.EXPECT().GetApplication(namespace, appName, "latest", false).Return(filesReturned, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			files, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false)
+			files, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false, "")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(files).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(files).ShouldNot(gomega.BeNil())
@@ -107,7 +107,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			appName := "appName"
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Download(appName, false)
+			_, err := manager.Download(appName, false, "")
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 		ginkgo.It("should not be able to download an application if there is an error in the storage", func() {
@@ -117,7 +117,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			storageProvider.EXPECT().GetApplication(namespace, appName, "latest", false).Return(nil, nerrors.NewInternalError("error reading repository"))
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false)
+			_, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false, "")
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 	})
@@ -138,7 +138,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			}, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			metadata, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName))
+			metadata, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName), "")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(metadata).ShouldNot(gomega.BeNil())
 			gomega.Expect(metadata.MetadataObj.Name).ShouldNot(gomega.BeEmpty())
@@ -152,13 +152,13 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			metadataProvider.EXPECT().Get(matcher).Return(nil, nerrors.NewNotFoundError("not found"))
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName))
+			_, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName), "")
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 
 		})
 		ginkgo.It("should not be able to return a invalid application", func() {
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Get("invalidApp")
+			_, err := manager.Get("invalidApp", "")
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 	})
@@ -179,10 +179,10 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 				},
 			}
 
-			metadataProvider.EXPECT().ListSummary(gomock.Any()).Return(returned, nil)
+			metadataProvider.EXPECT().GetPublicApps().Return(returned)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			received, err := manager.List("")
+			received, err := manager.List("", "")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(len(received)).ShouldNot(gomega.BeZero())
@@ -200,9 +200,14 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 					TagMetadataName: map[string]string{"tag2": "my app v2"},
 				},
 			}
-			metadataProvider.EXPECT().ListSummary(gomock.Any()).Return(returned, nil)
+			summary := entities.Summary{
+				NumNamespaces:   1,
+				NumApplications: 1,
+				NumTags:         2,
+			}
+			metadataProvider.EXPECT().ListSummaryWithFilter(gomock.Any()).Return(returned, &summary, nil)
 			manager := NewManager(storageProvider, metadataProvider, "")
-			received, err := manager.List("ns1")
+			received, err := manager.List("ns1", "")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(len(received)).Should(gomega.Equal(len(returned)))
@@ -211,11 +216,10 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 		ginkgo.It("should be able to return an empty list of applications", func() {
 
 			returned := make([]*entities.AppSummary, 0)
-
-			metadataProvider.EXPECT().ListSummary(gomock.Any()).Return(returned, nil)
+			metadataProvider.EXPECT().GetPublicApps().Return(returned)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			received, err := manager.List("")
+			received, err := manager.List("", "")
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).Should(gomega.BeEmpty())
 		})
@@ -239,7 +243,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			storageProvider.EXPECT().StoreApplication(namespace, appName, tag, gomock.Any()).Return(nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			err := manager.Add(fmt.Sprintf("%s/%s:%s", namespace, appName, tag), filesReturned)
+			_, err := manager.Add(fmt.Sprintf("%s/%s:%s", namespace, appName, tag), filesReturned, false, "")
 			gomega.Expect(err).Should(gomega.Succeed())
 		})
 		ginkgo.It("Should not be able to add an application if the namespace is wrong", func() {
@@ -256,7 +260,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 					Data: []byte(metadataFile),
 				}}
 			manager := NewManager(storageProvider, metadataProvider, "")
-			err := manager.Add(fmt.Sprintf("%s/%s:%s", namespace, appName, tag), filesReturned)
+			_, err := manager.Add(fmt.Sprintf("%s/%s:%s", namespace, appName, tag), filesReturned, false, "")
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 	})

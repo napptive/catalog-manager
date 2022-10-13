@@ -44,7 +44,7 @@ var validNamespace = regexp.MustCompile(NamespaceRegex)
 
 type Manager interface {
 	// Add stores a new application in the repository.
-	Add(requestedAppID string, files []*entities.FileInfo, isPrivate bool) (bool, error)
+	Add(requestedAppID string, files []*entities.FileInfo, isPrivate bool, username string) (bool, error)
 	// Download returns the files of an application
 	Download(requestedAppID string, compressed bool, username string) ([]*entities.FileInfo, error)
 	// Remove removes an application from the repository
@@ -93,7 +93,7 @@ func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte
 }
 
 // Add stores a new application in the repository returning the application visibility
-func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPrivate bool) (bool, error) {
+func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPrivate bool, username string) (bool, error) {
 
 	// TODO: here, validate the application
 
@@ -135,22 +135,25 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPriva
 		return false, nerrors.NewFailedPreconditionError("Unable to add the application. Metadata name is required.")
 	}
 
-	// Check Application visibility
-	private, err := m.provider.GetApplicationVisibility(appID.Namespace, appID.ApplicationName)
-	if err != nil {
-		return false, nerrors.NewInternalErrorFrom(err, "Unable to add the application.")
-	}
-
-	if private != nil {
-		log.Debug().Bool("application visibility", *private).Bool("new app visibility", isPrivate).Msg("checking application visibility")
-		// the application stored is public and the user wants to store another version PRIVATE -> error
-		if *private == false && isPrivate {
-			return false, nerrors.NewInternalError("error adding application. There is already a public application, change the visibility before adding a private one.")
-		} else {
-			isPrivate = *private
+	// If authentication is enabled
+	if username != "" {
+		// Check Application visibility
+		private, err := m.provider.GetApplicationVisibility(appID.Namespace, appID.ApplicationName)
+		if err != nil {
+			return false, nerrors.NewInternalErrorFrom(err, "Unable to add the application.")
 		}
-	} else {
-		log.Debug().Bool("new app visibility", isPrivate).Msg("There is no applications previously")
+
+		if private != nil {
+			log.Debug().Bool("application visibility", *private).Bool("new app visibility", isPrivate).Msg("checking application visibility")
+			// the application stored is public and the user wants to store another version PRIVATE -> error
+			if *private == false && isPrivate {
+				return false, nerrors.NewInternalError("error adding application. There is already a public application, change the visibility before adding a private one.")
+			} else {
+				isPrivate = *private
+			}
+		} else {
+			log.Debug().Bool("new app visibility", isPrivate).Msg("There is no applications previously")
+		}
 	}
 
 	if _, err := m.provider.Add(&entities.ApplicationInfo{
@@ -284,7 +287,6 @@ func (m *manager) List(namespace string, username string) ([]*entities.AppSummar
 	// no authentication enabled
 	if username == "" {
 		if namespace == "" {
-			log.Debug().Msg("me estoy volviendo loca??")
 			return m.provider.GetPublicApps(), nil
 		} else {
 			apps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{

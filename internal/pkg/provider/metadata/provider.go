@@ -96,8 +96,7 @@ type MetadataProvider interface {
 	Remove(appID *entities.ApplicationID) error
 	// List returns the applications stored
 	List(namespace string) ([]*entities.ApplicationInfo, error)
-	// ListSummary returns a list of application summaries
-	ListSummary(namespace string) ([]*entities.AppSummary, error)
+
 	// GetSummary returns the catalog summary
 	GetSummary() (*entities.Summary, error)
 

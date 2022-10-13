@@ -50,6 +50,17 @@ func NewHandler(manager Manager, authEnabled bool, teamConfig config.TeamConfig)
 // Add a new application in the catalog
 func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 
+	username := ""
+	// if authentication is enabled -> Get the account name to filter all private apps by namespace
+	if h.authEnabled {
+		usernameFromCtx, err := h.getUsernameFromContext(server.Context())
+		if err != nil {
+			log.Error().Err(err).Msg("error getting username from context")
+			return err
+		}
+		username = *usernameFromCtx
+	}
+
 	// TODO: create a map to load the files and avoid send a file twice
 	applicationID := ""
 	var applicationFiles []*entities.FileInfo
@@ -59,7 +70,7 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 		// From https://grpc.io/docs/languages/go/basics/#server-side-streaming-rpc-1
 		request, err := server.Recv()
 		if err == io.EOF {
-			isPrivate, err := h.manager.Add(applicationID, applicationFiles, private)
+			isPrivate, err := h.manager.Add(applicationID, applicationFiles, private, username)
 			if err != nil {
 				return nerrors.FromError(err).ToGRPC()
 			} else {
