@@ -146,7 +146,7 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPriva
 		if private != nil {
 			log.Debug().Bool("application visibility", *private).Bool("new app visibility", isPrivate).Msg("checking application visibility")
 			// the application stored is public and the user wants to store another version PRIVATE -> error
-			if *private == false && isPrivate {
+			if !*private && isPrivate {
 				return false, nerrors.NewInternalError("error adding application. There is already a public application, change the visibility before adding a private one.")
 			} else {
 				isPrivate = *private

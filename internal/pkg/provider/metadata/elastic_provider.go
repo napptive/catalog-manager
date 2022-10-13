@@ -369,8 +369,13 @@ func (e *ElasticProvider) List(namespace string) ([]*entities.ApplicationInfo, e
 	query := true
 	applications := make([]*entities.ApplicationInfo, 0)
 
+	filter := &ListFilter{
+		Namespace: &namespace,
+		Private:   nil,
+	}
+
 	for query {
-		r, err := e.listFrom(namespace, lastReceived)
+		r, err := e.listFromWithFilter(filter, lastReceived)
 		if err != nil {
 			return nil, err
 		}

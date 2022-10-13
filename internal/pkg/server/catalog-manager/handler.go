@@ -31,7 +31,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const appAddedMsg = "%s added to catalog"
 const appRemovedMsg = "%s removed from catalog"
 
 type Handler struct {
@@ -322,11 +321,6 @@ func (h *Handler) isTeamNamespace(repoName string) bool {
 
 // getUsernameFromContext returns the username from the token
 func (h *Handler) getUsernameFromContext(ctx context.Context) (*string, error) {
-	if !h.authEnabled {
-		// TODO: ask @Dani about what to do... perhaps is better to allow get private applications if authorization is not enable
-		// Use case: catalog with authentication and private apps becomes to unauthenticated mode
-		return nil, nerrors.NewFailedPreconditionError("no authentication enabled")
-	}
 	claim, err := interceptors.GetClaimFromContext(ctx)
 	if err != nil {
 		return nil, err
