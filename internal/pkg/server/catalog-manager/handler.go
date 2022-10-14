@@ -250,7 +250,6 @@ func (h *Handler) Update(ctx context.Context, request *grpc_catalog_go.UpdateReq
 	if err := request.Validate(); err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
-
 	if !h.authEnabled {
 		sErr := nerrors.NewFailedPreconditionError("enable authentication to make use of private apps")
 		return nil, nerrors.FromError(sErr).ToGRPC()
@@ -274,10 +273,15 @@ func (h *Handler) Update(ctx context.Context, request *grpc_catalog_go.UpdateReq
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
 
+	privateStr := "public"
+	if request.Private {
+		privateStr = "private"
+	}
+
 	return &grpc_catalog_common_go.OpResponse{
 		Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
 		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
-		UserInfo:   fmt.Sprintf("Visibility changed to %v", request.Private),
+		UserInfo:   fmt.Sprintf("Application %s/%s changed to %s", request.Namespace, request.ApplicationName, privateStr),
 	}, nil
 }
 
