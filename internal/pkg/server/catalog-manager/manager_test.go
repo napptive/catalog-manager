@@ -178,8 +178,13 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 					TagMetadataName: map[string]string{"tag2": "my app v2"},
 				},
 			}
+			summary := entities.Summary{
+				NumNamespaces:   1,
+				NumApplications: 1,
+				NumTags:         2,
+			}
 
-			metadataProvider.EXPECT().GetPublicApps().Return(returned)
+			metadataProvider.EXPECT().ListSummaryWithFilter(gomock.Any()).Return(returned, &summary, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
 			received, err := manager.List("", "")
@@ -214,9 +219,13 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 
 		})
 		ginkgo.It("should be able to return an empty list of applications", func() {
-
-			returned := make([]*entities.AppSummary, 0)
-			metadataProvider.EXPECT().GetPublicApps().Return(returned)
+			var returned = []*entities.AppSummary{}
+			summary := entities.Summary{
+				NumNamespaces:   0,
+				NumApplications: 0,
+				NumTags:         0,
+			}
+			metadataProvider.EXPECT().ListSummaryWithFilter(gomock.Any()).Return(returned, &summary, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
 			received, err := manager.List("", "")
@@ -262,6 +271,36 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			manager := NewManager(storageProvider, metadataProvider, "")
 			_, err := manager.Add(fmt.Sprintf("%s/%s:%s", namespace, appName, tag), filesReturned, false, "")
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
+		})
+	})
+
+	ginkgo.Context("Changing visibility", func() {
+		ginkgo.It("Should not be able to change visibility if the application does not exist", func() {
+
+			metadataProvider.EXPECT().GetApplicationVisibility("namespace", "appName").Return(nil, nerrors.NewNotFoundError("application not found"))
+
+			manager := NewManager(storageProvider, metadataProvider, "")
+			err := manager.UpdateApplicationVisibility("namespace", "appName", true)
+			gomega.Expect(err).NotTo(gomega.Succeed())
+
+		})
+		ginkgo.It("Should not be able to change visibility to the previous visibility", func() {
+			private := true
+			metadataProvider.EXPECT().GetApplicationVisibility("namespace", "appName").Return(&private, nil)
+
+			manager := NewManager(storageProvider, metadataProvider, "")
+			err := manager.UpdateApplicationVisibility("namespace", "appName", true)
+			gomega.Expect(err).NotTo(gomega.Succeed())
+
+		})
+		ginkgo.It("Should be able to change application visibility", func() {
+			private := false
+			metadataProvider.EXPECT().GetApplicationVisibility("namespace", "appName").Return(&private, nil)
+			metadataProvider.EXPECT().UpdateApplicationVisibility("namespace", "appName", true).Return(nil)
+
+			manager := NewManager(storageProvider, metadataProvider, "")
+			err := manager.UpdateApplicationVisibility("namespace", "appName", true)
+			gomega.Expect(err).To(gomega.Succeed())
 		})
 	})
 })

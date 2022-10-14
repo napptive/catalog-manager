@@ -95,20 +95,6 @@ func (mr *MockMetadataProviderMockRecorder) GetApplicationVisibility(arg0, arg1 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApplicationVisibility", reflect.TypeOf((*MockMetadataProvider)(nil).GetApplicationVisibility), arg0, arg1)
 }
 
-// GetPublicApps mocks base method.
-func (m *MockMetadataProvider) GetPublicApps() []*entities.AppSummary {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPublicApps")
-	ret0, _ := ret[0].([]*entities.AppSummary)
-	return ret0
-}
-
-// GetPublicApps indicates an expected call of GetPublicApps.
-func (mr *MockMetadataProviderMockRecorder) GetPublicApps() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicApps", reflect.TypeOf((*MockMetadataProvider)(nil).GetPublicApps))
-}
-
 // GetSummary mocks base method.
 func (m *MockMetadataProvider) GetSummary() (*entities.Summary, error) {
 	m.ctrl.T.Helper()
@@ -167,4 +153,18 @@ func (m *MockMetadataProvider) Remove(arg0 *entities.ApplicationID) error {
 func (mr *MockMetadataProviderMockRecorder) Remove(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockMetadataProvider)(nil).Remove), arg0)
+}
+
+// UpdateApplicationVisibility mocks base method.
+func (m *MockMetadataProvider) UpdateApplicationVisibility(arg0, arg1 string, arg2 bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateApplicationVisibility", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateApplicationVisibility indicates an expected call of UpdateApplicationVisibility.
+func (mr *MockMetadataProviderMockRecorder) UpdateApplicationVisibility(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateApplicationVisibility", reflect.TypeOf((*MockMetadataProvider)(nil).UpdateApplicationVisibility), arg0, arg1, arg2)
 }

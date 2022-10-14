@@ -246,6 +246,41 @@ func (h *Handler) Summary(ctx context.Context, request *grpc_catalog_common_go.E
 	return summary.ToSummaryResponse(), nil
 }
 
+func (h *Handler) Update(ctx context.Context, request *grpc_catalog_go.UpdateRequest) (*grpc_catalog_common_go.OpResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	if !h.authEnabled {
+		sErr := nerrors.NewFailedPreconditionError("enable authentication to make use of private apps")
+		return nil, nerrors.FromError(sErr).ToGRPC()
+	}
+
+	username, err := h.getUsernameFromContext(ctx)
+	if err != nil {
+		log.Error().Err(err).Str("namespace", request.Namespace).
+			Str("application", request.ApplicationName).Msg("error getting username, unable to change application visibility")
+		return nil, nerrors.NewInternalErrorFrom(err, "unable to change")
+	}
+	if *username != request.Namespace {
+		log.Error().Str("namespace", request.Namespace).
+			Str("application", request.ApplicationName).Str("username", *username).Msg("unable to change application visibility")
+		sErr := nerrors.NewFailedPreconditionError("A user can only change the visibility of their apps")
+		return nil, nerrors.FromError(sErr).ToGRPC()
+	}
+	if err := h.manager.UpdateApplicationVisibility(request.Namespace, request.ApplicationName, request.Private); err != nil {
+		log.Error().Err(err).Str("namespace", request.Namespace).
+			Str("application", request.ApplicationName).Msg("error changing application visibility")
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	return &grpc_catalog_common_go.OpResponse{
+		Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
+		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
+		UserInfo:   fmt.Sprintf("Visibility changed to %v", request.Private),
+	}, nil
+}
+
 // validateUser check if the user in the context is the same as the repo name
 func (h *Handler) validateUser(ctx context.Context, appName string, action string, requireAdminPrivilege bool) error {
 

@@ -55,6 +55,8 @@ type Manager interface {
 	List(namespace string, username string) ([]*entities.AppSummary, error)
 	// Summary returns catalog summary
 	Summary() (*entities.Summary, error)
+	// UpdateApplicationVisibility changes the application visibility
+	UpdateApplicationVisibility(namespace string, applicationName string, isPrivate bool) error
 }
 
 type manager struct {
@@ -288,7 +290,16 @@ func (m *manager) List(namespace string, username string) ([]*entities.AppSummar
 	// no authentication enabled
 	if username == "" {
 		if namespace == "" {
-			return m.provider.GetPublicApps(), nil
+			private := false
+			apps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
+				Namespace: nil,
+				Private:   &private,
+			})
+			if err != nil {
+				log.Error().Err(err).Str("required namespace", appID.Namespace).Str("username", username).Msg("error getting public apps")
+				return nil, err
+			}
+			return apps, nil
 		} else {
 			apps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
 				Namespace: &appID.Namespace,
@@ -318,7 +329,16 @@ func (m *manager) List(namespace string, username string) ([]*entities.AppSummar
 			log.Error().Err(err).Str("required namespace", appID.Namespace).Str("username", username).Msg("error getting public apps")
 			return nil, err
 		}
-		return append(m.provider.GetPublicApps(), ownApps...), nil
+		private = false
+		publicApps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
+			Namespace: nil,
+			Private:   &private,
+		})
+		if err != nil {
+			log.Error().Err(err).Str("required namespace", appID.Namespace).Str("username", username).Msg("error getting public apps")
+			return nil, err
+		}
+		return append(publicApps, ownApps...), nil
 
 	} else {
 		if appID.Namespace == username {
@@ -351,4 +371,24 @@ func (m *manager) List(namespace string, username string) ([]*entities.AppSummar
 // Summary returns catalog summary
 func (m *manager) Summary() (*entities.Summary, error) {
 	return m.provider.GetSummary()
+}
+
+func (m *manager) UpdateApplicationVisibility(namespace string, applicationName string, isPrivate bool) error {
+
+	previousVisibility, err := m.provider.GetApplicationVisibility(namespace, applicationName)
+	if err != nil {
+		return err
+	}
+	if previousVisibility == nil {
+		return nerrors.NewNotFoundError("error updating application visibility. Application not found")
+	}
+	if *previousVisibility == isPrivate {
+		privateStr := "public"
+		if isPrivate {
+			privateStr = "private"
+		}
+		return nerrors.NewPermissionDeniedError("error updating application visibility. The application is already %s", privateStr)
+	}
+
+	return m.provider.UpdateApplicationVisibility(namespace, applicationName, isPrivate)
 }

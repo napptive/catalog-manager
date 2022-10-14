@@ -18,7 +18,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/napptive/analytics v1.1.0
 	github.com/napptive/grpc-catalog-common-go v0.2.0
-	github.com/napptive/grpc-catalog-go v0.24.0
+	github.com/napptive/grpc-catalog-go v0.25.0
 	github.com/napptive/grpc-playground-apps-go v0.25.0
 	github.com/napptive/grpc-playground-common-go v0.6.0 // indirect
 	github.com/napptive/grpc-playground-environments-go v0.10.0 // indirect

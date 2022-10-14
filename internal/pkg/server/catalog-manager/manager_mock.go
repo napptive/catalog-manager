@@ -122,3 +122,17 @@ func (mr *MockManagerMockRecorder) Summary() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Summary", reflect.TypeOf((*MockManager)(nil).Summary))
 }
+
+// UpdateApplicationVisibility mocks base method.
+func (m *MockManager) UpdateApplicationVisibility(arg0, arg1 string, arg2 bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateApplicationVisibility", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateApplicationVisibility indicates an expected call of UpdateApplicationVisibility.
+func (mr *MockManagerMockRecorder) UpdateApplicationVisibility(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateApplicationVisibility", reflect.TypeOf((*MockManager)(nil).UpdateApplicationVisibility), arg0, arg1, arg2)
+}

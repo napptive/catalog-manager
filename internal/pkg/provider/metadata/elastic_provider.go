@@ -88,6 +88,112 @@ type responseWrapper struct {
 	}
 }
 
+type ElasticFilter interface {
+	ToElasticQuery() map[string]interface{}
+}
+
+// ToElasticQuery returns the search query for a ListFilter. Required to implement ElasticFilter interface
+/*
+curl -X GET "localhost:9200/napptive/_search?pretty" -H 'Content-Type: application/json' -d'
+
+	{
+	  "query": {
+	    "bool" : {
+	      "must" : {
+	        "term" : { "Private" : <private> }
+	      },
+	      "filter": {
+	        "term" : { "Namespace" : <namespace> }
+	      }
+	    }
+	  }
+	}
+
+'
+*/
+func (f *ListFilter) ToElasticQuery() map[string]interface{} {
+	var query map[string]interface{}
+
+	if f == nil {
+		return query
+	}
+
+	// Namespace && Private
+	if f.Namespace != nil && *f.Namespace != "" && f.Private != nil {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"bool": map[string]interface{}{
+					"must": map[string]interface{}{
+						"term": map[string]interface{}{PrivateField: *f.Private},
+					},
+					"filter": map[string]interface{}{
+						"term": map[string]interface{}{NamespaceField: *f.Namespace},
+					},
+				},
+			},
+		} // Private
+	} else if f.Private != nil && (f.Namespace == nil || *f.Namespace == "") {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"term": map[string]interface{}{
+					PrivateField: *f.Private,
+				},
+			},
+		}
+		// Namespace
+	} else if f.Namespace != nil && *f.Namespace != "" && f.Private == nil {
+		query = map[string]interface{}{
+			"query": map[string]interface{}{
+				"term": map[string]interface{}{
+					NamespaceField: *f.Namespace,
+				},
+			},
+		}
+	}
+	return query
+}
+
+// ApplicationFilter struct to filter by namespace and applicationName
+type ApplicationFilter struct {
+	namespace   string
+	application string
+}
+
+// ToElasticQuery returns the search query for a ApplicationFilter. Required to implement ElasticFilter interface
+/*
+curl -X GET "localhost:9200/napptive/_search?pretty" -H 'Content-Type: application/json' -d'
+
+	{
+	  "query": {
+	    "bool" : {
+	      "must" : {
+	        "term" : { "Namespace" : <namespace> }
+	      },
+	      "filter": {
+	        "term" : { "ApplicationName" : <applicationName> }
+	      }
+	    }
+	  }
+	}
+
+'
+*/
+func (af *ApplicationFilter) ToElasticQuery() map[string]interface{} {
+	return map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": map[string]interface{}{
+					"term": map[string]interface{}{NamespaceField: af.namespace},
+				},
+				"filter": map[string]interface{}{
+					"term": map[string]interface{}{ApplicationField: af.application},
+				},
+			},
+		},
+	}
+}
+
+// ElasticProvider a struct to manage elastic storage
 type ElasticProvider struct {
 	client    *elasticsearch.Client
 	indexName string
@@ -416,16 +522,16 @@ func (e *ElasticProvider) FillCache() {
 			Private:   nil,
 		}
 	}
-	summaryList, summary, err := e.ListSummaryWithFilter(listFilter)
+	summaryList, summary, err := e.listSummaryWithFilter(listFilter)
 	if err != nil {
 		log.Error().Str("error", err.Error()).Msg("error filling the cache")
 	} else {
 		e.Lock()
 		defer e.Unlock()
-
 		e.appCache = summaryList
-		log.Debug().Int("len", len(e.appCache)).Msg("applications in cache")
 		e.summaryCache = summary
+		log.Debug().Int("len", len(e.appCache)).Msg("applications in cache")
+
 	}
 }
 
@@ -440,7 +546,7 @@ func (e *ElasticProvider) GetSummary() (*entities.Summary, error) {
 }
 
 // listFromWithFilter search applications in elastic with pagination
-func (e *ElasticProvider) listFromWithFilter(filter *ListFilter, lastReceived int, getFields ...string) (*responseWrapper, error) {
+func (e *ElasticProvider) listFromWithFilter(filter ElasticFilter, lastReceived int, getFields ...string) (*responseWrapper, error) {
 
 	sortedBy := []string{NamespaceField, ApplicationField, TagField}
 	searchFunctions := []func(*esapi.SearchRequest){
@@ -490,6 +596,19 @@ func (e *ElasticProvider) listFromWithFilter(filter *ListFilter, lastReceived in
 
 // ListSummaryWithFilter returns entities.AppSummary and entities.Summary applying a filter in the search method
 func (e *ElasticProvider) ListSummaryWithFilter(filter *ListFilter) ([]*entities.AppSummary, *entities.Summary, error) {
+	// if filtering == (public applications for all namespaces) -> return cache
+	if filter != nil && (filter.Namespace == nil || *filter.Namespace == "") && (filter.Private == nil || !*filter.Private) {
+		log.Debug().Msg("returning public apps")
+		e.Lock()
+		defer e.Unlock()
+		return e.appCache, e.summaryCache, nil
+	} else {
+		return e.listSummaryWithFilter(filter)
+	}
+}
+
+// ListSummaryWithFilter returns entities.AppSummary and entities.Summary applying a filter in the search method
+func (e *ElasticProvider) listSummaryWithFilter(filter *ListFilter) ([]*entities.AppSummary, *entities.Summary, error) {
 	lastReceived := 0
 	query := true
 	summaryList := make([]*entities.AppSummary, 0)
@@ -577,14 +696,7 @@ func (e *ElasticProvider) ListSummaryWithFilter(filter *ListFilter) ([]*entities
 	return summaryList, &summary, nil
 }
 
-// GetPublicApps returns the public apps stored in the cache
-func (e *ElasticProvider) GetPublicApps() []*entities.AppSummary {
-	e.Lock()
-	defer e.Unlock()
-	return e.appCache
-}
-
-// GetApplicationVisibility returns the application visibility or nil if the application does not exist
+// GetApplicationVisibility returns the application visibility or error if the application does not exist
 func (e *ElasticProvider) GetApplicationVisibility(namespace string, applicationName string) (*bool, error) {
 
 	sortedBy := []string{NamespaceField, ApplicationField, TagField}
@@ -634,7 +746,7 @@ func (e *ElasticProvider) GetApplicationVisibility(namespace string, application
 	}
 
 	if len(r.Hits.Hits) <= 0 {
-		return nil, nil
+		return nil, nerrors.NewNotFoundError("application not found")
 	}
 
 	var application entities.ApplicationInfo
@@ -643,4 +755,93 @@ func (e *ElasticProvider) GetApplicationVisibility(namespace string, application
 	}
 	return &application.Private, nil
 
+}
+
+// getApplicationIds returns the internal identifiers of all the tags of an application and the application visibility (if it is private or public)
+func (e *ElasticProvider) getApplicationIds(namespace string, application string) ([]string, error) {
+
+	lastReceived := 0
+	query := true
+	ids := make([]string, 0)
+	for query {
+		r, err := e.listFromWithFilter(&ApplicationFilter{
+			namespace:   namespace,
+			application: application,
+		}, lastReceived)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Debug().Int("hits received", len(r.Hits.Hits)).Msg("received")
+		if len(r.Hits.Hits) > 0 {
+			var application entities.ApplicationInfo
+			if err := json.Unmarshal(r.Hits.Hits[0].Source, &application); err != nil {
+				return nil, nerrors.NewInternalErrorFrom(err, "error unmarshalling application metadata")
+			}
+		}
+		for _, app := range r.Hits.Hits {
+			ids = append(ids, app.ID)
+		}
+		lastReceived += len(r.Hits.Hits)
+		query = r.Hits.Total.Value != len(ids) && len(r.Hits.Hits) != 0
+	}
+
+	return ids, nil
+
+}
+
+// updateVisibilityStruct struct required to update application visibility
+type updateVisibilityStruct struct {
+	Private bool
+}
+
+// UpdateApplicationVisibility changes the application visibility
+func (e *ElasticProvider) UpdateApplicationVisibility(namespace string, applicationName string, isPrivate bool) error {
+
+	// Get all the catalogIDs for namespace, applicationName
+	// Foreach:
+	// update the data
+
+	ids, err := e.getApplicationIds(namespace, applicationName)
+	if err != nil {
+		log.Error().Err(err).Msg("error getting application tags")
+		return err
+	}
+
+	if len(ids) == 0 {
+		log.Error().Str("namespace", namespace).Str("application", applicationName).
+			Msg("error changing application visibility, no applications found")
+		return nerrors.NewNotFoundError("unable to update application visibility. Application not found")
+	}
+
+	data := &updateVisibilityStruct{
+		Private: isPrivate,
+	}
+
+	// convert the metadata to JSON
+	metadataJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		res, err := esapi.UpdateRequest{
+			Index:      "napptive",
+			DocumentID: id,
+			Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, string(metadataJSON)))),
+		}.Do(context.Background(), e.client)
+		if err != nil {
+			log.Error().Err(err).Msg("error updating metadata")
+			return err
+		}
+		defer res.Body.Close()
+
+		if err = e.checkElasticError(res, "updating visibility"); err != nil {
+			return err
+		}
+	}
+
+	// update the cache
+	// e.invalidateCacheChan <- true
+
+	return nil
 }
