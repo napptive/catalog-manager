@@ -126,6 +126,7 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPriva
 	readme := utils.GetFile(readmeFile, files)
 	appMetadata, header, err := m.getApplicationMetadataFile(files)
 	if err != nil {
+		log.Err(err).Str("name", requestedAppID).Msg("Unable to add the application. Error getting metadata")
 		return false, nerrors.NewInternalErrorFrom(err, "Unable to add the application. Error getting metadata")
 	}
 	// the metadata file is required, if is not in the Files -> return an error
@@ -142,7 +143,10 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPriva
 		// Check Application visibility
 		private, err := m.provider.GetApplicationVisibility(appID.Namespace, appID.ApplicationName)
 		if err != nil {
-			return false, nerrors.NewInternalErrorFrom(err, "Unable to add the application.")
+			if nerrors.FromError(err).Code != nerrors.NotFound {
+				log.Err(err).Str("name", requestedAppID).Msg("Unable to add the application, error getting application visibility")
+				return false, nerrors.NewInternalErrorFrom(err, "Unable to add the application.")
+			}
 		}
 
 		if private != nil {
