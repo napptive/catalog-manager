@@ -43,7 +43,7 @@ func GetTestAdminContext() context.Context {
 	return utils.CreateTestJWTAuthIncomingContext(validUsername, validAccountName, true, "authorization", "jwt")
 }
 func GetTestMemberApplicationId() string {
-	return fmt.Sprintf("%s/test:latest", validUsername)
+	return fmt.Sprintf("%s/test:latest", validAccountName)
 }
 func GetTestAccountApplicationId() string {
 	return fmt.Sprintf("%s/test:latest", validAccountName)
@@ -103,7 +103,7 @@ var _ = ginkgo.Describe("Catalog handler test with auth enabled by JWT", func() 
 				ApplicationId: appID,
 			}
 			manager.EXPECT().Remove(appID).Return(nil)
-			opResponse, err := handler.Remove(GetTestMemberContext(), request)
+			opResponse, err := handler.Remove(GetTestAdminContext(), request)
 			gomega.Expect(err).To(gomega.Succeed())
 			gomega.Expect(opResponse.Status).Should(gomega.Equal(grpc_catalog_common_go.OpStatus_SUCCESS))
 		})
