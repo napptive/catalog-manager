@@ -204,7 +204,7 @@ func (m *manager) Download(requestedAppID string, compressed bool, accountName s
 		}
 		if app.Private {
 			if app.Namespace != accountName {
-				log.Error().Err(err).Str("application", requestedAppID).Str("username", accountName).
+				log.Warn().Err(err).Str("application", requestedAppID).Str("username", accountName).
 					Msg("error downloading application. The application is private and the user is not the owner")
 				return nil, nerrors.NewPermissionDeniedError("Error downloading application")
 			}
@@ -253,7 +253,7 @@ func (m *manager) Get(requestedAppID string, accountName string) (*entities.Exte
 	}
 
 	if accountName != "" && app.Private && accountName != app.Namespace {
-		log.Error().Str("accountName", accountName).Str("application", requestedAppID).Msg("User trying to get info of a private app")
+		log.Warn().Str("accountName", accountName).Str("application", requestedAppID).Msg("User trying to get info of a private app")
 		return nil, nerrors.NewPermissionDeniedError("error getting application")
 	}
 
