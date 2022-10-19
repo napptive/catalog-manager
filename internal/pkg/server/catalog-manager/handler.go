@@ -96,7 +96,6 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 			applicationID = request.ApplicationId
 			private = request.Private
 			// Also, validate the user.
-			// TODO: remove team privilege management -> create account and add admin users
 			if vErr := h.validateUser(server.Context(), request.ApplicationId, "push", false); vErr != nil {
 				return vErr
 			}
