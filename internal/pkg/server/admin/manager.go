@@ -26,7 +26,7 @@ import (
 )
 
 type Manager interface {
-	// DeleteNamespace deletes a namespace so that the applications contained on it are not longer available.
+	// DeleteNamespace deletes a namespace so that the applications contained on it are no longer available.
 	DeleteNamespace(namespace string) error
 	// DeleteApplication removes an application from the repository
 	DeleteApplication(requestedAppID string) error
@@ -46,8 +46,9 @@ func NewManager(stManager storage.StorageManager, metadataProvider metadata.Meta
 	}
 }
 
-// DeleteNamespace deletes a namespace so that the applications contained on it are not longer available.
+// DeleteNamespace deletes a namespace so that the applications contained on it are no longer available.
 func (m *manager) DeleteNamespace(namespace string) error {
+
 	namespaceApps, err := m.provider.List(namespace)
 	if err != nil {
 		return err
@@ -94,5 +95,13 @@ func (m *manager) DeleteApplication(requestedAppID string) error {
 
 // List returns a list of applications (without metadata and readme content)
 func (m *manager) List(namespace string) ([]*entities.AppSummary, error) {
-	return m.provider.ListSummary(namespace)
+	filter := metadata.ListFilter{
+		Namespace: &namespace,
+		Private:   nil,
+	}
+	appSummary, _, err := m.provider.ListSummaryWithFilter(&filter)
+	if err != nil {
+		return nil, err
+	}
+	return appSummary, nil
 }

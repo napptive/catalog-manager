@@ -81,7 +81,7 @@ var _ = ginkgo.Describe("Apps manager test", func() {
 
 			appID := fmt.Sprintf("%s/%s", "username", "application")
 
-			catalogManager.EXPECT().Download(appID, false).Return([]*entities.FileInfo{{
+			catalogManager.EXPECT().Download(appID, false, "").Return([]*entities.FileInfo{{
 				Path: "application.yaml",
 				Data: []byte(application),
 			}}, nil)
@@ -96,7 +96,7 @@ var _ = ginkgo.Describe("Apps manager test", func() {
 
 			appID := fmt.Sprintf("%s/%s", "username", "application")
 
-			catalogManager.EXPECT().Download(appID, false).Return([]*entities.FileInfo{{
+			catalogManager.EXPECT().Download(appID, false, "").Return([]*entities.FileInfo{{
 				Path: "cm.yaml",
 				Data: []byte(cm),
 			}}, nil)
@@ -111,7 +111,7 @@ var _ = ginkgo.Describe("Apps manager test", func() {
 
 			appID := fmt.Sprintf("%s/%s", "username", "application")
 
-			catalogManager.EXPECT().Download(appID, false).Return([]*entities.FileInfo{}, nerrors.NewNotFoundError("Application not found"))
+			catalogManager.EXPECT().Download(appID, false, "").Return([]*entities.FileInfo{}, nerrors.NewNotFoundError("Application not found"))
 
 			_, err := manager.GetConfiguration(appID)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())

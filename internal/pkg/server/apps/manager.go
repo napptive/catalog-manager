@@ -64,7 +64,7 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 	log.Debug().Interface("instanceConfig", instanceConfiguration).Msg("instance configuration")
 
 	// Retrieve the target application
-	app, err := m.catalogManager.Download(applicationID, true)
+	app, err := m.catalogManager.Download(applicationID, true, "")
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (m *manager) toInstanceConfiguration(instanceConfiguration map[string]*grpc
 func (m *manager) GetConfiguration(applicationID string) (*grpc_catalog_go.GetConfigurationResponse, error) {
 
 	// Get application files (Checking if application exists)
-	files, err := m.catalogManager.Download(applicationID, false)
+	files, err := m.catalogManager.Download(applicationID, false, "")
 	if err != nil {
 		log.Error().Err(err).Str("applicationID", applicationID).Msg("error getting application files")
 		return nil, err

@@ -74,7 +74,7 @@ type Providers struct {
 
 // getProviders creates and initializes all the providers
 func (s *Service) getProviders() (*Providers, error) {
-	pr, err := metadata.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress)
+	pr, err := metadata.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress, s.cfg.AuthEnabled)
 	if err != nil {
 		return nil, err
 	}

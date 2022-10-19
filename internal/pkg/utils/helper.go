@@ -124,6 +124,9 @@ func DecomposeApplicationID(applicationID string) (string, *entities.Application
 	} else if len(sp) == 2 {
 		applicationName = sp[0]
 		version = sp[1]
+		if strings.Trim(version, " ") == "" {
+			version = defaultVersion
+		}
 	} else {
 		return "", nil, nerrors.NewFailedPreconditionError(
 			"incorrect format for application name. [catalogURL/]namespace/appName[:tag]")

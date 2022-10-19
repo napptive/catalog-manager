@@ -19,7 +19,7 @@ var _ = ginkgo.Describe("Elastic Provider test", func() {
 	index := strings.ToLower(faker.App().Name())
 	index = strings.Replace(index, " ", "", -1)
 	log.Debug().Str("index", index).Msg("Elastic index")
-	provider, err := NewElasticProvider(index, "http://localhost:9200")
+	provider, err := NewElasticProvider(index, "http://localhost:9200", false)
 	gomega.Expect(err).Should(gomega.Succeed())
 
 	ginkgo.BeforeEach(func() {
