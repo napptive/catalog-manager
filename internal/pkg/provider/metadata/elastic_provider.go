@@ -825,6 +825,7 @@ func (e *ElasticProvider) UpdateApplicationVisibility(namespace string, applicat
 	}
 	for _, id := range ids {
 		res, err := esapi.UpdateRequest{
+			Refresh:    "true",
 			Index:      "napptive",
 			DocumentID: id,
 			Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, string(metadataJSON)))),
@@ -841,7 +842,7 @@ func (e *ElasticProvider) UpdateApplicationVisibility(namespace string, applicat
 	}
 
 	// update the cache
-	// e.invalidateCacheChan <- true
+	e.invalidateCacheChan <- true
 
 	return nil
 }
