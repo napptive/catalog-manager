@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package entities
 
 import (
@@ -21,6 +22,7 @@ import (
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 )
 
+// AppSummary with the application summary (all the application tags and logos)
 type AppSummary struct {
 	// Namespace with the namespace of the application
 	Namespace string
@@ -30,6 +32,8 @@ type AppSummary struct {
 	TagMetadataName map[string]string
 	// MetadataLogo with the ApplicationLogo indexed by Tag
 	MetadataLogo map[string][]ApplicationLogo
+	// Private indicate the application scope indexed by tag
+	Private bool
 }
 
 // ToApplicationSummary converts the ApplicationSummary to grpc_catalog_go.ApplicationSummary
@@ -51,14 +55,18 @@ func (a *AppSummary) ToApplicationSummary() *grpc_catalog_go.ApplicationSummary 
 		ApplicationName:        a.ApplicationName,
 		TagMetadataName:        a.TagMetadataName,
 		SummaryApplicationLogo: logoSummary,
+		Private:                a.Private,
 	}
 }
 
 // Summary with catalog summary
 type Summary struct {
-	NumNamespaces   int
+	// NumNamespaces with the number of the namespaces in the catalog
+	NumNamespaces int
+	// NumApplications with the number of the applications in the catalog
 	NumApplications int
-	NumTags         int
+	// NumTags with the number of the application tags in the catalog
+	NumTags int
 }
 
 // ToSummaryResponse converts Summary to GRPC
@@ -71,17 +79,6 @@ func (s *Summary) ToSummaryResponse() *grpc_catalog_go.SummaryResponse {
 		NumApplications: int32(s.NumApplications),
 		NumTags:         int32(s.NumTags),
 	}
-}
-
-type ExtendedAppSummary struct {
-	// Namespace with the namespace of the application
-	Namespace string
-	// ApplicationName with the name of the application
-	ApplicationName string
-	// TagMetadataName with the MetadataName indexed by Tag
-	Tag          string
-	MetadataName string
-	Metadata     string
 }
 
 // -- ApplicationMetadata
@@ -102,6 +99,8 @@ type ApplicationInfo struct {
 	Metadata string
 	//MedataName with the name defined in metadata file. This field is used to store it in elastic field and return it when listing
 	MetadataName string
+	// Private with a flag to indicate the application Scope
+	Private bool
 }
 
 // ToApplicationID converts ApplicationSummary to ApplicationID
@@ -235,6 +234,7 @@ func (am *ApplicationMetadata) ToGRPC() *grpc_catalog_go.ApplicationMetadata {
 }
 
 // -- ExtendedApplicationMetadata
+
 // ExtendedApplicationMetadata is an object with ApplicationMetadata and a field with metadata parsed
 type ExtendedApplicationMetadata struct {
 	// CatalogID with an internal identifier
@@ -251,6 +251,8 @@ type ExtendedApplicationMetadata struct {
 	Metadata string
 	// MetadataObj with the metadata object
 	MetadataObj ApplicationMetadata
+	// Private
+	Private bool
 }
 
 // --

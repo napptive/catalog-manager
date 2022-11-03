@@ -199,8 +199,10 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(err).Should(gomega.Succeed())
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
-
-			listRetrieved, err := provider.ListSummary("")
+			listRetrieved, _, err := provider.ListSummaryWithFilter(&ListFilter{
+				Namespace: nil,
+				Private:   nil,
+			})
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(listRetrieved).ShouldNot(gomega.BeEmpty())
 
@@ -220,13 +222,19 @@ func RunTests(provider MetadataProvider) {
 				gomega.Expect(returned.CatalogID).ShouldNot(gomega.BeEmpty())
 			}
 
-			listRetrieved, err := provider.ListSummary("")
+			listRetrieved, _, err := provider.ListSummaryWithFilter(&ListFilter{
+				Namespace: nil,
+				Private:   nil,
+			})
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(listRetrieved).ShouldNot(gomega.BeEmpty())
 
 		})
 		ginkgo.It("Should be able to list an empty list of applications", func() {
-			listRetrieved, err := provider.ListSummary("")
+			listRetrieved, _, err := provider.ListSummaryWithFilter(&ListFilter{
+				Namespace: nil,
+				Private:   nil,
+			})
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(listRetrieved).Should(gomega.BeEmpty())
 		})

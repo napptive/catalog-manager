@@ -16,7 +16,14 @@
 
 package metadata
 
-import "github.com/napptive/catalog-manager/internal/pkg/entities"
+import (
+	"github.com/napptive/catalog-manager/internal/pkg/entities"
+)
+
+type ListFilter struct {
+	Namespace *string
+	Private   *bool
+}
 
 // MetadataProvider is an interface with the methods of a metadata provider must implement
 type MetadataProvider interface {
@@ -28,10 +35,14 @@ type MetadataProvider interface {
 	Exists(appID *entities.ApplicationID) (bool, error)
 	// Remove removes an application metadata
 	Remove(appID *entities.ApplicationID) error
-	// List returns the applications stored
+	// List returns the applications stored (public and privates)
 	List(namespace string) ([]*entities.ApplicationInfo, error)
-	// ListSummary returns a list of application summaries
-	ListSummary(namespace string) ([]*entities.AppSummary, error)
-	// GetSummary returns the catalog summary
+	// GetSummary returns the catalog summary (public apps summary)
 	GetSummary() (*entities.Summary, error)
+	// ListSummaryWithFilter returns entities.AppSummary and entities.Summary applying a filter in the search method
+	ListSummaryWithFilter(filter *ListFilter) ([]*entities.AppSummary, *entities.Summary, error)
+	// GetApplicationVisibility returns is an application is private or not or error if the application does not exist
+	GetApplicationVisibility(namespace string, applicationName string) (*bool, error)
+	// UpdateApplicationVisibility changes the application visibility
+	UpdateApplicationVisibility(namespace string, applicationName string, isPrivate bool) error
 }
