@@ -47,11 +47,12 @@ RUN_INTEGRATION_TEST=all make test
 
 This repository is integrated with GitHub Actions.
 
-![Check changes in the Main branch](https://github.com/napptive/catalog-manager/workflows/Check%20changes%20in%20the%20Main%20branch/badge.svg)
+<a href="https://github.com/napptive/catalog-manager">![Check changes in the Main branch](https://github.com/napptive/catalog-manager/workflows/Check%20changes%20in%20the%20Main%20branch/badge.svg)
+</a>
 
 ## Contributing
 
-Let's make the catalog better, check our [contribution](contributing.md) guidelines to discover how you can contribute to the project.
+Let's make the catalog better, check our [contribution](./CONTRIBUTING.md) guidelines to discover how you can contribute to the project.
 
 ## License
 
