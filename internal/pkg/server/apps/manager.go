@@ -82,17 +82,20 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 	defer cancel()
 
 	response, err := client.Deploy(ctx, &grpc_playground_apps_go.DeployApplicationRequest{
+		DeployFrom:                     grpc_playground_apps_go.DeploySource_FROM_DATA,
+		ApplicationDataType:            grpc_playground_apps_go.AppDataType_TGZ,
 		ApplicationData:                app[0].Data,
 		TargetEnvironmentQualifiedName: targetEnvironmentQualifiedName,
 		InstanceConfiguration:          m.toInstanceConfiguration(instanceConfiguration),
+		RepoConf:                       nil,
 	})
 	if err != nil {
 		return nil, nerrors.FromGRPC(err)
 	}
 	return &grpc_catalog_common_go.OpResponse{
-		Status:     grpc_catalog_common_go.OpStatus(grpc_catalog_common_go.OpStatus_value[response.StatusName]),
-		StatusName: response.StatusName,
-		UserInfo:   response.UserInfo,
+		Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
+		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
+		UserInfo:   response.Message,
 	}, nil
 }
 
