@@ -72,7 +72,7 @@ func IsMetadata(data []byte) (bool, *entities.ApplicationMetadata, error) {
 	err := yaml.Unmarshal(data, &a)
 	if err != nil {
 		log.Err(err).Msg("error getting metadata")
-		return false, nil, nerrors.FromError(err)
+		return false, nil, err
 	}
 	// Iterate through the list of valid metadata file definitions.
 	for gv, k := range metadataGKV {
