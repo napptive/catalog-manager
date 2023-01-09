@@ -127,7 +127,6 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPriva
 	appMetadata, header, err := m.getApplicationMetadataFile(files)
 	if err != nil {
 		log.Err(err).Str("name", requestedAppID).Msg("Unable to add the application. Error getting metadata")
-		// return false, nerrors.NewInternalErrorFrom(err, "Unable to add the application. Error getting metadata")
 		return false, err
 	}
 	// the metadata file is required, if is not in the Files -> return an error
