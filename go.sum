@@ -478,10 +478,6 @@ github.com/napptive/grpc-common-go v0.4.0 h1:uN6sxr8tidDEPwhVLA6UwnGpNHwuI+QTwWd
 github.com/napptive/grpc-common-go v0.4.0/go.mod h1:Q896cZY+yIkted9zYw3jtguVDdfL1bqTHjjiirBTjnw=
 github.com/napptive/grpc-ping-go v0.1.0 h1:/hNDGXAOPbGA/jszauggfDG3PcVsfpgrxrS5lLGgfwI=
 github.com/napptive/grpc-ping-go v0.1.0/go.mod h1:hBIdzClG9sZCHcq+tYZGNLaZ0TtQZ6s/YIRbNyhKES4=
-github.com/napptive/grpc-playground-apps-go v0.25.0 h1:2eXTtvyohQcEVZJfjqXRmdw8ihXEEtS8/eDVqHhaZes=
-github.com/napptive/grpc-playground-apps-go v0.25.0/go.mod h1:0U/uXuVz7u9nRNXFTBnvVv4JY/+cY4I4bWzEm/tbeeA=
-github.com/napptive/grpc-playground-apps-go v0.27.0 h1:8t6I5iVJsHm8PNzYnoCOtPOejU731bntlDlILWMfe58=
-github.com/napptive/grpc-playground-apps-go v0.27.0/go.mod h1:0U/uXuVz7u9nRNXFTBnvVv4JY/+cY4I4bWzEm/tbeeA=
 github.com/napptive/grpc-playground-apps-go v0.30.0 h1:Ziy3zU6jhHJP9i3dON1dCbaWRPPqxC5sX6qeo+WgO/M=
 github.com/napptive/grpc-playground-apps-go v0.30.0/go.mod h1:0U/uXuVz7u9nRNXFTBnvVv4JY/+cY4I4bWzEm/tbeeA=
 github.com/napptive/grpc-playground-common-go v0.6.0 h1:TQDS1qy6c1O6Bb1M3Rt0FW94/2l3lrDmozoHEEvCPNw=
