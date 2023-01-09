@@ -95,8 +95,8 @@ func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte
 				// validate YAML file to avoid errors
 				_, gkvErr := utils.GetGvk(file.Data)
 				if gkvErr != nil {
-					log.Error().Err(err).Str("file", file.Path).Msg("Error checking YAML file")
-					return nil, nil, nerrors.NewInternalError("error in %s file [%s]", file.Path, err.Error())
+					log.Error().Err(gkvErr).Str("file", file.Path).Msg("Error checking YAML file")
+					return nil, nil, nerrors.NewInternalError("error in %s file [%s]", file.Path, gkvErr.Error())
 				}
 			}
 		}
