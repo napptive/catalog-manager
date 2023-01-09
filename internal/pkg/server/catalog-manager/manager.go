@@ -84,7 +84,7 @@ func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte
 			isMetadata, metadataObj, err := utils.IsMetadata(file.Data)
 			if err != nil {
 				log.Error().Err(err).Str("file", file.Path).Msg("Error looking for the metadata file")
-				return nil, nil, nerrors.NewInternalErrorFrom(err, "error in %s file", file.Path)
+				return nil, nil, nerrors.NewInternalError("error in %s file [%s]", file.Path, err.Error())
 			}
 			if isMetadata {
 				return file.Data, metadataObj, nil
@@ -127,7 +127,7 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPriva
 	appMetadata, header, err := m.getApplicationMetadataFile(files)
 	if err != nil {
 		log.Err(err).Str("name", requestedAppID).Msg("Unable to add the application. Error getting metadata")
-		return false, nerrors.NewInternalErrorFrom(err, "Unable to add the application. Error getting metadata")
+		return false, err
 	}
 	// the metadata file is required, if is not in the Files -> return an error
 	if appMetadata == nil {
