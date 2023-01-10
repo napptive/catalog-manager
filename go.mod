@@ -40,6 +40,7 @@ require (
 	google.golang.org/api v0.94.0 // indirect
 	google.golang.org/genproto v0.0.0-20220829175752-36a9c930ecbf // indirect
 	google.golang.org/grpc v1.49.0
+	k8s.io/apimachinery v0.25.0
 	sigs.k8s.io/yaml v1.3.0
 	syreclabs.com/go/faker v1.2.3
 

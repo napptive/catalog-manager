@@ -18,7 +18,6 @@ package catalog_manager
 
 import (
 	"fmt"
-
 	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/mock-extensions/pkg/matcher"
@@ -63,6 +62,33 @@ requires:
     - my.custom.trait2
   scopes:
     - my.custom.scope
+`
+
+var appFile = `
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: nginx-app
+  annotations:
+    version: v1.0.0
+    description: "Customized version of nginx"
+spec:
+  components:
+    - name: nginx
+      type: webservice
+      properties:
+        image: nginx:1.20.0
+        cpu: "0.1"
+        memory: 128Mi
+        ports:
+        - port: 80
+          expose: true
+      traits:
+      - type: napptive-ingress
+        properties:
+          name: nginx
+          port: 80
+          path: /
 `
 
 var _ = ginkgo.Describe("Catalog handler test", func() {
@@ -235,7 +261,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 	})
 
 	ginkgo.Context("Adding applications", func() {
-		ginkgo.It("Should be able to add an application", func() {
+		ginkgo.It("Should not be able to add an application if a YAMl file contains an error", func() {
 
 			namespace := "namespace"
 			appName := "app"
@@ -244,6 +270,24 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 				{
 					Path: "./app.yaml",
 					Data: []byte("Kind: ApplicationConfiguration"),
+				}, {
+					Path: "./metadata.yaml",
+					Data: []byte(metadataFile),
+				}}
+
+			manager := NewManager(storageProvider, metadataProvider, "")
+			_, err := manager.Add(fmt.Sprintf("%s/%s:%s", namespace, appName, tag), filesReturned, false, "")
+			gomega.Expect(err).ShouldNot(gomega.Succeed())
+		})
+		ginkgo.It("Should be able to add an application", func() {
+
+			namespace := "namespace"
+			appName := "app"
+			tag := "v1.0"
+			filesReturned := []*entities.FileInfo{
+				{
+					Path: "./app.yaml",
+					Data: []byte(appFile),
 				}, {
 					Path: "./metadata.yaml",
 					Data: []byte(metadataFile),
@@ -263,7 +307,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			filesReturned := []*entities.FileInfo{
 				{
 					Path: "./app.yaml",
-					Data: []byte("Kind: ApplicationConfiguration"),
+					Data: []byte(appFile),
 				}, {
 					Path: "./metadata.yaml",
 					Data: []byte(metadataFile),

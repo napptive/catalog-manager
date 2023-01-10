@@ -75,8 +75,10 @@ func NewManager(stManager storage.StorageManager, provider metadata.MetadataProv
 	}
 }
 
-// getApplicationMetadataFile looks for the application metadata yaml file
+// getApplicationMetadataFile checks the YAML files and returns the application metadata yaml file
 func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte, *entities.ApplicationMetadata, error) {
+	var data []byte
+	var appMetadata *entities.ApplicationMetadata
 	for _, file := range files {
 		// the files must have .yaml extension
 		if utils.IsYamlFile(strings.ToLower(file.Path)) {
@@ -87,17 +89,23 @@ func (m *manager) getApplicationMetadataFile(files []*entities.FileInfo) ([]byte
 				return nil, nil, nerrors.NewInternalError("error in %s file [%s]", file.Path, err.Error())
 			}
 			if isMetadata {
-				return file.Data, metadataObj, nil
+				data = file.Data
+				appMetadata = metadataObj
+			} else {
+				// validate YAML file to avoid errors
+				_, gkvErr := utils.GetGvk(file.Data)
+				if gkvErr != nil {
+					log.Error().Err(gkvErr).Str("file", file.Path).Msg("Error checking YAML file")
+					return nil, nil, nerrors.NewInternalError("error in %s file [%s]", file.Path, gkvErr.Error())
+				}
 			}
 		}
 	}
-	return nil, nil, nil
+	return data, appMetadata, nil
 }
 
 // Add stores a new application in the repository returning the application visibility
 func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPrivate bool, accountName string) (bool, error) {
-
-	// TODO: here, validate the application
 
 	// Store metadata into the provider
 	// Locate README and metadata

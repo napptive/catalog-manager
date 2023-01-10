@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package utils
 
 import (
 	"encoding/base32"
-
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8syaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 
 	"crypto/rand"
 
@@ -42,7 +45,7 @@ var metadataGKV = map[string]string{
 	"core.napptive.com/v1alpha1": "ApplicationMetadata",
 	"core.oam.dev/v1alpha1":      "ApplicationMetadata"}
 
-// check file extension and returns if is a yaml file
+// IsYamlFile check file extension and returns if is a yaml file
 func IsYamlFile(filePath string) bool {
 	return strings.Contains(filePath, ".yaml") || strings.Contains(filePath, ".yml")
 }
@@ -56,7 +59,7 @@ func ApplicationInfoToJSON(metadata entities.ApplicationInfo) (string, error) {
 	return string(bRes), nil
 }
 
-// getFile looks for a file by name in the array retrieved and returns the data or nil if the file does not exist
+// GetFile looks for a file by name in the array retrieved and returns the data or nil if the file does not exist
 func GetFile(relativeFileName string, files []*entities.FileInfo) []byte {
 	for _, file := range files {
 		if strings.HasSuffix(strings.ToLower(file.Path), strings.ToLower(relativeFileName)) {
@@ -137,4 +140,17 @@ func DecomposeApplicationID(applicationID string) (string, *entities.Application
 		ApplicationName: applicationName,
 		Tag:             version,
 	}, nil
+}
+
+// GetGvk returns the GroupVersionKind from a yaml file
+func GetGvk(inputYAML []byte) (*schema.GroupVersionKind, error) {
+	// - Decode YAML manifest into unstructured.Unstructured
+	var decUnstructured = k8syaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
+
+	obj := &unstructured.Unstructured{}
+	_, gvk, err := decUnstructured.Decode(inputYAML, nil, obj)
+	if err != nil {
+		return nil, err
+	}
+	return gvk, nil
 }
