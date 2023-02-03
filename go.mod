@@ -18,15 +18,15 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/napptive/analytics v1.1.0
 	github.com/napptive/grpc-catalog-common-go v0.2.0
-	github.com/napptive/grpc-catalog-go v0.26.0
-	github.com/napptive/grpc-playground-apps-go v0.30.0
+	github.com/napptive/grpc-catalog-go v0.27.0
+	github.com/napptive/grpc-playground-apps-go v0.32.0
 	github.com/napptive/grpc-playground-common-go v0.6.0 // indirect
-	github.com/napptive/grpc-playground-environments-go v0.10.0 // indirect
+	github.com/napptive/grpc-playground-environments-go v0.11.0 // indirect
 	github.com/napptive/grpc-playground-oam-go v0.9.0 // indirect
 	github.com/napptive/grpc-playground-oam3-go v0.5.0 // indirect
 	github.com/napptive/mock-extensions v1.0.0
 	github.com/napptive/nerrors v1.1.0
-	github.com/napptive/njwt v1.3.0
+	github.com/napptive/njwt v1.4.0
 	github.com/napptive/oam-utils v1.0.0
 	github.com/napptive/rdbms/v2 v2.3.0
 	github.com/onsi/ginkgo v1.16.5
