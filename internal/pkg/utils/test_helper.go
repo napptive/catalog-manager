@@ -18,8 +18,10 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/rs/xid"
 
@@ -136,7 +138,9 @@ func CreateTestJWTAuthIncomingContext(username string, accountName string, accou
 		njwthelper.AccountIDKey:     GetAccountId(),
 		njwthelper.AccountNameKey:   accountName,
 		njwthelper.EnvironmentIDKey: GetEnvironmentId(),
+		njwthelper.JWTID:            GetTokenId(),
 		njwthelper.AccountAdminKey:  strconv.FormatBool(accountAdmin),
+		njwthelper.JWTIssuedAt:      fmt.Sprint(time.Now().Add(time.Minute * (-30)).Unix()),
 		jwtKey:                      jwt,
 	})
 	parentCtx := context.Background()
@@ -155,5 +159,10 @@ func GetAccountId() string {
 
 // GetEnvironmentId generates a random environmentId
 func GetEnvironmentId() string {
+	return xid.New().String()
+}
+
+// GetTokenId generates a random token ID
+func GetTokenId() string {
 	return xid.New().String()
 }
