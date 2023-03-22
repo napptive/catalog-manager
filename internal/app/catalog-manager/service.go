@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,36 +19,34 @@ package catalog_manager
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/napptive/nerrors/pkg/nerrors"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
+	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-
-	"github.com/rs/zerolog/log"
-
 	bqinterceptor "github.com/napptive/analytics/pkg/interceptors"
-	analytics "github.com/napptive/analytics/pkg/provider"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
-	"github.com/napptive/catalog-manager/internal/pkg/provider/metadata"
 	"github.com/napptive/catalog-manager/internal/pkg/server/admin"
 	"github.com/napptive/catalog-manager/internal/pkg/server/apps"
 	catalog_manager "github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
-	"github.com/napptive/catalog-manager/internal/pkg/storage"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
+	grpc_jwt_go "github.com/napptive/grpc-jwt-go"
 	njwtConfig "github.com/napptive/njwt/pkg/config"
 	"github.com/napptive/njwt/pkg/interceptors"
-
+	"github.com/rs/zerolog/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
+
+const ZoneSecretCacheTTL = 5 * time.Minute
 
 // Service structure in charge of launching the application.
 type Service struct {
@@ -62,50 +60,22 @@ func NewService(cfg config.Config) *Service {
 	}
 }
 
-// Providers with all the providers needed
-type Providers struct {
-	// elasticProvider with a elastic provider to store metadata
-	elasticProvider metadata.MetadataProvider
-	// repoStorage to store the applications
-	repoStorage storage.StorageManager
-	// analyticsProvider to store operation metrics
-	analyticsProvider analytics.Provider
-}
-
-// getProviders creates and initializes all the providers
-func (s *Service) getProviders() (*Providers, error) {
-	pr, err := metadata.NewElasticProvider(s.cfg.Index, s.cfg.ElasticAddress, s.cfg.AuthEnabled)
-	if err != nil {
-		return nil, err
-	}
-	err = pr.Init()
-	if err != nil {
-		return nil, err
-	}
-
-	if s.cfg.BQConfig.Enabled {
-		provider, err := analytics.NewBigQueryProvider(s.cfg.BQConfig.Config)
-		if err != nil {
-			return nil, err
-		}
-		return &Providers{
-			elasticProvider:   pr,
-			repoStorage:       storage.NewStorageManager(s.cfg.RepositoryPath),
-			analyticsProvider: provider}, nil
-	}
-	// ! s.cfg.BQConfig.Enabled
-	return &Providers{elasticProvider: pr,
-		repoStorage: storage.NewStorageManager(s.cfg.RepositoryPath)}, nil
-
-}
-
 // Run method starting the internal components and launching the service
 func (s *Service) Run() {
 	if err := s.cfg.IsValid(); err != nil {
 		log.Fatal().Err(err).Msg("invalid configuration options")
 	}
 	s.cfg.Print()
-	providers, err := s.getProviders()
+
+	clients, err := GetClients(&s.cfg)
+	if err != nil {
+		if s.cfg.Debug {
+			log.Debug().Str("trace", nerrors.FromError(err).StackTraceToString()).Msg("cannot create downstream clients")
+		}
+		log.Fatal().Err(err).Msg("cannot create downstream clients")
+	}
+
+	providers, err := GetProviders(&s.cfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error creating providers")
 	}
@@ -117,10 +87,10 @@ func (s *Service) Run() {
 	if s.cfg.AdminAPI {
 		go s.LaunchGRPCAdminService(providers)
 	}
-	s.LaunchGRPCService(providers)
+	s.LaunchGRPCService(providers, clients)
 }
 
-// Launch the gRPC admin service.
+// LaunchGRPCAdminService launches the admin interface of the service.
 func (s *Service) LaunchGRPCAdminService(providers *Providers) {
 	manager := admin.NewManager(providers.repoStorage, providers.elasticProvider)
 	handler := admin.NewHandler(manager)
@@ -142,46 +112,67 @@ func (s *Service) LaunchGRPCAdminService(providers *Providers) {
 	}
 }
 
+// createInterceptors method to create an interceptor chain or JWT interceptor depending on the authentication
+// configuration. This method returns both the standard and the streaming interceptor.
+func (s *Service) createInterceptors(providers *Providers, JWTSecretsClient grpc_jwt_go.SecretsClient) (grpc.ServerOption, grpc.ServerOption) {
+
+	var unaryInterceptorsChain []grpc.UnaryServerInterceptor
+	//var unaryStreamChain grpc.ServerOption
+	var unaryStreamChain []grpc.StreamServerInterceptor
+
+	if s.cfg.AuthEnabled {
+		config := njwtConfig.JWTConfig{
+			Secret: s.cfg.JWTConfig.Secret,
+			Header: s.cfg.JWTConfig.Header,
+		}
+		var jwtInterceptor grpc.UnaryServerInterceptor
+		var jwtStreamingInterceptor grpc.StreamServerInterceptor
+
+		if s.cfg.CatalogManager.UseZoneAwareInterceptors {
+			log.Info().Msg("using zone-aware interceptor")
+			secretProvider := interceptors.NewInterceptorZoneSecretManager(config, JWTSecretsClient, ZoneSecretCacheTTL)
+			jwtInterceptor = interceptors.ZoneAwareJWTInterceptor(config, secretProvider)
+			jwtStreamingInterceptor = interceptors.ZoneAwareJWTStreamInterceptor(config, secretProvider)
+		} else {
+			log.Info().Msg("using standard JWT interceptor")
+			jwtInterceptor = interceptors.JwtInterceptor(config)
+			jwtStreamingInterceptor = interceptors.JwtStreamInterceptor(config)
+		}
+		unaryInterceptorsChain = append(unaryInterceptorsChain, jwtInterceptor)
+		unaryStreamChain = append(unaryStreamChain, jwtStreamingInterceptor)
+	}
+
+	if s.cfg.BQConfig.Enabled {
+		log.Info().Msg("analytics enabled, create the interceptor")
+		unaryInterceptorsChain = append(unaryInterceptorsChain, bqinterceptor.OpInterceptor(providers.analyticsProvider))
+		unaryStreamChain = append(unaryStreamChain, bqinterceptor.OpStreamInterceptor(providers.analyticsProvider))
+	}
+
+	return grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)),
+		grpc_middleware.WithStreamServerChain(unaryStreamChain...)
+}
+
 // LaunchGRPCService launches a server for gRPC requests.
-func (s *Service) LaunchGRPCService(providers *Providers) {
+func (s *Service) LaunchGRPCService(providers *Providers, clients *Clients) {
 	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider, s.cfg.CatalogUrl)
 	handler := catalog_manager.NewHandler(manager, s.cfg.AuthEnabled, s.cfg.TeamConfig)
 
 	appManager := apps.NewManager(&s.cfg, manager)
 	appHandler := apps.NewHandler(&s.cfg.JWTConfig, appManager)
 
-	var unaryInterceptorsChain []grpc.UnaryServerInterceptor
-	//var unaryStreamChain grpc.ServerOption
-	var unaryStreamChain []grpc.StreamServerInterceptor
+	unaryInterceptors, streamingInterceptors := s.createInterceptors(providers, clients.JWTSecretsClient)
 
 	// create gRPC server
 	var gRPCServer *grpc.Server
-	if s.cfg.AuthEnabled {
-		// interceptor
-		config := njwtConfig.JWTConfig{
-			Secret: s.cfg.JWTConfig.Secret,
-			Header: s.cfg.JWTConfig.Header,
-		}
-		unaryInterceptorsChain = append(unaryInterceptorsChain, interceptors.JwtInterceptor(config))
-		//unaryStreamChain =  interceptors.WithServerJWTStreamInterceptor(config)
-		unaryStreamChain = append(unaryStreamChain, interceptors.JwtStreamInterceptor(config))
 
-	}
-	if s.cfg.BQConfig.Enabled {
-		log.Info().Msg("analytics enabled, create the interceptor")
-		unaryInterceptorsChain = append(unaryInterceptorsChain, bqinterceptor.OpInterceptor(providers.analyticsProvider))
-		unaryStreamChain = append(unaryStreamChain, bqinterceptor.OpStreamInterceptor(providers.analyticsProvider))
-	}
 	if s.cfg.TLSConfig.LaunchSecureService {
 		serverCert, err := credentials.NewServerTLSFromFile(s.cfg.CertificatePath, s.cfg.PrivateKeyPath)
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed to create gRPC cert")
 		}
-		gRPCServer = grpc.NewServer(grpc.Creds(serverCert), grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)),
-			grpc_middleware.WithStreamServerChain(unaryStreamChain...))
+		gRPCServer = grpc.NewServer(grpc.Creds(serverCert), unaryInterceptors, streamingInterceptors)
 	} else {
-		gRPCServer = grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)),
-			grpc_middleware.WithStreamServerChain(unaryStreamChain...))
+		gRPCServer = grpc.NewServer(unaryInterceptors, streamingInterceptors)
 	}
 	grpc_catalog_go.RegisterCatalogServer(gRPCServer, handler)
 	grpc_catalog_go.RegisterApplicationsServer(gRPCServer, appHandler)

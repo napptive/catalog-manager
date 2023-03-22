@@ -71,4 +71,7 @@ func init() {
 	runCmd.Flags().BoolVar(&cfg.PlaygroundConnection.UseTLS, "useTLSWithPlayground", true, "Whether a TLS protected connection is to be used when connecting with a target playground-api. Altering this value is not recommended in production environments.")
 	runCmd.Flags().StringVar(&cfg.PlaygroundConnection.ClientCA, "playgroundCA", "", "CA that will be used by the playground-api")
 
+	runCmd.Flags().BoolVar(&cfg.CatalogManager.UseZoneAwareInterceptors, "useZoneAwareInterceptors", false, "Use zone aware interceptors. This should be set to true in the control-plane deployment")
+	runCmd.Flags().StringVar(&cfg.CatalogManager.SecretsProviderAddress, "secretsProviderAddress", "", "Address of the service that providers access to the JWT signing secrets")
+
 }

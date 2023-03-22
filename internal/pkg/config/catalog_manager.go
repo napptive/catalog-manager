@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package config
 
 import (
@@ -38,6 +39,11 @@ type CatalogManager struct {
 	RepositoryPath string
 	//CatalogUrl with the url of the repository (napptive repository must be nil)
 	CatalogUrl string
+	// UseZoneAwareInterceptors determines if the service will be using an interceptor that uses
+	// a backend to retrieve zone signing secrets.
+	UseZoneAwareInterceptors bool
+	// SecretsProviderAddress with the address of the service providing JWT signing secrets.
+	SecretsProviderAddress string
 }
 
 // IsValid checks if the configuration options are valid.
@@ -64,6 +70,12 @@ func (c *CatalogManager) IsValid() error {
 		}
 	}
 
+	if c.UseZoneAwareInterceptors {
+		if c.SecretsProviderAddress == "" {
+			return nerrors.NewFailedPreconditionError("secretsProviderAddress must be set")
+		}
+	}
+
 	return nil
 }
 
@@ -78,4 +90,5 @@ func (c *CatalogManager) Print() {
 	log.Info().Str("ElasticAddress", c.ElasticAddress).Str("Index", c.Index).Msg("Elastic Search Address")
 	log.Info().Str("CatalogUrl", c.CatalogUrl).Msg("Catalog URL")
 	log.Info().Str("RepositoryPath", c.RepositoryPath).Msg("Repository base path")
+	log.Info().Bool("useZoneAwareInterceptors", c.UseZoneAwareInterceptors).Str("secretsProviderAddress", c.SecretsProviderAddress).Msg("JWT interceptors")
 }
