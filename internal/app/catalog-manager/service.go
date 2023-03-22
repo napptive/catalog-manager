@@ -19,7 +19,6 @@ package catalog_manager
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/napptive/nerrors/pkg/nerrors"
 	"net"
 	"net/http"
 	"os"
@@ -36,6 +35,7 @@ import (
 	catalog_manager "github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
 	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	grpc_jwt_go "github.com/napptive/grpc-jwt-go"
+	"github.com/napptive/nerrors/pkg/nerrors"
 	njwtConfig "github.com/napptive/njwt/pkg/config"
 	"github.com/napptive/njwt/pkg/interceptors"
 	"github.com/rs/zerolog/log"
@@ -149,7 +149,7 @@ func (s *Service) createInterceptors(providers *Providers, JWTSecretsClient grpc
 	}
 
 	return grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)),
-		grpc_middleware.WithStreamServerChain(unaryStreamChain...)
+		grpc.ChainStreamInterceptor(unaryStreamChain...)
 }
 
 // LaunchGRPCService launches a server for gRPC requests.
