@@ -565,8 +565,6 @@ func (e *ElasticProvider) GetSummary() (*entities.Summary, error) {
 
 // listFromWithFilter search applications in elastic with pagination
 func (e *ElasticProvider) listFromWithFilter(filter ElasticFilter, lastReceived int, getFields ...string) (*responseWrapper, error) {
-
-	log.Debug().Str("filter", filter.ToString()).Int("last received", lastReceived).Msg("listFromWithFilter")
 	sortedBy := []string{NamespaceField, ApplicationField, TagField}
 	searchFunctions := []func(*esapi.SearchRequest){
 		e.client.Search.WithContext(context.Background()),
@@ -815,8 +813,6 @@ type updateVisibilityStruct struct {
 
 // UpdateApplicationVisibility changes the application visibility
 func (e *ElasticProvider) UpdateApplicationVisibility(namespace string, applicationName string, isPrivate bool) error {
-	log.Debug().Msg("UpdateApplicationVisibility")
-
 	// Get all the catalogIDs for namespace, applicationName
 	// Foreach:
 	// update the data
