@@ -269,6 +269,9 @@ type FileInfo struct {
 
 // NewFileInfo creates FileInfo from *grpc_catalog_go.FileInfo
 func NewFileInfo(info *grpc_catalog_go.FileInfo) *FileInfo {
+	if info == nil {
+		return nil
+	}
 	return &FileInfo{
 		Path: info.Path,
 		Data: info.Data,

@@ -10,7 +10,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
 	github.com/napptive/analytics v1.1.0
 	github.com/napptive/grpc-catalog-common-go v0.2.0
-	github.com/napptive/grpc-catalog-go v0.27.0
+	github.com/napptive/grpc-catalog-go v0.28.0
 	github.com/napptive/grpc-jwt-go v0.1.0
 	github.com/napptive/grpc-playground-apps-go v0.33.0
 	github.com/napptive/mock-extensions v1.0.0
@@ -19,7 +19,7 @@ require (
 	github.com/napptive/oam-utils v1.0.0
 	github.com/napptive/rdbms/v2 v2.4.0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.27.4
+	github.com/onsi/gomega v1.27.5
 	github.com/rs/xid v1.4.0
 	github.com/rs/zerolog v1.29.0
 	github.com/spf13/cobra v1.6.1
@@ -43,7 +43,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v0.10.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
-	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
+	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
