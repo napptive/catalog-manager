@@ -53,7 +53,7 @@ const (
 	// PrivateField with the name of the field where we store the application scope
 	PrivateField = "Private"
 	// CacheRefreshTime ick duration to update cache
-	CacheRefreshTime = time.Second * 30
+	CacheRefreshTime = time.Minute * 5
 )
 
 // mapping with the elastic-schema
@@ -90,6 +90,7 @@ type responseWrapper struct {
 
 type ElasticFilter interface {
 	ToElasticQuery() map[string]interface{}
+	ToString() string
 }
 
 // ToElasticQuery returns the search query for a ListFilter. Required to implement ElasticFilter interface
@@ -153,6 +154,18 @@ func (f *ListFilter) ToElasticQuery() map[string]interface{} {
 	return query
 }
 
+func (f *ListFilter) ToString() string {
+	namespace := ""
+	private := ""
+	if f.Private != nil {
+		private = fmt.Sprintf("%v", *f.Private)
+	}
+	if f.Namespace != nil {
+		namespace = *f.Namespace
+	}
+	return fmt.Sprintf("ListFilter. Namespace [%s] - Private [%s]", namespace, private)
+}
+
 // ApplicationFilter struct to filter by namespace and applicationName
 type ApplicationFilter struct {
 	namespace   string
@@ -191,6 +204,10 @@ func (af *ApplicationFilter) ToElasticQuery() map[string]interface{} {
 			},
 		},
 	}
+}
+
+func (af *ApplicationFilter) ToString() string {
+	return fmt.Sprintf("ApplicationFilter. Namespace [%s] - Application [%s]", af.namespace, af.application)
 }
 
 // ElasticProvider a struct to manage elastic storage
@@ -547,7 +564,6 @@ func (e *ElasticProvider) GetSummary() (*entities.Summary, error) {
 
 // listFromWithFilter search applications in elastic with pagination
 func (e *ElasticProvider) listFromWithFilter(filter ElasticFilter, lastReceived int, getFields ...string) (*responseWrapper, error) {
-
 	sortedBy := []string{NamespaceField, ApplicationField, TagField}
 	searchFunctions := []func(*esapi.SearchRequest){
 		e.client.Search.WithContext(context.Background()),
@@ -589,7 +605,7 @@ func (e *ElasticProvider) listFromWithFilter(filter ElasticFilter, lastReceived 
 		return nil, nerrors.FromError(err)
 	}
 	// Print the response status, number of results, and request duration.
-	log.Debug().Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("List operation")
+	log.Debug().Str("filter", filter.ToString()).Str("Status", res.Status()).Int("total", r.Hits.Total.Value).Int("took(ms)", r.Took).Msg("List operation")
 
 	return &r, nil
 }
@@ -598,7 +614,6 @@ func (e *ElasticProvider) listFromWithFilter(filter ElasticFilter, lastReceived 
 func (e *ElasticProvider) ListSummaryWithFilter(filter *ListFilter) ([]*entities.AppSummary, *entities.Summary, error) {
 	// if filtering == (public applications for all namespaces) -> return cache
 	if filter != nil && (filter.Namespace == nil || *filter.Namespace == "") && (filter.Private == nil || !*filter.Private) {
-		log.Debug().Msg("returning public apps")
 		e.Lock()
 		defer e.Unlock()
 		return e.appCache, e.summaryCache, nil
@@ -797,7 +812,6 @@ type updateVisibilityStruct struct {
 
 // UpdateApplicationVisibility changes the application visibility
 func (e *ElasticProvider) UpdateApplicationVisibility(namespace string, applicationName string, isPrivate bool) error {
-
 	// Get all the catalogIDs for namespace, applicationName
 	// Foreach:
 	// update the data

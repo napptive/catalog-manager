@@ -18,6 +18,7 @@ package catalog_manager
 
 import (
 	"context"
+	b64 "encoding/base64"
 	"fmt"
 	"io"
 
@@ -118,8 +119,65 @@ func (h *Handler) Add(server grpc_catalog_go.Catalog_AddServer) error {
 			return nerrors.FromError(sErr).ToGRPC()
 		}
 		// Append the files
-		applicationFiles = append(applicationFiles, entities.NewFileInfo(request.File))
+		fileInfo := entities.NewFileInfo(request.File)
+		if fileInfo != nil {
+			applicationFiles = append(applicationFiles, fileInfo)
+		}
 	}
+}
+
+func (h *Handler) Upload(ctx context.Context, request *grpc_catalog_go.UploadApplicationRequest) (*grpc_catalog_common_go.OpResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	// check the user (check if after validation yto be sure the ApplicationId is filled
+	if err := h.validateUser(ctx, request.ApplicationId, "remove", true); err != nil {
+		return nil, err
+	}
+
+	accountName := ""
+	// if authentication is enabled -> Get the account name to filter all private apps by namespace
+	if h.authEnabled {
+		accountNameFromCtx, err := h.getAccountNameFromContext(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("error getting username from context")
+			return nil, err
+		}
+		accountName = *accountNameFromCtx
+	}
+
+	files := make([]*entities.FileInfo, 0)
+	for _, file := range request.Files {
+		sDec, err := b64.StdEncoding.DecodeString(file.Data)
+		if err != nil {
+			log.Error().Err(err).Str("file", file.Path).Msg("error uploading catalog application. Error decoding application file")
+			return nil, nerrors.NewInternalErrorFrom(err, "Error uploading catalog application, error decoding application file [%s]", file.Path)
+		}
+		files = append(files, &entities.FileInfo{
+			Path: file.Path,
+			Data: sDec,
+		})
+	}
+	isPrivate, err := h.manager.Add(request.ApplicationId, files, request.Private, accountName)
+	if err != nil {
+		log.Error().Err(err).Str("applicationID", request.ApplicationId).Msg("error uploading application")
+		return nil, nerrors.FromGRPC(err)
+	}
+
+	message := ""
+
+	if isPrivate {
+		message = fmt.Sprintf("Private application %s added.", request.ApplicationId)
+	} else {
+		message = fmt.Sprintf("Public application %s added.", request.ApplicationId)
+	}
+
+	return &grpc_catalog_common_go.OpResponse{
+		Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
+		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
+		UserInfo:   message,
+	}, nil
 }
 
 // Download an application from catalog
