@@ -53,7 +53,6 @@ const (
 	// PrivateField with the name of the field where we store the application scope
 	PrivateField = "Private"
 	// CacheRefreshTime ick duration to update cache
-	// CacheRefreshTime = time.Second * 30
 	CacheRefreshTime = time.Minute * 5
 )
 
