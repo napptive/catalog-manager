@@ -373,7 +373,11 @@ func (e *ElasticProvider) checkElasticError(res *esapi.Response, operation strin
 
 	if res.IsError() {
 		log.Warn().Str("err", res.Status()).Str("operation", operation).Msg("Elastic error")
-		return nerrors.NewInternalError("Error %s document: [%s]", operation, res.Status())
+		if res.StatusCode == 404 {
+			return nerrors.NewNotFoundError("Error %s application: [%s]", operation, res.Status())
+		} else {
+			return nerrors.NewInternalError("Error %s application: [%s]", operation, res.Status())
+		}
 	}
 	return nil
 }

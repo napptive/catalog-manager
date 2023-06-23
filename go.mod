@@ -4,37 +4,37 @@ go 1.19
 
 require (
 	github.com/doug-martin/goqu/v9 v9.18.0
-	github.com/elastic/go-elasticsearch/v7 v7.17.7
+	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/napptive/analytics v1.1.0
 	github.com/napptive/grpc-catalog-common-go v0.2.0
 	github.com/napptive/grpc-catalog-go v0.28.0
 	github.com/napptive/grpc-jwt-go v0.1.0
-	github.com/napptive/grpc-playground-apps-go v0.33.0
+	github.com/napptive/grpc-playground-apps-go v0.34.0
 	github.com/napptive/mock-extensions v1.0.0
 	github.com/napptive/nerrors v1.1.0
-	github.com/napptive/njwt v1.7.0
+	github.com/napptive/njwt v1.8.0
 	github.com/napptive/oam-utils v1.0.0
 	github.com/napptive/rdbms/v2 v2.4.0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.27.5
-	github.com/rs/xid v1.4.0
-	github.com/rs/zerolog v1.29.0
-	github.com/spf13/cobra v1.6.1
-	golang.org/x/crypto v0.7.0
-	golang.org/x/net v0.8.0
-	google.golang.org/grpc v1.54.0
-	k8s.io/apimachinery v0.26.3
+	github.com/onsi/gomega v1.27.8
+	github.com/rs/xid v1.5.0
+	github.com/rs/zerolog v1.29.1
+	github.com/spf13/cobra v1.7.0
+	golang.org/x/crypto v0.10.0
+	golang.org/x/net v0.11.0
+	google.golang.org/grpc v1.56.0
+	k8s.io/apimachinery v0.27.3
 	sigs.k8s.io/yaml v1.3.0
 	syreclabs.com/go/faker v1.2.3
 )
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
-	cloud.google.com/go/bigquery v1.49.0 // indirect
-	cloud.google.com/go/compute v1.18.0 // indirect
+	cloud.google.com/go/bigquery v1.50.0 // indirect
+	cloud.google.com/go/compute v1.19.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
@@ -42,7 +42,7 @@ require (
 	github.com/apache/thrift v0.18.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.10.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
@@ -86,16 +86,18 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/mod v0.9.0 // indirect
-	golang.org/x/oauth2 v0.6.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
-	golang.org/x/tools v0.7.0 // indirect
+	golang.org/x/mod v0.10.0 // indirect
+	golang.org/x/oauth2 v0.8.0 // indirect
+	golang.org/x/sync v0.2.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
+	golang.org/x/tools v0.9.1 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.114.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230320184635-7606e756e683 // indirect
+	google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect

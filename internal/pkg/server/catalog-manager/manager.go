@@ -207,14 +207,17 @@ func (m *manager) Download(requestedAppID string, compressed bool, accountName s
 		// If the application is private and the username is the application owner -> error
 		app, err := m.provider.Get(appID)
 		if err != nil {
-			log.Error().Err(err).Str("application", requestedAppID).Str("accountName", accountName).Msg("error getting application to check its visibility")
+			log.Error().Err(err).Str("application", requestedAppID).Str("accountName", accountName).Msg("error getting application to download it")
+			if nerrors.FromError(err).Code == nerrors.NotFound {
+				return nil, nerrors.NewNotFoundError("application %s not available", appID.String())
+			}
 			return nil, nerrors.NewInternalErrorFrom(err, "Error downloading application")
 		}
 		if app.Private {
 			if app.Namespace != accountName {
 				log.Warn().Err(err).Str("application", requestedAppID).Str("username", accountName).
 					Msg("error downloading application. The application is private and the user is not the owner")
-				return nil, nerrors.NewPermissionDeniedError("Error downloading application")
+				return nil, nerrors.NewNotFoundError("application %s not available", appID.String())
 			}
 		}
 	}
@@ -257,12 +260,15 @@ func (m *manager) Get(requestedAppID string, accountName string) (*entities.Exte
 
 	app, err := m.provider.Get(appID)
 	if err != nil {
+		if nerrors.FromError(err).Code == nerrors.NotFound {
+			return nil, nerrors.NewNotFoundError("application %s not available", appID.String())
+		}
 		return nil, err
 	}
 
 	if accountName != "" && app.Private && accountName != app.Namespace {
 		log.Warn().Str("accountName", accountName).Str("application", requestedAppID).Msg("User trying to get info of a private app")
-		return nil, nerrors.NewPermissionDeniedError("error getting application")
+		return nil, nerrors.NewNotFoundError("application %s not available", appID.String())
 	}
 
 	_, metadata, err := utils.IsMetadata([]byte(app.Metadata))
