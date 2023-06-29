@@ -9,16 +9,21 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: catalog-manager
+      install_type: control-plane
   template:
     metadata:
       labels:
         app: catalog-manager
+        install_type: control-plane
     spec:
       containers:
       - name: catalog-manager
         image: TARGET_DOCKER_REGISTRY/catalog-manager:VERSION
         imagePullPolicy: Always
+        ports:
+          - containerPort: 7060
+            name: 7060-grpc
+            protocol: TCP
         args:
           - "run"
           - "--elasticAddress=http://elastic.TARGET_K8S_NAMESPACE:9200"
