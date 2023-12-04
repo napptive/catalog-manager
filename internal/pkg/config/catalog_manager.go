@@ -63,19 +63,16 @@ func (c *CatalogManager) IsValid() error {
 	if c.RepositoryPath == "" {
 		return nerrors.NewFailedPreconditionError("RepositoryPath must be filled")
 	}
-
 	if c.AdminAPI {
 		if c.AdminGRPCPort <= 0 {
 			return nerrors.NewFailedPreconditionError("invalid admin gRPC port number")
 		}
 	}
-
 	if c.UseZoneAwareInterceptors {
 		if c.SecretsProviderAddress == "" {
 			return nerrors.NewFailedPreconditionError("secretsProviderAddress must be set")
 		}
 	}
-
 	return nil
 }
 

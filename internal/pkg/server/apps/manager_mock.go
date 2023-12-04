@@ -36,31 +36,31 @@ func (m *MockManager) EXPECT() *MockManagerMockRecorder {
 }
 
 // Deploy mocks base method.
-func (m *MockManager) Deploy(arg0, arg1, arg2, arg3 string, arg4 map[string]*grpc_catalog_go.ApplicationInstanceConfiguration) (*grpc_catalog_common_go.OpResponse, error) {
+func (m *MockManager) Deploy(arg0, arg1, arg2, arg3 string, arg4 map[string]*grpc_catalog_go.ApplicationInstanceConfiguration, arg5 bool) (*grpc_catalog_common_go.OpResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Deploy", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "Deploy", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*grpc_catalog_common_go.OpResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Deploy indicates an expected call of Deploy.
-func (mr *MockManagerMockRecorder) Deploy(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockManagerMockRecorder) Deploy(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Deploy", reflect.TypeOf((*MockManager)(nil).Deploy), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Deploy", reflect.TypeOf((*MockManager)(nil).Deploy), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // GetConfiguration mocks base method.
-func (m *MockManager) GetConfiguration(arg0 string) (*grpc_catalog_go.GetConfigurationResponse, error) {
+func (m *MockManager) GetConfiguration(arg0 string, arg1 bool) (*grpc_catalog_go.GetConfigurationResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfiguration", arg0)
+	ret := m.ctrl.Call(m, "GetConfiguration", arg0, arg1)
 	ret0, _ := ret[0].(*grpc_catalog_go.GetConfigurationResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetConfiguration indicates an expected call of GetConfiguration.
-func (mr *MockManagerMockRecorder) GetConfiguration(arg0 interface{}) *gomock.Call {
+func (mr *MockManagerMockRecorder) GetConfiguration(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfiguration", reflect.TypeOf((*MockManager)(nil).GetConfiguration), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfiguration", reflect.TypeOf((*MockManager)(nil).GetConfiguration), arg0, arg1)
 }

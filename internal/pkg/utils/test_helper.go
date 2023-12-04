@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,15 @@ package utils
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
-	"time"
-
-	"github.com/rs/xid"
-
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
+	"github.com/napptive/mockup-generator/pkg/mockups"
 	njwthelper "github.com/napptive/njwt/pkg/helper"
+	njwt "github.com/napptive/njwt/pkg/njwt"
+	"github.com/rs/xid"
 	"google.golang.org/grpc/metadata"
+	"os"
 	"syreclabs.com/go/faker"
+	"time"
 )
 
 // RunIntegrationTests checks whether integration tests should be executed.
@@ -132,17 +131,27 @@ func CreateTestApplicationInfoWithoutLogo() *entities.ApplicationInfo {
 // after passing the interceptor. The jwt elements allow to test scenarios where
 // no JWT has been provided in the request.
 func CreateTestJWTAuthIncomingContext(username string, accountName string, accountAdmin bool, jwtKey string, jwt string) context.Context {
-	md := metadata.New(map[string]string{
-		njwthelper.UserIDKey:        GetUserId(),
-		njwthelper.UsernameKey:      username,
-		njwthelper.AccountIDKey:     GetAccountId(),
-		njwthelper.AccountNameKey:   accountName,
-		njwthelper.EnvironmentIDKey: GetEnvironmentId(),
-		njwthelper.JWTID:            GetTokenId(),
-		njwthelper.AccountAdminKey:  strconv.FormatBool(accountAdmin),
-		njwthelper.JWTIssuedAt:      fmt.Sprint(time.Now().Add(time.Minute * (-30)).Unix()),
-		jwtKey:                      jwt,
-	})
+
+	userID := mockups.GetUserId()
+	accountID := mockups.GetAccountId()
+	environmentID := mockups.GetEnvironmentId()
+	zoneID := mockups.GetZoneId()
+	role := "Member"
+	if accountAdmin {
+		role = "Admin"
+	}
+	claim := njwt.NewAuthxClaim(userID, username, accountID, accountName, environmentID,
+		accountAdmin, zoneID, "zone-test.napptive.dev",
+		[]njwt.UserAccountClaim{njwt.UserAccountClaim{
+			Id:   accountID,
+			Name: accountName,
+			Role: role,
+		}})
+	claimMap := claim.ToMap()
+	claimMap[jwtKey] = jwt
+	claimMap[njwthelper.JWTID] = GetTokenId()
+	claimMap[njwthelper.JWTIssuedAt] = fmt.Sprint(time.Now().Add(time.Minute * (-30)).Unix())
+	md := metadata.New(claimMap)
 	parentCtx := context.Background()
 	return metadata.NewIncomingContext(parentCtx, md)
 }

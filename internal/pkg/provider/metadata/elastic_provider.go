@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,10 @@ import (
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v7"
-
 	"github.com/elastic/go-elasticsearch/v7/esapi"
-
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/napptive/nerrors/pkg/nerrors"
-
 	"github.com/rs/zerolog/log"
 )
 

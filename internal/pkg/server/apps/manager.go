@@ -19,12 +19,12 @@ package apps
 import (
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/connection"
-	catalog_manager "github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
-	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
-	grpc_playground_apps_go "github.com/napptive/grpc-playground-apps-go"
+	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
+	"github.com/napptive/grpc-catalog-common-go"
+	"github.com/napptive/grpc-catalog-go"
+	"github.com/napptive/grpc-playground-apps-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
-	oamutils "github.com/napptive/oam-utils/pkg/oam-utils"
+	"github.com/napptive/oam-utils/pkg/oam-utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -32,9 +32,10 @@ type Manager interface {
 	// Deploy an application on a target Playground platform. This endpoint
 	// will gather the application information and send it to the target
 	// playground platform.
-	Deploy(userToken string, applicationID string, targetEnvironmentQualifiedName string, targetPlaygroundApiURL string, instanceConfiguration map[string]*grpc_catalog_go.ApplicationInstanceConfiguration) (*grpc_catalog_common_go.OpResponse, error)
+	Deploy(userToken string, applicationID string, targetEnvironmentQualifiedName string, targetPlaygroundApiURL string,
+		instanceConfiguration map[string]*grpc_catalog_go.ApplicationInstanceConfiguration, allowed bool) (*grpc_catalog_common_go.OpResponse, error)
 	// GetConfiguration returns the application configuration (name for now)
-	GetConfiguration(applicationID string) (*grpc_catalog_go.GetConfigurationResponse, error)
+	GetConfiguration(applicationID string, allowed bool) (*grpc_catalog_go.GetConfigurationResponse, error)
 }
 
 // Manager for apps operations.
@@ -58,14 +59,12 @@ func NewManager(cfg *config.Config, catalogManager catalog_manager.Manager) Mana
 // will gather the application information and send it to the target
 // playground platform.
 func (m *manager) Deploy(userToken string, applicationID string, targetEnvironmentQualifiedName string, targetPlaygroundApiURL string,
-	instanceConfiguration map[string]*grpc_catalog_go.ApplicationInstanceConfiguration) (*grpc_catalog_common_go.OpResponse, error) {
+	instanceConfiguration map[string]*grpc_catalog_go.ApplicationInstanceConfiguration, allowed bool) (*grpc_catalog_common_go.OpResponse, error) {
 
-	log.Debug().Str("application_id", applicationID).Str("eqn", targetEnvironmentQualifiedName).Str("target_playground_api_url", targetPlaygroundApiURL).Msg("deploying application")
-	log.Debug().Interface("instanceConfig", instanceConfiguration).Msg("instance configuration")
-
-	// Retrieve the target application
-	app, err := m.catalogManager.Download(applicationID, true, "")
+	// Download the application
+	app, err := m.catalogManager.Download(applicationID, true, allowed)
 	if err != nil {
+		log.Error().Err(err).Str("application_id", applicationID).Msg("error downloading the application, unable to deploy it")
 		return nil, err
 	}
 
@@ -92,6 +91,7 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 	if err != nil {
 		return nil, nerrors.FromGRPC(err)
 	}
+
 	return &grpc_catalog_common_go.OpResponse{
 		Status:     grpc_catalog_common_go.OpStatus_SUCCESS,
 		StatusName: grpc_catalog_common_go.OpStatus_SUCCESS.String(),
@@ -100,7 +100,7 @@ func (m *manager) Deploy(userToken string, applicationID string, targetEnvironme
 }
 
 func (m *manager) toInstanceConfiguration(instanceConfiguration map[string]*grpc_catalog_go.ApplicationInstanceConfiguration) map[string]*grpc_playground_apps_go.ApplicationInstanceConfiguration {
-	newConf := make(map[string]*grpc_playground_apps_go.ApplicationInstanceConfiguration, 0)
+	newConf := make(map[string]*grpc_playground_apps_go.ApplicationInstanceConfiguration)
 	for appName, conf := range instanceConfiguration {
 		newConf[appName] = &grpc_playground_apps_go.ApplicationInstanceConfiguration{
 			ApplicationName:   conf.ApplicationDefaultName,
@@ -110,25 +110,25 @@ func (m *manager) toInstanceConfiguration(instanceConfiguration map[string]*grpc
 	return newConf
 }
 
-// GetConfiguration returns the application configuration (name for now)
-// TODO: add spec
-func (m *manager) GetConfiguration(applicationID string) (*grpc_catalog_go.GetConfigurationResponse, error) {
+// GetConfiguration returns the application configuration
+func (m *manager) GetConfiguration(applicationID string, allowed bool) (*grpc_catalog_go.GetConfigurationResponse, error) {
 
-	// Get application files (Checking if application exists)
-	files, err := m.catalogManager.Download(applicationID, false, "")
+	log.Debug().Str("application_id", applicationID).Bool("allowed", allowed).Msg("getting configuration")
+	// Download the application
+	files, err := m.catalogManager.Download(applicationID, false, allowed)
 	if err != nil {
-		log.Error().Err(err).Str("applicationID", applicationID).Msg("error getting application files")
+		log.Error().Err(err).Str("application_id", applicationID).Msg("error downloading the application, unable to get application configuration")
 		return nil, err
 	}
 
-	appFiles := make([]*oamutils.ApplicationFile, 0)
+	appFiles := make([]*oam_utils.ApplicationFile, 0)
 
 	// Get Application configuration
 	for _, file := range files {
-		appFiles = append(appFiles, &oamutils.ApplicationFile{FileName: file.Path, Content: file.Data})
+		appFiles = append(appFiles, &oam_utils.ApplicationFile{FileName: file.Path, Content: file.Data})
 	}
 
-	app, err := oamutils.NewApplication(appFiles)
+	app, err := oam_utils.NewApplication(appFiles)
 	if err != nil {
 		// check the error, perhaps the catalog application no correspond to an oam application
 		log.Error().Err(err).Str("applicationID", applicationID).Msg("error getting application files")
