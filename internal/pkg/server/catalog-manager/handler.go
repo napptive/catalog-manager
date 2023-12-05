@@ -371,34 +371,6 @@ func (h *Handler) validateUser(ctx context.Context, appName string, action strin
 	return nerrors.NewPermissionDeniedError("operation not allowed")
 }
 
-// isPrivilegedUser checks the user role
-func (h *Handler) isPrivilegedUser(userName string) bool {
-	if !h.teamConfig.Enabled {
-		return false
-	}
-	for _, user := range h.teamConfig.PrivilegedUsers {
-		if user == userName {
-			return true
-		}
-	}
-
-	return false
-}
-
-// isTeamNamespace checks the namespace role
-func (h *Handler) isTeamNamespace(repoName string) bool {
-	if !h.teamConfig.Enabled {
-		return false
-	}
-	for _, repo := range h.teamConfig.TeamNamespaces {
-		if repo == repoName {
-			return true
-		}
-	}
-
-	return false
-}
-
 // getAccountNameFromContext returns the username from the token
 func (h *Handler) getAccountNameFromContext(ctx context.Context) (*string, error) {
 	claim, err := interceptors.GetClaimFromContext(ctx)
