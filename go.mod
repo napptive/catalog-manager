@@ -14,7 +14,7 @@ require (
 	github.com/napptive/grpc-jwt-go v0.1.0
 	github.com/napptive/grpc-playground-apps-go v0.45.0
 	github.com/napptive/mock-extensions v1.0.0
-	github.com/napptive/mockup-generator v1.3.6-0.20231130105510-3a0d38c80543
+	github.com/napptive/mockup-generator v1.3.6-0.20240119110011-4d367135ad8d
 	github.com/napptive/nerrors v1.1.0
 	github.com/napptive/njwt v1.8.1-0.20231201140407-d70953bfcae6
 	github.com/napptive/oam-utils v1.0.0

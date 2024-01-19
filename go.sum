@@ -461,6 +461,8 @@ github.com/napptive/mock-extensions v1.0.0 h1:gesBQWNBWZ/mfyQbX3G5DLRDcnNOEQL2dn
 github.com/napptive/mock-extensions v1.0.0/go.mod h1:RL9B37bA5Y08gw4bffhtedE+zFRqj3uHshLuP2lhhyA=
 github.com/napptive/mockup-generator v1.3.6-0.20231130105510-3a0d38c80543 h1:5Plx1Od6E2MfXbmkhNsUJJRw6tCPQd1XzQoqcO0dmX8=
 github.com/napptive/mockup-generator v1.3.6-0.20231130105510-3a0d38c80543/go.mod h1:xEHanp463cn1X4kVn09i3VyyIJDACoQey1vq/JCaE+0=
+github.com/napptive/mockup-generator v1.3.6-0.20240119110011-4d367135ad8d h1:LrexTw0vJb6cUAuc/klWYEw8/MaGdXf2tAC8D6ktCH4=
+github.com/napptive/mockup-generator v1.3.6-0.20240119110011-4d367135ad8d/go.mod h1:xEHanp463cn1X4kVn09i3VyyIJDACoQey1vq/JCaE+0=
 github.com/napptive/nerrors v1.1.0 h1:TkpfHi5CScDlzC4uKKiOj3wTJ//zW7Zx8uXukMbCHdA=
 github.com/napptive/nerrors v1.1.0/go.mod h1:CpRat1XjEuYtPjsQ7w2qZeOgYz+Ok5KdMipAWpISYgg=
 github.com/napptive/njwt v1.8.1-0.20231201140407-d70953bfcae6 h1:JHaU8rxq0dhEVRfpRMelc3P5WvbPahe2dtxHBjMzrZE=
