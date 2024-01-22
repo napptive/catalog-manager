@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	"github.com/napptive/mockup-generator/pkg/mockups"
 	njwthelper "github.com/napptive/njwt/pkg/helper"
 	njwt "github.com/napptive/njwt/pkg/njwt"
 	"github.com/rs/xid"
@@ -132,10 +131,10 @@ func CreateTestApplicationInfoWithoutLogo() *entities.ApplicationInfo {
 // no JWT has been provided in the request.
 func CreateTestJWTAuthIncomingContext(username string, accountName string, accountAdmin bool, jwtKey string, jwt string) context.Context {
 
-	userID := mockups.GetUserId()
-	accountID := mockups.GetAccountId()
-	environmentID := mockups.GetEnvironmentId()
-	zoneID := mockups.GetZoneId()
+	userID := GetUserID()
+	accountID := GetAccountID()
+	environmentID := GetEnvironmentID()
+	zoneID := GetZoneID()
 	role := "Member"
 	if accountAdmin {
 		role = "Admin"
@@ -149,29 +148,34 @@ func CreateTestJWTAuthIncomingContext(username string, accountName string, accou
 		}})
 	claimMap := claim.ToMap()
 	claimMap[jwtKey] = jwt
-	claimMap[njwthelper.JWTID] = GetTokenId()
+	claimMap[njwthelper.JWTID] = GetTokenID()
 	claimMap[njwthelper.JWTIssuedAt] = fmt.Sprint(time.Now().Add(time.Minute * (-30)).Unix())
 	md := metadata.New(claimMap)
 	parentCtx := context.Background()
 	return metadata.NewIncomingContext(parentCtx, md)
 }
 
-// GetUserId generates a random UserId
-func GetUserId() string {
+// GetUserID generates a random UserId
+func GetUserID() string {
 	return xid.New().String()
 }
 
-// GetAccountId generates a random AccountId
-func GetAccountId() string {
+// GetAccountID generates a random AccountId
+func GetAccountID() string {
 	return xid.New().String()
 }
 
-// GetEnvironmentId generates a random environmentId
-func GetEnvironmentId() string {
+// GetEnvironmentID generates a random environmentId
+func GetEnvironmentID() string {
 	return xid.New().String()
 }
 
-// GetTokenId generates a random token ID
-func GetTokenId() string {
+// GetTokenID generates a random token ID
+func GetTokenID() string {
+	return xid.New().String()
+}
+
+// GetZoneID generates a random zone ID
+func GetZoneID() string {
 	return xid.New().String()
 }

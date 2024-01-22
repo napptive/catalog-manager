@@ -14,7 +14,6 @@ require (
 	github.com/napptive/grpc-jwt-go v0.1.0
 	github.com/napptive/grpc-playground-apps-go v0.45.0
 	github.com/napptive/mock-extensions v1.0.0
-	github.com/napptive/mockup-generator v1.3.6-0.20240119110011-4d367135ad8d
 	github.com/napptive/nerrors v1.1.0
 	github.com/napptive/njwt v1.8.1-0.20240119105957-cd28e5a47f2f
 	github.com/napptive/oam-utils v1.0.0
@@ -79,25 +78,10 @@ require (
 	github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/napptive/grpc-account-manager-go v0.133.0 // indirect
-	github.com/napptive/grpc-authx-go v0.37.0 // indirect
 	github.com/napptive/grpc-common-go v0.8.0 // indirect
-	github.com/napptive/grpc-environment-manager-go v0.45.0 // indirect
-	github.com/napptive/grpc-event-exporter-go v0.2.0 // indirect
-	github.com/napptive/grpc-infrastructure-go v0.1.0 // indirect
-	github.com/napptive/grpc-k8s-go v0.2.0 // indirect
-	github.com/napptive/grpc-kube-manager-go v0.80.0 // indirect
-	github.com/napptive/grpc-oam-go v0.15.0 // indirect
-	github.com/napptive/grpc-oam3-go v0.8.0 // indirect
 	github.com/napptive/grpc-playground-common-go v0.6.0 // indirect
 	github.com/napptive/grpc-playground-environments-go v0.17.0 // indirect
-	github.com/napptive/grpc-playground-oam-go v0.9.0 // indirect
 	github.com/napptive/grpc-playground-oam3-go v0.5.0 // indirect
-	github.com/napptive/grpc-playground-schematics-go v0.19.0 // indirect
-	github.com/napptive/grpc-subscription-manager-go v0.31.0 // indirect
-	github.com/napptive/grpc-token-invalidator-go v0.4.0 // indirect
-	github.com/napptive/grpc-user-manager-go v0.25.0 // indirect
-	github.com/napptive/grpc-zone-manager-go v0.25.0 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
