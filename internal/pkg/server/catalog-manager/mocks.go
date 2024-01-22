@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,5 +20,5 @@ package catalog_manager
 //go:generate  mockgen -destination catalog_add_server_mock.go -package=catalog_manager github.com/napptive/grpc-catalog-go Catalog_AddServer
 //go:generate  mockgen -destination manager_mock.go  -package=catalog_manager  github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager Manager
 
-//Mock is a place holder to unify all mock generators.
+// Mock is a place holder to unify all mock generators.
 func Mock() {}

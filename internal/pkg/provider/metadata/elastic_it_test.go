@@ -5,8 +5,9 @@ import (
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
-	"strings"
 	"syreclabs.com/go/faker"
+
+	"strings"
 )
 
 var _ = ginkgo.Describe("Elastic Provider test", func() {

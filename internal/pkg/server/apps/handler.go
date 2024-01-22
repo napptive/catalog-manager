@@ -20,8 +20,9 @@ import (
 	"context"
 
 	"github.com/napptive/catalog-manager/internal/pkg/config"
-	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
+	"github.com/napptive/catalog-manager/internal/pkg/server/resolver"
+	"github.com/napptive/grpc-catalog-common-go"
+	"github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/metadata"
@@ -29,15 +30,17 @@ import (
 
 // Handler for apps operations.
 type Handler struct {
-	manager Manager
-	cfg     *config.JWTConfig
+	manager  Manager
+	cfg      *config.JWTConfig
+	resolver resolver.PermissionResolver
 }
 
 // NewHandler creates a new instance of the handler.
-func NewHandler(cfg *config.JWTConfig, manager Manager) *Handler {
+func NewHandler(cfg *config.JWTConfig, manager Manager, resolver resolver.PermissionResolver) *Handler {
 	return &Handler{
-		manager: manager,
-		cfg:     cfg,
+		manager:  manager,
+		cfg:      cfg,
+		resolver: resolver,
 	}
 }
 
@@ -64,11 +67,19 @@ func (h *Handler) Deploy(ctx context.Context, request *grpc_catalog_go.DeployApp
 	if err := request.Validate(); err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
+
+	// check user permission in the application namespace (for private apps)
+	accountAllowed, err := h.resolver.CheckAccountPermissions(ctx, request.ApplicationId, false)
+	if err != nil {
+		log.Error().Err(err).Str("application_name", request.ApplicationId).Msg("error checking permission, unable to download the application to deploy it")
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
 	jwt, err := h.extractIncomingJWT(ctx)
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
-	response, err := h.manager.Deploy(jwt, request.ApplicationId, request.TargetEnvironmentQualifiedName, request.TargetPlaygroundApiUrl, request.InstanceConfiguration)
+	response, err := h.manager.Deploy(jwt, request.ApplicationId, request.TargetEnvironmentQualifiedName, request.TargetPlaygroundApiUrl, request.InstanceConfiguration, *accountAllowed)
 	if err != nil {
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
@@ -81,7 +92,14 @@ func (h *Handler) GetConfiguration(ctx context.Context, request *grpc_catalog_go
 		return nil, nerrors.FromError(err).ToGRPC()
 	}
 
-	conf, err := h.manager.GetConfiguration(request.ApplicationId)
+	// check user permission in the application namespace (for private apps)
+	accountAllowed, err := h.resolver.CheckAccountPermissions(ctx, request.ApplicationId, false)
+	if err != nil {
+		log.Error().Err(err).Str("application_name", request.ApplicationId).Msg("error checking permission, unable to get application configuration")
+		return nil, nerrors.FromError(err).ToGRPC()
+	}
+
+	conf, err := h.manager.GetConfiguration(request.ApplicationId, *accountAllowed)
 	if err != nil {
 		log.Error().Err(err).Str("applicationID", request.ApplicationId).Msg("error getting application configuration")
 		return nil, nerrors.FromError(err).ToGRPC()

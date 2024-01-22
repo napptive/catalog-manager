@@ -23,7 +23,7 @@ func (c *JWTConfig) IsValid() error {
 	return nil
 }
 
-// IsValid checks if the configuration options are valid.
+// Print prints the configuration
 func (c *JWTConfig) Print() error {
 	if c.AuthEnabled {
 		log.Info().Str("header", c.Header).

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ package admin
 import (
 	"context"
 	"fmt"
-	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
+
+	"github.com/napptive/grpc-catalog-common-go"
+	"github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 )

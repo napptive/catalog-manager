@@ -50,7 +50,7 @@ func (mr *MockManagerMockRecorder) Add(arg0, arg1, arg2, arg3 interface{}) *gomo
 }
 
 // Download mocks base method.
-func (m *MockManager) Download(arg0 string, arg1 bool, arg2 string) ([]*entities.FileInfo, error) {
+func (m *MockManager) Download(arg0 string, arg1, arg2 bool) ([]*entities.FileInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Download", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]*entities.FileInfo)
@@ -65,7 +65,7 @@ func (mr *MockManagerMockRecorder) Download(arg0, arg1, arg2 interface{}) *gomoc
 }
 
 // Get mocks base method.
-func (m *MockManager) Get(arg0, arg1 string) (*entities.ExtendedApplicationMetadata, error) {
+func (m *MockManager) Get(arg0 string, arg1 bool) (*entities.ExtendedApplicationMetadata, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", arg0, arg1)
 	ret0, _ := ret[0].(*entities.ExtendedApplicationMetadata)
@@ -80,7 +80,7 @@ func (mr *MockManagerMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockManager) List(arg0, arg1 string) ([]*entities.AppSummary, error) {
+func (m *MockManager) List(arg0 map[string]*bool, arg1 bool) ([]*entities.AppSummary, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", arg0, arg1)
 	ret0, _ := ret[0].([]*entities.AppSummary)

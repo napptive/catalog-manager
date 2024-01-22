@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
-	user_provider "github.com/napptive/catalog-manager/internal/pkg/provider/user-provider"
+	"github.com/napptive/catalog-manager/internal/pkg/provider/user-provider"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/napptive/rdbms/v2/pkg/rdbms"

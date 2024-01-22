@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package connection
 
 import (
@@ -22,11 +23,10 @@ import (
 
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/nerrors/pkg/nerrors"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // GetConnectionToPlayground creates a new connection with the playground.

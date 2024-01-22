@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ package catalog_manager
 import (
 	"context"
 	"fmt"
+	"github.com/napptive/catalog-manager/internal/pkg/server/resolver"
 	"io"
 
 	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
-	grpc_catalog_common_go "github.com/napptive/grpc-catalog-common-go"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
+	"github.com/napptive/grpc-catalog-common-go"
+	"github.com/napptive/grpc-catalog-go"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 )
@@ -82,7 +83,8 @@ var _ = ginkgo.Describe("Catalog handler test with auth enabled by JWT", func() 
 		ctrl = gomock.NewController(ginkgo.GinkgoT())
 		manager = NewMockManager(ctrl)
 		addServerStream = NewMockCatalog_AddServer(ctrl)
-		handler = NewHandler(manager, true, teamConfig)
+		permissionResolver := resolver.NewPermissionResolver(true, config.NewTeamConfig(false, "", ""))
+		handler = NewHandler(manager, true, teamConfig, *permissionResolver)
 	})
 
 	ginkgo.AfterEach(func() {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package catalog_manager
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -46,13 +45,13 @@ type Manager interface {
 	// Add stores a new application in the repository.
 	Add(requestedAppID string, files []*entities.FileInfo, isPrivate bool, accountName string) (bool, error)
 	// Download returns the files of an application
-	Download(requestedAppID string, compressed bool, accountName string) ([]*entities.FileInfo, error)
+	Download(applicationDescriptor string, compressed bool, accessNsAllowed bool) ([]*entities.FileInfo, error)
 	// Remove removes an application from the repository
 	Remove(requestedAppID string) error
 	// Get returns a given application metadata
-	Get(requestedAppID string, accountName string) (*entities.ExtendedApplicationMetadata, error)
+	Get(requestedAppID string, accessNsAllowed bool) (*entities.ExtendedApplicationMetadata, error)
 	// List returns a list of applications (without metadata and readme content)
-	List(namespace string, accountName string) ([]*entities.AppSummary, error)
+	List(accounts map[string]*bool, showPublicApps bool) ([]*entities.AppSummary, error)
 	// Summary returns catalog summary
 	Summary() (*entities.Summary, error)
 	// UpdateApplicationVisibility changes the application visibility
@@ -196,32 +195,29 @@ func (m *manager) Add(requestedAppID string, files []*entities.FileInfo, isPriva
 	return isPrivate, nil
 }
 
-// Download returns the files of an application
-func (m *manager) Download(requestedAppID string, compressed bool, accountName string) ([]*entities.FileInfo, error) {
+func (m *manager) Download(applicationID string, compressed bool, allowed bool) ([]*entities.FileInfo, error) {
 
-	_, appID, err := utils.DecomposeApplicationID(requestedAppID)
+	_, applicationDescriptor, err := utils.DecomposeApplicationID(applicationID)
+
 	if err != nil {
-		return nil, nerrors.NewFailedPreconditionErrorFrom(err, "unable to download the application")
+		log.Error().Err(err).Str("application_name", applicationID).Msg("error getting application name, unable to check permissions")
+		return nil, err
 	}
-	if accountName != "" {
-		// If the application is private and the username is the application owner -> error
-		app, err := m.provider.Get(appID)
-		if err != nil {
-			log.Error().Err(err).Str("application", requestedAppID).Str("accountName", accountName).Msg("error getting application to download it")
-			if nerrors.FromError(err).Code == nerrors.NotFound {
-				return nil, nerrors.NewNotFoundError("application %s not available", appID.String())
-			}
-			return nil, nerrors.NewInternalErrorFrom(err, "Error downloading application")
+	// If the application is private and the username is the application owner -> error
+	app, err := m.provider.Get(applicationDescriptor)
+	if err != nil {
+		if nerrors.FromError(err).Code == nerrors.NotFound {
+			return nil, nerrors.NewNotFoundError("application %s not available", applicationDescriptor.String())
 		}
-		if app.Private {
-			if app.Namespace != accountName {
-				log.Warn().Err(err).Str("application", requestedAppID).Str("username", accountName).
-					Msg("error downloading application. The application is private and the user is not the owner")
-				return nil, nerrors.NewNotFoundError("application %s not available", appID.String())
-			}
-		}
+		return nil, nerrors.NewInternalErrorFrom(err, "Error downloading application")
 	}
-	return m.stManager.GetApplication(appID.Namespace, appID.ApplicationName, appID.Tag, compressed)
+	if app.Private && !allowed {
+		log.Debug().Str("application", applicationDescriptor.String()).Msg("application private, user can access to the namespace")
+		return nil, nerrors.NewNotFoundError("application %s not available", applicationDescriptor.String())
+
+	}
+
+	return m.stManager.GetApplication(applicationDescriptor.Namespace, applicationDescriptor.ApplicationName, applicationDescriptor.Tag, compressed)
 }
 
 // Remove removes an application from the repository
@@ -251,7 +247,7 @@ func (m *manager) Remove(requestedAppID string) error {
 }
 
 // Get returns the application metadata for a given application
-func (m *manager) Get(requestedAppID string, accountName string) (*entities.ExtendedApplicationMetadata, error) {
+func (m *manager) Get(requestedAppID string, accessNsAllowed bool) (*entities.ExtendedApplicationMetadata, error) {
 
 	_, appID, err := utils.DecomposeApplicationID(requestedAppID)
 	if err != nil {
@@ -266,8 +262,8 @@ func (m *manager) Get(requestedAppID string, accountName string) (*entities.Exte
 		return nil, err
 	}
 
-	if accountName != "" && app.Private && accountName != app.Namespace {
-		log.Warn().Str("accountName", accountName).Str("application", requestedAppID).Msg("User trying to get info of a private app")
+	if app.Private && !accessNsAllowed {
+		log.Warn().Str("application", requestedAppID).Msg("User trying to get info of a private app")
 		return nil, nerrors.NewNotFoundError("application %s not available", appID.String())
 	}
 
@@ -294,96 +290,35 @@ func (m *manager) Get(requestedAppID string, accountName string) (*entities.Exte
 
 // List returns a list of applications (without metadata and readme content)
 // List ([catalogURL/]namespace)
-func (m *manager) List(namespace string, accountName string) ([]*entities.AppSummary, error) {
-	// TODO: Check if the catalogURL matches with repositoryName
-	// DecomposeApplicationID needs [catalogURL/]namespace/appName[:tag]
-	// in this case we have no appName, uses dummyAppName to simulate it
-	_, appID, err := utils.DecomposeApplicationID(fmt.Sprintf("%s/dummyAppName", namespace))
-	if err != nil {
-		return nil, nerrors.NewFailedPreconditionErrorFrom(err, "unable to list applications")
-	}
+// List returns a list f applications
+// The private and or public applications for the accounts in accounts
+// and if showPublicApps is true, already returns all the public applications
+func (m *manager) List(accounts map[string]*bool, showPublicApps bool) ([]*entities.AppSummary, error) {
 
-	log.Debug().Str("required namespace", appID.Namespace).Str("accountName", accountName).Msg("application list")
-
-	// no authentication enabled
-	if accountName == "" {
-		if namespace == "" {
-			private := false
-			apps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
-				Namespace: nil,
-				Private:   &private,
-			})
-			if err != nil {
-				log.Error().Err(err).Str("required namespace", appID.Namespace).Str("accountName", accountName).Msg("error getting public apps")
-				return nil, err
-			}
-			return apps, nil
-		} else {
-			apps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
-				Namespace: &appID.Namespace,
-				Private:   nil,
-			})
-			if err != nil {
-				log.Error().Err(err).Str("required namespace", appID.Namespace).Str("accountName", accountName).Msg("error getting public apps")
-				return nil, err
-			}
-			return apps, nil
-		}
-	}
-
-	// Authentication enabled
-	// - namespace empty -> All public applications and his private ones
-	// - namespace != empty
-	//   - namespace == username -> All the applications in namespace (public and private)
-	//   - namespace != username -> Public applications in namespace
-	if appID.Namespace == "" {
-		// All public apps + own privates (only if authEnabled username != "")
-		private := true
-		ownApps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
-			Namespace: &accountName,
-			Private:   &private,
-		})
-		if err != nil {
-			log.Error().Err(err).Str("required namespace", appID.Namespace).Str("accountName", accountName).Msg("error getting public apps")
-			return nil, err
-		}
-		private = false
-		publicApps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
+	result := make([]*entities.AppSummary, 0)
+	if showPublicApps {
+		private := false
+		apps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
 			Namespace: nil,
 			Private:   &private,
 		})
 		if err != nil {
-			log.Error().Err(err).Str("required namespace", appID.Namespace).Str("accountName", accountName).Msg("error getting public apps")
 			return nil, err
 		}
-		return append(publicApps, ownApps...), nil
-
-	} else {
-		if appID.Namespace == accountName {
-			// the required namespace is the user namespace or authentication is not enabled -> Return all the applications in the namespace (public and private)
-			apps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
-				Namespace: &appID.Namespace,
-				Private:   nil,
-			})
-			if err != nil {
-				log.Error().Err(err).Str("required namespace", appID.Namespace).Str("accountName", accountName).Msg("error getting public apps")
-				return nil, err
-			}
-			return apps, nil
-		} else {
-			// return only the public application in the namespace
-			private := false
-			apps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
-				Namespace: &appID.Namespace,
-				Private:   &private,
-			})
-			if err != nil {
-				log.Error().Err(err).Str("required namespace", appID.Namespace).Str("accountName", accountName).Msg("error getting public apps")
-				return nil, err
-			}
-			return apps, nil
-		}
+		result = append(result, apps...)
 	}
+
+	for accountName, private := range accounts {
+		apps, _, err := m.provider.ListSummaryWithFilter(&metadata.ListFilter{
+			Namespace: &accountName,
+			Private:   private,
+		})
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, apps...)
+	}
+	return result, nil
 }
 
 // Summary returns catalog summary

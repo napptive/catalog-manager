@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package printer
 
 import (
 	"fmt"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
 	"os"
 	"text/tabwriter"
 	"text/template"
 
+	"github.com/napptive/grpc-catalog-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 )
 

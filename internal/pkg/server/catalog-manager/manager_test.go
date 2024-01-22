@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package catalog_manager
 
 import (
 	"fmt"
+
 	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/mock-extensions/pkg/matcher"
@@ -32,7 +33,7 @@ kind: ApplicationMetadata
 # Name of the application, not necessarily a valid k8s name.
 name: "My App Name 2"
 version: 1.0
-description: Short description for searchs. Long one plus how to goes into the README.md
+description: Short description for search. Long one plus how to goes into the README.md
 # Keywords facilitate searches on the catalog
 keywords:
   - "key1"
@@ -46,7 +47,7 @@ kind: ApplicationMetadata
 # Name of the application, not necessarily a valid k8s name.
 name: "My App Name 2"
 version: 1.0
-description: Short description for searchs. Long one plus how to goes into the README.md
+description: Short description for search. Long one plus how to goes into the README.md
 # Keywords facilitate searches on the catalog
 keywords:
   - "key1"
@@ -108,7 +109,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 	})
 
 	ginkgo.Context("Downloading applications", func() {
-		ginkgo.It("Should be able to download an application", func() {
+		ginkgo.It("Should be able to download a public application", func() {
 			namespace := "namespace"
 			appName := "appName"
 
@@ -121,35 +122,86 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 					Data: []byte("metadata"),
 				}}
 
+			metadataProvider.EXPECT().Get(gomock.Any()).Return(&entities.ApplicationInfo{
+				Namespace:       namespace,
+				ApplicationName: appName,
+				Private:         false,
+			}, nil)
 			storageProvider.EXPECT().GetApplication(namespace, appName, "latest", false).Return(filesReturned, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			files, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false, "")
+			files, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false, true)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(files).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(files).ShouldNot(gomega.BeNil())
+		})
+		ginkgo.It("Should be able to download a private application if the user can access to the account", func() {
+			namespace := "namespace"
+			appName := "appName"
+
+			filesReturned := []*entities.FileInfo{
+				{
+					Path: "./app.yaml",
+					Data: []byte("app"),
+				}, {
+					Path: "./metadata.yaml",
+					Data: []byte("metadata"),
+				}}
+
+			metadataProvider.EXPECT().Get(gomock.Any()).Return(&entities.ApplicationInfo{
+				Namespace:       namespace,
+				ApplicationName: appName,
+				Private:         true,
+			}, nil)
+			storageProvider.EXPECT().GetApplication(namespace, appName, "latest", false).Return(filesReturned, nil)
+
+			manager := NewManager(storageProvider, metadataProvider, "")
+			files, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false, true)
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(files).ShouldNot(gomega.BeEmpty())
+			gomega.Expect(files).ShouldNot(gomega.BeNil())
+		})
+		ginkgo.It("Should not be able to download a private application if the user can not access to the account", func() {
+			namespace := "namespace"
+			appName := "appName"
+
+			metadataProvider.EXPECT().Get(gomock.Any()).Return(&entities.ApplicationInfo{
+				Namespace:       namespace,
+				ApplicationName: appName,
+				Private:         true,
+			}, nil)
+
+			manager := NewManager(storageProvider, metadataProvider, "")
+			_, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false, false)
+			gomega.Expect(err).ShouldNot(gomega.Succeed())
+
 		})
 		ginkgo.It("should not be able to download an application with a wrong name", func() {
 			appName := "appName"
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Download(appName, false, "")
+			_, err := manager.Download(appName, false, true)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 		ginkgo.It("should not be able to download an application if there is an error in the storage", func() {
 			namespace := "namespace"
 			appName := "appName"
 
+			metadataProvider.EXPECT().Get(gomock.Any()).Return(&entities.ApplicationInfo{
+				Namespace:       namespace,
+				ApplicationName: appName,
+				Private:         false,
+			}, nil)
 			storageProvider.EXPECT().GetApplication(namespace, appName, "latest", false).Return(nil, nerrors.NewInternalError("error reading repository"))
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false, "")
+			_, err := manager.Download(fmt.Sprintf("%s/%s", namespace, appName), false, true)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 	})
 
 	ginkgo.Context("Getting application", func() {
-		ginkgo.It("should be able to get an application", func() {
+		ginkgo.It("should be able to get a public application", func() {
 			namespace := "namespace"
 			appName := "appName"
 
@@ -161,13 +213,56 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 				Tag:             "latest",
 				MetadataName:    "My App",
 				Metadata:        metadataFile,
+				Private:         false,
 			}, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			metadata, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName), "")
+			metadata, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName), true)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(metadata).ShouldNot(gomega.BeNil())
 			gomega.Expect(metadata.MetadataObj.Name).ShouldNot(gomega.BeEmpty())
+
+		})
+		ginkgo.It("should be able to get a private application if the user can access to the account", func() {
+			namespace := "namespace"
+			appName := "appName"
+
+			matcher := matcher.NewStructMatcher(map[string]interface{}{"Namespace": namespace, "ApplicationName": appName})
+			metadataProvider.EXPECT().Get(matcher).Return(&entities.ApplicationInfo{
+				CatalogID:       "",
+				Namespace:       namespace,
+				ApplicationName: appName,
+				Tag:             "latest",
+				MetadataName:    "My App",
+				Metadata:        metadataFile,
+				Private:         true,
+			}, nil)
+
+			manager := NewManager(storageProvider, metadataProvider, "")
+			metadata, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName), true)
+			gomega.Expect(err).Should(gomega.Succeed())
+			gomega.Expect(metadata).ShouldNot(gomega.BeNil())
+			gomega.Expect(metadata.MetadataObj.Name).ShouldNot(gomega.BeEmpty())
+
+		})
+		ginkgo.It("should not be able to get a private application if the user can not access to the account", func() {
+			namespace := "namespace"
+			appName := "appName"
+
+			matcher := matcher.NewStructMatcher(map[string]interface{}{"Namespace": namespace, "ApplicationName": appName})
+			metadataProvider.EXPECT().Get(matcher).Return(&entities.ApplicationInfo{
+				CatalogID:       "",
+				Namespace:       namespace,
+				ApplicationName: appName,
+				Tag:             "latest",
+				MetadataName:    "My App",
+				Metadata:        metadataFile,
+				Private:         true,
+			}, nil)
+
+			manager := NewManager(storageProvider, metadataProvider, "")
+			_, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName), false)
+			gomega.Expect(err).ShouldNot(gomega.Succeed())
 
 		})
 		ginkgo.It("should not be able to return an application if it does not exist", func() {
@@ -178,19 +273,19 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			metadataProvider.EXPECT().Get(matcher).Return(nil, nerrors.NewNotFoundError("not found"))
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName), "")
+			_, err := manager.Get(fmt.Sprintf("%s/%s", namespace, appName), true)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 
 		})
 		ginkgo.It("should not be able to return a invalid application", func() {
 			manager := NewManager(storageProvider, metadataProvider, "")
-			_, err := manager.Get("invalidApp", "")
+			_, err := manager.Get("invalidApp", true)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
 	})
 
 	ginkgo.Context("Listing applications", func() {
-		ginkgo.It("should be able to list applications", func() {
+		ginkgo.It("should be able to list applications all the public app", func() {
 
 			returned := []*entities.AppSummary{
 				{
@@ -213,7 +308,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			metadataProvider.EXPECT().ListSummaryWithFilter(gomock.Any()).Return(returned, &summary, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			received, err := manager.List("", "")
+			received, err := manager.List(map[string]*bool{}, true)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(len(received)).ShouldNot(gomega.BeZero())
@@ -224,11 +319,13 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 					Namespace:       "ns1",
 					ApplicationName: "app1",
 					TagMetadataName: map[string]string{"tag1": "my app v1"},
+					Private:         false,
 				},
 				{
 					Namespace:       "ns1",
 					ApplicationName: "app1",
 					TagMetadataName: map[string]string{"tag2": "my app v2"},
+					Private:         false,
 				},
 			}
 			summary := entities.Summary{
@@ -238,14 +335,14 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			}
 			metadataProvider.EXPECT().ListSummaryWithFilter(gomock.Any()).Return(returned, &summary, nil)
 			manager := NewManager(storageProvider, metadataProvider, "")
-			received, err := manager.List("ns1", "")
+			received, err := manager.List(map[string]*bool{"ns1": nil}, false)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).ShouldNot(gomega.BeEmpty())
 			gomega.Expect(len(received)).Should(gomega.Equal(len(returned)))
 
 		})
 		ginkgo.It("should be able to return an empty list of applications", func() {
-			var returned = []*entities.AppSummary{}
+			var returned []*entities.AppSummary
 			summary := entities.Summary{
 				NumNamespaces:   0,
 				NumApplications: 0,
@@ -254,7 +351,7 @@ var _ = ginkgo.Describe("Catalog handler test", func() {
 			metadataProvider.EXPECT().ListSummaryWithFilter(gomock.Any()).Return(returned, &summary, nil)
 
 			manager := NewManager(storageProvider, metadataProvider, "")
-			received, err := manager.List("", "")
+			received, err := manager.List(map[string]*bool{"ns1": nil}, false)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(received).Should(gomega.BeEmpty())
 		})

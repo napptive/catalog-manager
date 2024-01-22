@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package commands
 import (
 	"time"
 
-	catalog_manager "github.com/napptive/catalog-manager/internal/app/catalog-manager"
+	"github.com/napptive/catalog-manager/internal/app/catalog-manager"
 	"github.com/spf13/cobra"
 )
 

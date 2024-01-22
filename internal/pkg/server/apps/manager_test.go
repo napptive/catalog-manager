@@ -13,12 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package apps
 
 import (
 	"fmt"
 
-	gomock "github.com/golang/mock/gomock"
+	"github.com/golang/mock/gomock"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
@@ -81,42 +82,40 @@ var _ = ginkgo.Describe("Apps manager test", func() {
 
 			appID := fmt.Sprintf("%s/%s", "username", "application")
 
-			catalogManager.EXPECT().Download(appID, false, "").Return([]*entities.FileInfo{{
+			catalogManager.EXPECT().Download(appID, false, true).Return([]*entities.FileInfo{{
 				Path: "application.yaml",
 				Data: []byte(application),
 			}}, nil)
 
-			config, err := manager.GetConfiguration(appID)
+			config, err := manager.GetConfiguration(appID, true)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(config).ShouldNot(gomega.BeNil())
 			gomega.Expect(config.IsApplication).Should(gomega.BeTrue())
 
 		})
-		ginkgo.It("Should be able to get application configuration, when the files do not containt any applications", func() {
+		ginkgo.It("Should be able to get application configuration, when the files do not contain any applications", func() {
 
 			appID := fmt.Sprintf("%s/%s", "username", "application")
 
-			catalogManager.EXPECT().Download(appID, false, "").Return([]*entities.FileInfo{{
+			catalogManager.EXPECT().Download(appID, false, true).Return([]*entities.FileInfo{{
 				Path: "cm.yaml",
 				Data: []byte(cm),
 			}}, nil)
 
-			config, err := manager.GetConfiguration(appID)
+			config, err := manager.GetConfiguration(appID, true)
 			gomega.Expect(err).Should(gomega.Succeed())
 			gomega.Expect(config).ShouldNot(gomega.BeNil())
 			gomega.Expect(config.IsApplication).ShouldNot(gomega.BeTrue())
 		})
-
 		ginkgo.It("Should not be able to get application configuration if the application does not exists", func() {
 
 			appID := fmt.Sprintf("%s/%s", "username", "application")
 
-			catalogManager.EXPECT().Download(appID, false, "").Return([]*entities.FileInfo{}, nerrors.NewNotFoundError("Application not found"))
+			catalogManager.EXPECT().Download(appID, false, true).Return([]*entities.FileInfo{}, nerrors.NewNotFoundError("Application not found"))
 
-			_, err := manager.GetConfiguration(appID)
+			_, err := manager.GetConfiguration(appID, true)
 			gomega.Expect(err).ShouldNot(gomega.Succeed())
 		})
-
 	})
 
 })

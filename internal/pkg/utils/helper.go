@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,18 @@
 package utils
 
 import (
+	"crypto/rand"
 	"encoding/base32"
+	"encoding/json"
+	"sigs.k8s.io/yaml"
+	"strings"
+
 	"github.com/napptive/catalog-manager/internal/pkg/entities"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	"github.com/rs/zerolog/log"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8syaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-
-	"crypto/rand"
-
-	"strings"
-
-	"sigs.k8s.io/yaml"
-
-	"encoding/json"
 )
 
 const (

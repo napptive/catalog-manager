@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ const (
 	VersionHeader = "version"
 )
 
-// ContextHelper structure to faciliate the generation of secure contexts.
+// ContextHelper structure to facilitate the generation of secure contexts.
 type ContextHelper struct {
 	// Version of the application sending the request.
 	Version string
@@ -50,7 +50,7 @@ func NewContextHelper(cfg *config.Config) *ContextHelper {
 	}
 }
 
-// GetContext returns a valid gRPC context with the appropiate authorization header.
+// GetContext returns a valid gRPC context with the appropriate authorization header.
 func (ch *ContextHelper) GetContext(JWT string) (context.Context, context.CancelFunc) {
 	md := metadata.New(map[string]string{AuthorizationHeader: JWT, AgentHeader: AgentValue, VersionHeader: ch.Version})
 	ctx := metadata.NewOutgoingContext(context.Background(), md)

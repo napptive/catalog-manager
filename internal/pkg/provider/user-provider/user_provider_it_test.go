@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Napptive
+ * Copyright 2023 Napptive
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,18 @@ docker exec -it local-postgres psql -h localhost -U postgres -d postgres -p 5432
 3.- create the schema and table
 CREATE SCHEMA IF NOT EXISTS catalog;
 CREATE TABLE IF NOT EXISTS catalog.users (
-  username VARCHAR(50) PRIMARY KEY NOT NULL,
-  salt VARCHAR(16) NOT NULL,
-  salted_password VARCHAR(256)
-);
 
+	username VARCHAR(50) PRIMARY KEY NOT NULL,
+	salt VARCHAR(16) NOT NULL,
+	salted_password VARCHAR(256)
+
+);
 */
+
 package user_provider
 
 import (
+	"context"
 	"time"
 
 	"github.com/napptive/catalog-manager/internal/pkg/utils"
@@ -42,8 +45,6 @@ import (
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/rs/zerolog/log"
-
-	"context"
 )
 
 var _ = ginkgo.Describe("Provider test", func() {

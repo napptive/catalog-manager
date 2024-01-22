@@ -26,15 +26,16 @@ import (
 	"syscall"
 	"time"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	bqinterceptor "github.com/napptive/analytics/pkg/interceptors"
 	"github.com/napptive/catalog-manager/internal/pkg/config"
 	"github.com/napptive/catalog-manager/internal/pkg/server/admin"
 	"github.com/napptive/catalog-manager/internal/pkg/server/apps"
-	catalog_manager "github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
-	grpc_catalog_go "github.com/napptive/grpc-catalog-go"
-	grpc_jwt_go "github.com/napptive/grpc-jwt-go"
+	"github.com/napptive/catalog-manager/internal/pkg/server/catalog-manager"
+	"github.com/napptive/catalog-manager/internal/pkg/server/resolver"
+	"github.com/napptive/grpc-catalog-go"
+	"github.com/napptive/grpc-jwt-go"
 	"github.com/napptive/nerrors/pkg/nerrors"
 	njwtConfig "github.com/napptive/njwt/pkg/config"
 	"github.com/napptive/njwt/pkg/interceptors"
@@ -121,7 +122,7 @@ func (s *Service) createInterceptors(providers *Providers, JWTSecretsClient grpc
 	var unaryStreamChain []grpc.StreamServerInterceptor
 
 	if s.cfg.AuthEnabled {
-		config := njwtConfig.JWTConfig{
+		catalogConfig := njwtConfig.JWTConfig{
 			Secret: s.cfg.JWTConfig.Secret,
 			Header: s.cfg.JWTConfig.Header,
 		}
@@ -130,13 +131,13 @@ func (s *Service) createInterceptors(providers *Providers, JWTSecretsClient grpc
 
 		if s.cfg.CatalogManager.UseZoneAwareInterceptors {
 			log.Info().Msg("using zone-aware interceptor")
-			secretProvider := interceptors.NewInterceptorZoneSecretManager(config, JWTSecretsClient, ZoneSecretCacheTTL)
-			jwtInterceptor = interceptors.ZoneAwareJWTInterceptor(config, secretProvider)
-			jwtStreamingInterceptor = interceptors.ZoneAwareJWTStreamInterceptor(config, secretProvider)
+			secretProvider := interceptors.NewInterceptorZoneSecretManager(catalogConfig, JWTSecretsClient, ZoneSecretCacheTTL)
+			jwtInterceptor = interceptors.ZoneAwareJWTInterceptor(catalogConfig, secretProvider)
+			jwtStreamingInterceptor = interceptors.ZoneAwareJWTStreamInterceptor(catalogConfig, secretProvider)
 		} else {
 			log.Info().Msg("using standard JWT interceptor")
-			jwtInterceptor = interceptors.JwtInterceptor(config)
-			jwtStreamingInterceptor = interceptors.JwtStreamInterceptor(config)
+			jwtInterceptor = interceptors.JwtInterceptor(catalogConfig)
+			jwtStreamingInterceptor = interceptors.JwtStreamInterceptor(catalogConfig)
 		}
 		unaryInterceptorsChain = append(unaryInterceptorsChain, jwtInterceptor)
 		unaryStreamChain = append(unaryStreamChain, jwtStreamingInterceptor)
@@ -148,17 +149,20 @@ func (s *Service) createInterceptors(providers *Providers, JWTSecretsClient grpc
 		unaryStreamChain = append(unaryStreamChain, bqinterceptor.OpStreamInterceptor(providers.analyticsProvider))
 	}
 
-	return grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptorsChain...)),
+	return grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(unaryInterceptorsChain...)),
 		grpc.ChainStreamInterceptor(unaryStreamChain...)
 }
 
 // LaunchGRPCService launches a server for gRPC requests.
 func (s *Service) LaunchGRPCService(providers *Providers, clients *Clients) {
+
+	permissionResolver := resolver.NewPermissionResolver(s.cfg.AuthEnabled, s.cfg.TeamConfig)
+
 	manager := catalog_manager.NewManager(providers.repoStorage, providers.elasticProvider, s.cfg.CatalogUrl)
-	handler := catalog_manager.NewHandler(manager, s.cfg.AuthEnabled, s.cfg.TeamConfig)
+	handler := catalog_manager.NewHandler(manager, s.cfg.AuthEnabled, s.cfg.TeamConfig, *permissionResolver)
 
 	appManager := apps.NewManager(&s.cfg, manager)
-	appHandler := apps.NewHandler(&s.cfg.JWTConfig, appManager)
+	appHandler := apps.NewHandler(&s.cfg.JWTConfig, appManager, *permissionResolver)
 
 	unaryInterceptors, streamingInterceptors := s.createInterceptors(providers, clients.JWTSecretsClient)
 
@@ -190,7 +194,7 @@ func (s *Service) LaunchGRPCService(providers *Providers, clients *Clients) {
 }
 
 // HealthzHandler to return 200 if called.
-func (s *Service) HealthzHandler(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+func (s *Service) HealthzHandler(w http.ResponseWriter, _ *http.Request, pathParams map[string]string) {
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -260,7 +264,7 @@ func (s *Service) registerShutdownListener(providers *Providers) {
 func (s *Service) Shutdown(providers *Providers) {
 	log.Warn().Msg("shutting down service")
 	if s.cfg.BQConfig.Enabled {
-		providers.analyticsProvider.Flush()
+		_ = providers.analyticsProvider.Flush()
 	}
 }
 
